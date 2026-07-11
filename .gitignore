@@ -1,0 +1,9 @@
+# Cada subprojeto (api/, app/) já tem seu próprio .gitignore (node_modules, dist, .env).
+# Este arquivo cobre só o que sobra na raiz.
+
+.DS_Store
+Thumbs.db
+*.log
+
+# Pasta residual que não consegui apagar durante o desenvolvimento — pode remover manualmente.
+api/_delete_me_node_modules
