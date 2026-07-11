@@ -4,6 +4,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { logout } from '@/services/authClient';
 import { initialsOf, useUserProfile } from '@/stores/userStore';
 import { cn } from '@/lib/cn';
 
@@ -34,6 +35,12 @@ export function ProfileMenu({ collapsed = false }: ProfileMenuProps) {
   function goTo(path: string) {
     close();
     navigate(path);
+  }
+
+  async function handleLogout() {
+    close();
+    await logout();
+    window.location.reload();
   }
 
   return (
@@ -116,7 +123,7 @@ export function ProfileMenu({ collapsed = false }: ProfileMenuProps) {
           <button
             type="button"
             role="menuitem"
-            onClick={() => goTo('/sair')}
+            onClick={() => void handleLogout()}
             className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium text-ink-secondary transition-colors duration-150 hover:bg-danger/[0.08] hover:text-danger"
           >
             <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-ink-muted transition-colors duration-150 group-hover:border-danger/25 group-hover:text-danger">

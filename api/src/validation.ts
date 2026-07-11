@@ -98,6 +98,11 @@ export const improveBodySchema = z.object({
   otherSlides: slidesArraySchema.default([]),
 });
 
+export const loginBodySchema = z.object({
+  username: z.string({ required_error: 'usuário é obrigatório' }).min(1, 'usuário é obrigatório').max(100),
+  password: z.string({ required_error: 'senha é obrigatória' }).min(1, 'senha é obrigatória').max(200),
+});
+
 /**
  * Valida o body de uma request. Em caso de falha responde 400 com o primeiro problema
  * apontando o campo, em português, e retorna null pro handler encerrar.

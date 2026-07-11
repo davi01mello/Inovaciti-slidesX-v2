@@ -34,7 +34,8 @@ export type IconName =
   | 'check'
   | 'grid'
   | 'list'
-  | 'restore';
+  | 'restore'
+  | 'lock';
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -59,6 +60,7 @@ const STROKE_PATHS: Record<string, string[]> = {
   ],
   billing: ['M17 8h3a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-3M13 4v16M4 4h9v16H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z'],
   logout: ['M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3'],
+  lock: ['M6 11V8a6 6 0 0 1 12 0v3', 'M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z', 'M12 15v3'],
   'chevron-down': ['m6 9 6 6 6-6'],
   'chevron-right': ['m9 6 6 6-6 6'],
   mail: ['M4 6h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z', 'm4 8 8 5.5L20 8'],
