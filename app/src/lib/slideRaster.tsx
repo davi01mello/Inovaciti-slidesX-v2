@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { toPng } from 'html-to-image';
 import { SlideComposition } from '@/components/present/SlideComposition';
-import { fromDom } from '@/lib/richText';
+import { fromDom, FONT_FAMILY_OPTIONS, FONT_SIZE_SCALE } from '@/lib/richText';
 import type { Slide } from '@/types/slide';
 
 /**
@@ -26,6 +26,12 @@ export interface ExportTextRun {
   bold?: boolean;
   /** Verde CITi nos trechos com highlight; ausente = cor base do texto. */
   highlight?: boolean;
+  /** Override de cor do run (hex sem '#'), quando fora da paleta padrão do bloco. */
+  colorHex?: string;
+  /** Nome da fonte do run, quando diferente da fonte padrão do slide. */
+  fontFace?: string;
+  /** Tamanho do run em px, já resolvido pela escala relativa do run. */
+  fontSizePx?: number;
 }
 
 export interface ExportText {
@@ -78,6 +84,13 @@ function toHex(color: string): string {
     .toUpperCase();
 }
 
+/** Hex de exportação para a paleta fixa — sem depender de CSS vars, que o pptx não resolve. */
+const EXPORT_COLOR_HEX: Record<'white' | 'gray' | 'green', string> = {
+  white: 'F7F7F7',
+  gray: 'B3B3B3',
+  green: '09E880',
+};
+
 function normalizeAlign(value: string): ExportText['align'] {
   if (value === 'center' || value === 'right' || value === 'justify') return value;
   return 'left';
@@ -105,6 +118,9 @@ function measureText(el: HTMLElement, stageRect: DOMRect): ExportText | null {
     text: run.text,
     ...(run.bold ? { bold: true } : {}),
     ...(run.highlight ? { highlight: true } : {}),
+    ...(run.color && run.color !== 'default' ? { colorHex: EXPORT_COLOR_HEX[run.color] } : {}),
+    ...(run.fontFamily ? { fontFace: FONT_FAMILY_OPTIONS[run.fontFamily].label } : {}),
+    ...(run.size && run.size !== 'md' ? { fontSizePx: fontSizePx * FONT_SIZE_SCALE[run.size].em } : {}),
   }));
   if (computed.textTransform === 'uppercase') {
     runs = runs.map((run) => ({ ...run, text: run.text.toUpperCase() }));

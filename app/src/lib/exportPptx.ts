@@ -41,7 +41,9 @@ function toPptxText(text: ExportText): { runs: PptxGenJS.TextProps[]; options: P
         text: part,
         options: {
           bold: text.bold || !!run.bold,
-          color: run.highlight ? HIGHLIGHT_HEX : text.color,
+          color: run.highlight ? HIGHLIGHT_HEX : (run.colorHex ?? text.color),
+          fontFace: run.fontFace ?? SLIDE_FONT,
+          ...(run.fontSizePx ? { fontSize: run.fontSizePx / PX_PER_POINT } : {}),
           breakLine: i < parts.length - 1,
         },
       });

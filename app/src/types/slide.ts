@@ -38,10 +38,24 @@ export interface BulletsBlock {
 
 export type Block = TextBlock | BulletsBlock;
 
+/**
+ * Elemento visual 3D da marca (blob/ícone) solto sobre o slide — não é texto,
+ * não entra no template-composition; é uma camada de imagem posicionada livremente.
+ * `assetKey` é a chave do manifesto em services/elementsManifest.ts (ex: "azul/coracao").
+ */
+export interface Decoration {
+  id: string;
+  assetKey: string;
+  rect: BlockRect;
+  /** Rotação em graus, sentido horário. */
+  rotation?: number;
+}
+
 export interface Slide {
   id: string;
   layout: SlideLayout;
   blocks: Block[];
+  decorations?: Decoration[];
 }
 
 export const BLOCK_KIND_META: Record<Block['kind'], { label: string; hint: string }> = {

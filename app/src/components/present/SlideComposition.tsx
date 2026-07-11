@@ -11,10 +11,11 @@ import {
 } from 'react';
 import { isEmpty, renderRich, fromPlain, type RichText } from '@/lib/richText';
 import { RichEditable } from '@/components/workspace/RichEditable';
+import { DecorationsLayer } from '@/components/present/DecorationsLayer';
 import { cn } from '@/lib/cn';
 import { composeSlide, type ComposedItem, type ComposedSlide } from '@/services/templateComposition';
 import { clampBelowLogoSafe, manifestFor, type TemplateManifest, type Zone } from '@/services/templateManifest';
-import type { Block, Slide, TextBlock } from '@/types/slide';
+import type { Block, BlockRect, Slide, TextBlock } from '@/types/slide';
 
 /**
  * Composição de slide sobre os templates oficiais do CITi.
@@ -68,11 +69,22 @@ interface SlideCompositionProps {
   /** Edição no lugar: os textos viram RichEditable e commitam via onBlockChange. */
   editable?: boolean;
   onBlockChange?: (blockId: string, patch: Partial<Block>) => void;
+  /** Move/redimensiona um elemento visual (Decoration) — habilita a camada interativa. */
+  onDecorationMove?: (decorationId: string, rect: BlockRect) => void;
+  onDecorationDelete?: (decorationId: string) => void;
   /** Export: esconde os textos (mantendo a arte) pra rasterizar só o fundo. */
   artOnly?: boolean;
 }
 
-export function SlideComposition({ slide, className, editable = false, onBlockChange, artOnly = false }: SlideCompositionProps) {
+export function SlideComposition({
+  slide,
+  className,
+  editable = false,
+  onBlockChange,
+  onDecorationMove,
+  onDecorationDelete,
+  artOnly = false,
+}: SlideCompositionProps) {
   const plan = useMemo(() => composeSlide(slide), [slide]);
   const manifest = useMemo(() => manifestFor(plan.archetype, slide.id), [plan.archetype, slide.id]);
 
@@ -114,6 +126,14 @@ export function SlideComposition({ slide, className, editable = false, onBlockCh
         {plan.archetype === 'cards' && <CardsLayout plan={plan} manifest={manifest} />}
         {plan.archetype === 'rows' && <RowsLayout plan={plan} manifest={manifest} />}
         {plan.archetype === 'bignumber' && <BigNumberLayout plan={plan} manifest={manifest} />}
+        {slide.decorations && slide.decorations.length > 0 && (
+          <DecorationsLayer
+            decorations={slide.decorations}
+            editable={ctx.editable && !!onDecorationMove}
+            onMove={(decorationId, rect) => onDecorationMove?.(decorationId, rect)}
+            onDelete={(decorationId) => onDecorationDelete?.(decorationId)}
+          />
+        )}
       </div>
     </CompositionContext.Provider>
   );

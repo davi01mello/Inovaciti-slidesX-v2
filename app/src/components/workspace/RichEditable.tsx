@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, type CSSProperties, type FocusEvent, type KeyboardEvent } from 'react';
-import { fromDom, isEmpty, type RichText } from '@/lib/richText';
+import { fromDom, isEmpty, resolveRunColor, FONT_FAMILY_OPTIONS, FONT_SIZE_SCALE, type RichRun, type RichText } from '@/lib/richText';
 import { cn } from '@/lib/cn';
 
 interface RichEditableProps {
@@ -40,37 +40,12 @@ export function RichEditable({
     if (hasFocusRef.current) return;
     const el = ref.current;
     if (!el) return;
-    // Only touch DOM if it doesn't already match — avoids caret jumps on autosave.
-    const currentPlain = el.innerText;
-    const nextPlain = value.map((r) => r.text).join('');
-    if (currentPlain === nextPlain && !containsMarks(el) === !valueHasMarks(value)) {
-      // Same text and same "has marks" — skip.
-      // (Rare misalignment on formatting-only edits is corrected on next blur.)
-    }
     // For simplicity always rebuild when not focused:
     el.innerHTML = '';
     if (value.length === 0) return;
     const container = document.createElement('div');
     for (const run of value) {
-      const span = document.createElement('span');
-      if (run.bold) {
-        const b = document.createElement('b');
-        b.textContent = run.text;
-        if (run.highlight) {
-          b.dataset['hl'] = '1';
-          b.style.color = 'var(--color-slide-hl)';
-        }
-        span.appendChild(b);
-      } else if (run.highlight) {
-        const s = document.createElement('span');
-        s.dataset['hl'] = '1';
-        s.style.color = 'var(--color-slide-hl)';
-        s.textContent = run.text;
-        span.appendChild(s);
-      } else {
-        span.textContent = run.text;
-      }
-      container.appendChild(span);
+      container.appendChild(buildRunNode(run));
     }
     el.innerHTML = container.innerHTML;
   }, [value]);
@@ -87,11 +62,7 @@ export function RichEditable({
     (event: FocusEvent<HTMLDivElement>) => {
       hasFocusRef.current = false;
       const next = fromDom(event.currentTarget);
-      const prevPlain = value.map((r) => r.text).join('');
-      const nextPlain = next.map((r) => r.text).join('');
-      const prevHas = valueHasMarks(value);
-      const nextHas = nextHasMarks(next);
-      if (prevPlain !== nextPlain || prevHas !== nextHas) {
+      if (JSON.stringify(value) !== JSON.stringify(next)) {
         onCommit(next);
       }
       onBlur?.();
@@ -135,14 +106,25 @@ export function RichEditable({
   );
 }
 
-function containsMarks(el: HTMLElement): boolean {
-  return !!el.querySelector('b, strong, mark, [data-hl="1"]');
+function buildRunNode(run: RichRun): HTMLElement {
+  const inner = run.bold ? document.createElement('b') : document.createElement('span');
+  inner.textContent = run.text;
+
+  const color = resolveRunColor(run);
+  if (color) inner.style.color = color;
+  if (run.fontFamily) {
+    inner.dataset['font'] = run.fontFamily;
+    inner.style.fontFamily = FONT_FAMILY_OPTIONS[run.fontFamily].stack;
+  }
+  if (run.size && run.size !== 'md') {
+    inner.dataset['size'] = run.size;
+    inner.style.fontSize = `${FONT_SIZE_SCALE[run.size].em}em`;
+  }
+  if (run.highlight) inner.dataset['hl'] = '1';
+  if (run.color && run.color !== 'default') inner.dataset['color'] = run.color;
+
+  const wrapper = document.createElement('span');
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
-function valueHasMarks(value: RichText): boolean {
-  return value.some((r) => r.bold || r.highlight);
-}
-
-function nextHasMarks(value: RichText): boolean {
-  return value.some((r) => r.bold || r.highlight);
-}

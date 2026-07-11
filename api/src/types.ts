@@ -18,10 +18,17 @@ export type TextBlockKind =
   | 'highlight'
   | 'section-label';
 
+export type TextColorKey = 'default' | 'white' | 'gray' | 'green';
+export type FontFamilyKey = 'sora' | 'inter' | 'poppins' | 'space-grotesk' | 'manrope' | 'outfit';
+export type FontSizeKey = 'sm' | 'md' | 'lg' | 'xl';
+
 export interface RichRun {
   text: string;
   bold?: boolean;
   highlight?: boolean;
+  color?: TextColorKey;
+  fontFamily?: FontFamilyKey;
+  size?: FontSizeKey;
 }
 export type RichText = RichRun[];
 

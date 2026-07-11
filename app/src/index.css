@@ -1,5 +1,15 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/sora';
+/* Fontes extras oferecidas no editor de texto dos slides (ver richText.tsx
+ * FONT_FAMILY_OPTIONS) — cada apresentação pode misturar mais de uma. */
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/poppins/800.css';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/outfit';
 @import 'tailwindcss';
 
 @theme {

@@ -6,6 +6,7 @@ import { SlideComposition } from '@/components/present/SlideComposition';
 import { SlideThumbnails } from '@/components/workspace/SlideThumbnails';
 import { FormattingToolbar } from '@/components/workspace/FormattingToolbar';
 import { BlockKindMenu } from '@/components/workspace/BlockKindMenu';
+import { ElementsPanel } from '@/components/workspace/ElementsPanel';
 import { CitiOrb } from '@/components/ui/CitiOrb';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
@@ -14,7 +15,8 @@ import { AiClientError } from '@/services/aiClient';
 import { canExportPresentation, exportPresentationAsPptx } from '@/lib/exportPptx';
 import { exportPresentationToCanva } from '@/services/canvaClient';
 import { pushToast } from '@/lib/toast';
-import type { Block, Slide } from '@/types/slide';
+import { hasElements } from '@/services/elementsManifest';
+import type { Block, BlockRect, Slide } from '@/types/slide';
 
 /**
  * Largura do palco do slide: cabe SEMPRE na viewport sem rolagem vertical.
@@ -37,6 +39,7 @@ export function WorkspacePage() {
   const [exporting, setExporting] = useState(false);
   const [canvaExporting, setCanvaExporting] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [elementsMenuOpen, setElementsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!presentation) return;
@@ -118,6 +121,30 @@ export function WorkspacePage() {
     (kind: Block['kind']) => {
       if (!presentation || !currentSlide) return;
       presentationsStore.insertBlockAfter(presentation.id, currentSlide.id, null, kind);
+    },
+    [presentation, currentSlide],
+  );
+
+  const handleInsertElement = useCallback(
+    (assetKey: string) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.addDecoration(presentation.id, currentSlide.id, assetKey);
+    },
+    [presentation, currentSlide],
+  );
+
+  const handleDecorationMove = useCallback(
+    (decorationId: string, rect: BlockRect) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.moveDecoration(presentation.id, currentSlide.id, decorationId, rect);
+    },
+    [presentation, currentSlide],
+  );
+
+  const handleDecorationDelete = useCallback(
+    (decorationId: string) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.removeDecoration(presentation.id, currentSlide.id, decorationId);
     },
     [presentation, currentSlide],
   );
@@ -240,6 +267,28 @@ export function WorkspacePage() {
                       />
                     )}
                   </div>
+                  {hasElements() && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setElementsMenuOpen((v) => !v)}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 text-[11.5px] font-medium text-ink-secondary transition-colors duration-150 hover:border-white/[0.16] hover:text-ink"
+                      >
+                        <Icon name="sparkle-design" size={11} />
+                        Elementos
+                      </button>
+                      {elementsMenuOpen && (
+                        <ElementsPanel
+                          anchor="below"
+                          onSelect={(assetKey) => {
+                            setElementsMenuOpen(false);
+                            handleInsertElement(assetKey);
+                          }}
+                          onClose={() => setElementsMenuOpen(false)}
+                        />
+                      )}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={handleImprove}
@@ -253,7 +302,13 @@ export function WorkspacePage() {
                 </div>
               </div>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-white/[0.06] bg-black shadow-[0_40px_80px_-40px_rgba(0,0,0,0.7)]">
-                <SlideComposition slide={currentSlide} editable onBlockChange={handleBlockChange} />
+                <SlideComposition
+                  slide={currentSlide}
+                  editable
+                  onBlockChange={handleBlockChange}
+                  onDecorationMove={handleDecorationMove}
+                  onDecorationDelete={handleDecorationDelete}
+                />
               </div>
               <p className="m-0 mt-2.5 text-center text-[11.5px] text-ink-muted">
                 O que você vê é exatamente o slide final — os textos se encaixam sozinhos no template.

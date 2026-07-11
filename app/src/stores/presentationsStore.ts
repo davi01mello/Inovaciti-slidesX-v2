@@ -8,7 +8,7 @@ import { AiClientError, generatePresentation, improveSlideRemote } from '@/servi
 import type { CreationDraft } from '@/types/creation';
 import type { ChatMessage } from '@/types/chat';
 import type { Presentation, PresentationStatus } from '@/types/presentation';
-import type { Block, BlockRect, Slide, SlideLayout } from '@/types/slide';
+import type { Block, BlockRect, Decoration, Slide, SlideLayout } from '@/types/slide';
 
 const STORAGE_KEY = 'citi-slides:presentations:v3';
 
@@ -136,6 +136,10 @@ export interface PresentationsApi {
   deleteBlock(id: string, slideId: string, blockId: string): void;
   reorderBlock(id: string, slideId: string, blockId: string, targetIndex: number): void;
   changeBlockKind(id: string, slideId: string, blockId: string, kind: Block['kind']): void;
+  addDecoration(id: string, slideId: string, assetKey: string): string;
+  updateDecoration(id: string, slideId: string, decorationId: string, patch: Partial<Decoration>): void;
+  moveDecoration(id: string, slideId: string, decorationId: string, rect: BlockRect): void;
+  removeDecoration(id: string, slideId: string, decorationId: string): void;
   appendChatMessage(id: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): ChatMessage;
   setStatus(id: string, status: PresentationStatus): void;
   duplicate(id: string): string | null;
@@ -213,6 +217,7 @@ export const presentationsStore = {
         id: createId(),
         layout: source.layout,
         blocks: source.blocks.map((b) => cloneBlock(b)),
+        decorations: source.decorations?.map((d) => ({ ...d, id: createId() })),
       };
       copyId = copy.id;
       const next = [...p.slides];
@@ -347,6 +352,54 @@ export const presentationsStore = {
     );
   },
 
+  addDecoration(id, slideId, assetKey) {
+    // Empilha os novos elementos com um pequeno deslocamento — inserir vários seguidos
+    // não deixa todos exatamente empilhados no centro.
+    const pres = state.presentations.find((p) => p.id === id);
+    const slide = pres?.slides.find((s) => s.id === slideId);
+    const count = slide?.decorations?.length ?? 0;
+    const offset = (count % 5) * 0.03;
+    const size = 0.18;
+    const decoration: Decoration = {
+      id: createId(),
+      assetKey,
+      rect: clampRect({ x: 0.41 + offset, y: 0.41 + offset, width: size, height: size }),
+    };
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        decorations: [...(s.decorations ?? []), decoration],
+      })),
+    );
+    return decoration.id;
+  },
+
+  updateDecoration(id, slideId, decorationId, patch) {
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        decorations: (s.decorations ?? []).map((d) =>
+          d.id === decorationId
+            ? { ...d, ...patch, rect: patch.rect ? clampRect(patch.rect) : d.rect }
+            : d,
+        ),
+      })),
+    );
+  },
+
+  moveDecoration(id, slideId, decorationId, rect) {
+    this.updateDecoration(id, slideId, decorationId, { rect });
+  },
+
+  removeDecoration(id, slideId, decorationId) {
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        decorations: (s.decorations ?? []).filter((d) => d.id !== decorationId),
+      })),
+    );
+  },
+
   appendChatMessage(id, message) {
     const full: ChatMessage = { id: createId(), createdAt: Date.now(), ...message };
     updatePresentation(id, (p) => ({ ...p, chat: [...p.chat, full] }));
@@ -373,6 +426,7 @@ export const presentationsStore = {
         ...s,
         id: createId(),
         blocks: s.blocks.map((b) => cloneBlock(b)),
+        decorations: s.decorations?.map((d) => ({ ...d, id: createId() })),
       })),
       chat: source.chat.map((m) => ({ ...m })),
     };

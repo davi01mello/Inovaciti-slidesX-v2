@@ -1,6 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { presentationsStore } from '@/stores/presentationsStore';
+import {
+  applyMarkToSelection,
+  FONT_FAMILY_OPTIONS,
+  FONT_SIZE_SCALE,
+  TEXT_COLOR_PALETTE,
+  type FontFamilyKey,
+  type FontSizeKey,
+  type TextColorKey,
+} from '@/lib/richText';
 import type { BlockAlign } from '@/types/slide';
 
 interface Rect {
@@ -12,6 +21,18 @@ interface FormatState {
   bold: boolean;
   highlight: boolean;
   align: BlockAlign | null;
+  color: TextColorKey;
+  fontFamily: FontFamilyKey | null;
+  size: FontSizeKey;
+}
+
+const COLOR_ORDER: TextColorKey[] = ['default', 'white', 'gray', 'green'];
+const FONT_ORDER: FontFamilyKey[] = ['sora', 'inter', 'poppins', 'space-grotesk', 'manrope', 'outfit'];
+const SIZE_ORDER: FontSizeKey[] = ['sm', 'md', 'lg', 'xl'];
+
+function swatchFor(color: TextColorKey): string {
+  if (color === 'default') return '#F7F7F7';
+  return TEXT_COLOR_PALETTE[color];
 }
 
 interface Context {
@@ -26,8 +47,16 @@ interface Context {
  */
 export function FormattingToolbar({ presentationId, slideId }: { presentationId: string; slideId: string }) {
   const [pos, setPos] = useState<Rect | null>(null);
-  const [state, setState] = useState<FormatState>({ bold: false, highlight: false, align: null });
+  const [state, setState] = useState<FormatState>({
+    bold: false,
+    highlight: false,
+    align: null,
+    color: 'default',
+    fontFamily: null,
+    size: 'md',
+  });
   const [ctx, setCtx] = useState<Context | null>(null);
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
 
   useEffect(() => {
     function read() {
@@ -82,6 +111,10 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
     };
   }, [presentationId, slideId]);
 
+  useEffect(() => {
+    if (!pos) setFontMenuOpen(false);
+  }, [pos]);
+
   if (!pos) return null;
 
   function applyInline(command: 'bold' | 'highlight' | 'default-color') {
@@ -111,6 +144,27 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
     }
   }
 
+  function applyColor(color: TextColorKey) {
+    if (color === 'green') {
+      applyInline('highlight');
+      return;
+    }
+    if (state.highlight) applyInline('default-color');
+    const applied = applyMarkToSelection({ color }, color === 'default' ? ['color'] : []);
+    if (applied) setState((prev) => ({ ...prev, color, highlight: false }));
+  }
+
+  function applyFontFamily(fontFamily: FontFamilyKey) {
+    const next = state.fontFamily === fontFamily ? undefined : fontFamily;
+    const applied = applyMarkToSelection({ fontFamily: next }, next ? [] : ['fontFamily']);
+    if (applied) setState((prev) => ({ ...prev, fontFamily: next ?? null }));
+  }
+
+  function applySize(size: FontSizeKey) {
+    const applied = applyMarkToSelection({ size }, size === 'md' ? ['size'] : []);
+    if (applied) setState((prev) => ({ ...prev, size }));
+  }
+
   function applyAlign(align: BlockAlign) {
     if (!ctx) return;
     presentationsStore.updateBlock(ctx.presentationId, ctx.slideId, ctx.blockId, { align });
@@ -125,47 +179,69 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
 
   return (
     <div
-      className="pointer-events-auto fixed z-[70] flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/[0.08] bg-surface-3 p-1 shadow-[0_16px_32px_-16px_rgba(0,0,0,0.6)]"
+      className="pointer-events-auto fixed z-[70] flex -translate-x-1/2 flex-col gap-1 rounded-xl border border-white/[0.08] bg-surface-3 p-1 shadow-[0_16px_32px_-16px_rgba(0,0,0,0.6)]"
       style={{ top: pos.top, left: pos.left }}
       onMouseDown={(event) => event.preventDefault()}
     >
-      <ToolbarButton onClick={() => applyInline('bold')} active={state.bold} ariaLabel="Negrito">
-        <span className="text-[13px] font-bold">B</span>
-      </ToolbarButton>
-      <div className="mx-1 h-4 w-px bg-white/10" />
-      <ToolbarButton
-        onClick={() => applyInline('default-color')}
-        active={!state.highlight}
-        ariaLabel="Cor padrão"
-        swatch="#F7F7F7"
-      />
-      <ToolbarButton
-        onClick={() => applyInline('highlight')}
-        active={state.highlight}
-        ariaLabel="Verde CITi"
-        swatch="#09E880"
-      />
-      <div className="mx-1 h-4 w-px bg-white/10" />
-      <ToolbarButton onClick={() => applyAlign('left')} active={state.align === 'left'} ariaLabel="Alinhar à esquerda">
-        <AlignIcon direction="left" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => applyAlign('center')} active={state.align === 'center'} ariaLabel="Centralizar">
-        <AlignIcon direction="center" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => applyAlign('right')} active={state.align === 'right'} ariaLabel="Alinhar à direita">
-        <AlignIcon direction="right" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => applyAlign('justify')} active={state.align === 'justify'} ariaLabel="Justificar">
-        <AlignIcon direction="justify" />
-      </ToolbarButton>
-      {ctx?.blockId && (
-        <>
-          <div className="mx-1 h-4 w-px bg-white/10" />
-          <ToolbarButton onClick={deleteBlock} active={false} ariaLabel="Remover bloco">
-            <TrashIcon />
+      <div className="flex items-center gap-1">
+        <ToolbarButton onClick={() => applyInline('bold')} active={state.bold} ariaLabel="Negrito">
+          <span className="text-[13px] font-bold">B</span>
+        </ToolbarButton>
+        <div className="mx-1 h-4 w-px bg-white/10" />
+        <FontDropdown
+          open={fontMenuOpen}
+          onToggle={() => setFontMenuOpen((v) => !v)}
+          onClose={() => setFontMenuOpen(false)}
+          value={state.fontFamily}
+          onSelect={(font) => {
+            applyFontFamily(font);
+            setFontMenuOpen(false);
+          }}
+        />
+        <div className="mx-1 h-4 w-px bg-white/10" />
+        {SIZE_ORDER.map((size) => (
+          <ToolbarButton
+            key={size}
+            onClick={() => applySize(size)}
+            active={state.size === size}
+            ariaLabel={`Tamanho ${FONT_SIZE_SCALE[size].label}`}
+          >
+            <span className="text-[10px] font-medium">{FONT_SIZE_SCALE[size].label}</span>
           </ToolbarButton>
-        </>
-      )}
+        ))}
+      </div>
+      <div className="flex items-center gap-1">
+        {COLOR_ORDER.map((color) => (
+          <ToolbarButton
+            key={color}
+            onClick={() => applyColor(color)}
+            active={color === 'green' ? state.highlight : !state.highlight && state.color === color}
+            ariaLabel={color === 'default' ? 'Cor padrão' : color === 'white' ? 'Branco' : color === 'gray' ? 'Cinza' : 'Verde CITi'}
+            swatch={swatchFor(color)}
+          />
+        ))}
+        <div className="mx-1 h-4 w-px bg-white/10" />
+        <ToolbarButton onClick={() => applyAlign('left')} active={state.align === 'left'} ariaLabel="Alinhar à esquerda">
+          <AlignIcon direction="left" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => applyAlign('center')} active={state.align === 'center'} ariaLabel="Centralizar">
+          <AlignIcon direction="center" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => applyAlign('right')} active={state.align === 'right'} ariaLabel="Alinhar à direita">
+          <AlignIcon direction="right" />
+        </ToolbarButton>
+        <ToolbarButton onClick={() => applyAlign('justify')} active={state.align === 'justify'} ariaLabel="Justificar">
+          <AlignIcon direction="justify" />
+        </ToolbarButton>
+        {ctx?.blockId && (
+          <>
+            <div className="mx-1 h-4 w-px bg-white/10" />
+            <ToolbarButton onClick={deleteBlock} active={false} ariaLabel="Remover bloco">
+              <TrashIcon />
+            </ToolbarButton>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -212,6 +288,73 @@ function ToolbarButton({ onClick, active, ariaLabel, children, swatch }: Toolbar
   );
 }
 
+interface FontDropdownProps {
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  value: FontFamilyKey | null;
+  onSelect: (font: FontFamilyKey) => void;
+}
+
+function FontDropdown({ open, onToggle, onClose, value, onSelect }: FontDropdownProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: PointerEvent) {
+      if (!ref.current) return;
+      if (!ref.current.contains(event.target as Node)) onClose();
+    }
+    document.addEventListener('pointerdown', onPointer);
+    return () => document.removeEventListener('pointerdown', onPointer);
+  }, [open, onClose]);
+
+  const label = value ? FONT_FAMILY_OPTIONS[value].label : 'Fonte';
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={onToggle}
+        aria-pressed={!!value}
+        aria-label="Fonte"
+        title="Fonte"
+        className={cn(
+          'inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-ink-secondary transition-colors duration-150',
+          value ? 'bg-white/[0.08] text-ink' : 'hover:bg-white/[0.04] hover:text-ink',
+        )}
+      >
+        <span className="max-w-[74px] truncate" style={{ fontFamily: value ? FONT_FAMILY_OPTIONS[value].stack : undefined }}>
+          {label}
+        </span>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+6px)] z-[80] w-[168px] animate-menu-in rounded-lg border border-white/[0.08] bg-surface-3 p-1 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]">
+          {FONT_ORDER.map((font) => (
+            <button
+              key={font}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onSelect(font)}
+              className={cn(
+                'flex w-full items-center rounded-md px-2 py-1.5 text-left text-[13px] transition-colors duration-150',
+                value === font ? 'bg-white/[0.08] text-ink' : 'text-ink-secondary hover:bg-white/[0.04] hover:text-ink',
+              )}
+              style={{ fontFamily: FONT_FAMILY_OPTIONS[font].stack }}
+            >
+              {FONT_FAMILY_OPTIONS[font].label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AlignIcon({ direction }: { direction: BlockAlign }) {
   const lines: Record<BlockAlign, string[]> = {
     left: ['M3 6h18', 'M3 12h12', 'M3 18h16'],
@@ -233,11 +376,15 @@ function readFormatState(root: HTMLElement): FormatState {
   const focusedBlock = root.closest('[data-block-id]') as HTMLElement | null;
   const align = (focusedBlock?.dataset['align'] as BlockAlign | undefined) ?? null;
 
-  if (!selection || selection.rangeCount === 0) return { bold: false, highlight: false, align };
+  const empty: FormatState = { bold: false, highlight: false, align, color: 'default', fontFamily: null, size: 'md' };
+  if (!selection || selection.rangeCount === 0) return empty;
 
   let node: Node | null = selection.anchorNode;
   let bold = false;
   let highlight = false;
+  let color: TextColorKey = 'default';
+  let fontFamily: FontFamilyKey | null = null;
+  let size: FontSizeKey = 'md';
   while (node && node !== root.parentElement) {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement;
@@ -245,10 +392,22 @@ function readFormatState(root: HTMLElement): FormatState {
       if (tag === 'b' || tag === 'strong') bold = true;
       if (tag === 'mark' || el.dataset['hl'] === '1') highlight = true;
       if (el.style.color && normalizeColor(el.style.color) === '#09e880') highlight = true;
+      const dataColor = el.dataset['color'];
+      if (color === 'default' && dataColor && (COLOR_ORDER as string[]).includes(dataColor)) {
+        color = dataColor as TextColorKey;
+      }
+      const dataFont = el.dataset['font'];
+      if (!fontFamily && dataFont && (FONT_ORDER as string[]).includes(dataFont)) {
+        fontFamily = dataFont as FontFamilyKey;
+      }
+      const dataSize = el.dataset['size'];
+      if (size === 'md' && dataSize && (SIZE_ORDER as string[]).includes(dataSize)) {
+        size = dataSize as FontSizeKey;
+      }
     }
     node = node.parentNode;
   }
-  return { bold, highlight, align };
+  return { bold, highlight, align, color, fontFamily, size };
 }
 
 function normalizeColor(input: string): string {
