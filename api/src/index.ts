@@ -7,9 +7,11 @@ import { pinoHttp } from 'pino-http';
 import { assertProductionConfig, config } from './config.js';
 import { logger } from './logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { chatLimits, generateLimits, imageLimits, improveLimits } from './middleware/rateLimits.js';
+import { authLimits, chatLimits, generateLimits, imageLimits, improveLimits } from './middleware/rateLimits.js';
 import { requestId } from './middleware/requestId.js';
+import { requireAuth } from './middleware/requireAuth.js';
 import { sessionCookie } from './middleware/sessionCookie.js';
+import { authRouter } from './routes/auth.js';
 import { canvaAuthRouter } from './routes/canvaAuth.js';
 import { chatRouter } from './routes/chat.js';
 import { exportCanvaRouter } from './routes/exportCanva.js';
@@ -71,6 +73,10 @@ app.get('/api/health', (_req, res) => {
     geminiConfigured: Boolean(config.geminiApiKey),
   });
 });
+
+app.post('/api/auth/login', authLimits);
+app.use('/api/auth', authRouter);
+app.use(requireAuth);
 
 app.use('/api/presentations/generate', generateLimits, generateRouter);
 app.use('/api/chat', chatLimits, chatRouter);

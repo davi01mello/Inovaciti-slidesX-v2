@@ -15,9 +15,9 @@ export interface UserProfile {
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
-  name: 'Bernardo Leão',
-  department: 'Inovação · CITi',
-  email: 'bernardo@citi.org.br',
+  name: 'Equipe CITi',
+  department: 'CITi Empresa Júnior',
+  email: '',
 };
 
 function sanitize(profile: UserProfile): UserProfile {
@@ -52,6 +52,11 @@ export const userStore = {
 
 export function useUserProfile(): UserProfile {
   return useSyncExternalStore(userStore.subscribe, userStore.getState);
+}
+
+/** true se já existe um perfil salvo neste navegador (independente de conteúdo). */
+export function hasSavedProfile(): boolean {
+  return loadJson<Partial<UserProfile>>(STORAGE_KEY) !== null;
 }
 
 /** Iniciais pra avatar: primeira letra do primeiro e do último nome. */

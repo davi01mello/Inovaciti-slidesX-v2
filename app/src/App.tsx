@@ -11,11 +11,9 @@ import { LixeiraPage } from '@/pages/LixeiraPage';
 import { NovaPresentacaoPage } from '@/pages/NovaPresentacaoPage';
 import { WorkspacePage } from '@/pages/WorkspacePage';
 import { PresentPage } from '@/pages/PresentPage';
-import { ComingSoonPage } from '@/pages/ComingSoonPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ToastHost } from '@/components/workspace/ToastHost';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
-import { SIGN_OUT_ROUTE } from '@/data/stubRoutes';
 
 /** Rotas que vivem dentro do shell (sidebar + topbar). */
 const SHELL_ROUTES: { path: string; element: React.ReactNode }[] = [
@@ -26,7 +24,6 @@ const SHELL_ROUTES: { path: string; element: React.ReactNode }[] = [
   { path: '/perfil', element: <PerfilPage /> },
   { path: '/configuracoes', element: <ConfiguracoesPage /> },
   { path: '/lixeira', element: <LixeiraPage /> },
-  { path: SIGN_OUT_ROUTE.path, element: <ComingSoonPage {...SIGN_OUT_ROUTE} /> },
 ];
 
 function AnimatedRoutes() {

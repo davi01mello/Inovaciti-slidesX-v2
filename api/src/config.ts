@@ -31,6 +31,10 @@ export const config = {
 
   geminiApiKey: process.env.GEMINI_API_KEY ?? '',
 
+  // Login compartilhado (usuário/senha únicos pra toda a equipe, ver auth/session.ts).
+  authUsername: process.env.SITE_USERNAME ?? '',
+  authPassword: process.env.SITE_PASSWORD ?? '',
+
   // Integração Canva (Connect API): conta única da CITi, autorizada uma vez via
   // /api/canva/oauth/start. O refresh token fica persistido em disco (ver canva/tokenStore.ts),
   // nunca nessas variáveis de ambiente -- elas só guardam a identidade da integração.
@@ -55,6 +59,8 @@ export const config = {
     // Usado pelo export-canva (montar e importar o design é a ação pesada que restou).
     imageIpPerHour: readInt('RATE_IMAGE_IP', 30),
     imageSessionPerHour: readInt('RATE_IMAGE_SESSION', 10),
+    authIpPerHour: readInt('RATE_AUTH_IP', 20),
+    authSessionPerHour: readInt('RATE_AUTH_SESSION', 10),
   },
 } as const;
 
@@ -63,6 +69,8 @@ export function assertProductionConfig(warn: (msg: string) => void): void {
   const missing: string[] = [];
   if (!config.geminiApiKey) missing.push('GEMINI_API_KEY');
   if (!process.env.ALLOWED_ORIGINS) missing.push('ALLOWED_ORIGINS');
+  if (!config.authUsername) missing.push('SITE_USERNAME');
+  if (!config.authPassword) missing.push('SITE_PASSWORD');
 
   if (missing.length === 0) return;
 

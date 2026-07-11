@@ -46,3 +46,4 @@ export const generateLimits = dual(config.rate.generateIpPerHour, config.rate.ge
 export const chatLimits = dual(config.rate.chatIpPerHour, config.rate.chatSessionPerHour);
 export const improveLimits = dual(config.rate.improveIpPerHour, config.rate.improveSessionPerHour);
 export const imageLimits = dual(config.rate.imageIpPerHour, config.rate.imageSessionPerHour);
+export const authLimits = dual(config.rate.authIpPerHour, config.rate.authSessionPerHour);
