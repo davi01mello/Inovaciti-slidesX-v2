@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { isEmpty, renderRich, fromPlain, type RichText } from '@/lib/richText';
@@ -54,6 +55,12 @@ interface CompositionContextValue {
   commitContent: (blockId: string, content: RichText) => void;
   commitItem: (blockId: string, index: number, content: RichText) => void;
   addItem: (blockId: string) => void;
+  /** Área de conteúdo customizada pelo usuário (mover/redimensionar), se houver. */
+  contentZoneOverride?: BlockRect;
+  /** true só quando editable E o handler de mover/redimensionar foi de fato passado. */
+  contentZoneEditable: boolean;
+  commitContentZone: (rect: BlockRect) => void;
+  resetContentZone: () => void;
 }
 
 const CompositionContext = createContext<CompositionContextValue>({
@@ -61,6 +68,9 @@ const CompositionContext = createContext<CompositionContextValue>({
   commitContent: () => {},
   commitItem: () => {},
   addItem: () => {},
+  contentZoneEditable: false,
+  commitContentZone: () => {},
+  resetContentZone: () => {},
 });
 
 interface SlideCompositionProps {
@@ -72,6 +82,9 @@ interface SlideCompositionProps {
   /** Move/redimensiona um elemento visual (Decoration) — habilita a camada interativa. */
   onDecorationMove?: (decorationId: string, rect: BlockRect) => void;
   onDecorationDelete?: (decorationId: string) => void;
+  /** Move/redimensiona a área de conteúdo (título+corpo) como uma unidade. */
+  onContentZoneMove?: (rect: BlockRect) => void;
+  onContentZoneReset?: () => void;
   /** Export: esconde os textos (mantendo a arte) pra rasterizar só o fundo. */
   artOnly?: boolean;
 }
@@ -83,6 +96,8 @@ export function SlideComposition({
   onBlockChange,
   onDecorationMove,
   onDecorationDelete,
+  onContentZoneMove,
+  onContentZoneReset,
   artOnly = false,
 }: SlideCompositionProps) {
   const plan = useMemo(() => composeSlide(slide), [slide]);
@@ -105,14 +120,19 @@ export function SlideComposition({
         if (!block || block.kind !== 'bullets') return;
         onBlockChange?.(blockId, { items: [...block.items, fromPlain('Novo tópico')] } as Partial<Block>);
       },
+      contentZoneOverride: slide.contentZoneOverride,
+      contentZoneEditable: editable && !!onContentZoneMove,
+      commitContentZone: (rect) => onContentZoneMove?.(rect),
+      resetContentZone: () => onContentZoneReset?.(),
     }),
-    [editable, onBlockChange, slide.blocks],
+    [editable, onBlockChange, slide.blocks, slide.contentZoneOverride, onContentZoneMove, onContentZoneReset],
   );
 
   return (
     <CompositionContext.Provider value={ctx}>
       <div
         data-slide-export={artOnly ? 'art' : undefined}
+        data-slide-stage=""
         className={cn('relative h-full w-full overflow-hidden bg-[#040605]', className)}
         style={{
           containerType: 'size',
@@ -162,13 +182,139 @@ function ZoneBox({ zone, className, style, children }: { zone: Zone; className?:
 }
 
 /** Zona principal de conteúdo: protegida da logo e encolhida quando há banner. */
-function effectiveContentZone(manifest: TemplateManifest, hasBanner: boolean): Zone {
+function effectiveContentZone(manifest: TemplateManifest, hasBanner: boolean, override?: BlockRect): Zone {
+  if (override) return override;
   const zone = clampBelowLogoSafe(manifest.content, manifest.logoSafe);
   if (hasBanner && manifest.banner) {
     const bottom = manifest.banner.y - 0.03;
     return { ...zone, height: Math.max(0.15, bottom - zone.y) };
   }
   return zone;
+}
+
+/**
+ * Moldura interativa em volta da área de conteúdo: no modo edição, ganha uma
+ * alça de mover (canto superior-esquerdo), uma de redimensionar (inferior-direito)
+ * e um botão de restaurar quando há override. Os textos dentro continuam
+ * clicáveis normalmente — só as alças (fora da área) capturam o arraste.
+ */
+function ContentZoneFrame({ zone, className, style, children }: { zone: Zone; className?: string; style?: CSSProperties; children: ReactNode }) {
+  const ctx = useContext(CompositionContext);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number; rect: BlockRect; w: number; h: number } | null>(null);
+  const resizeRef = useRef<{ startX: number; startY: number; rect: BlockRect; w: number; h: number } | null>(null);
+
+  const editable = ctx.contentZoneEditable;
+
+  function readStage(): { w: number; h: number } | null {
+    const stage = frameRef.current?.closest('[data-slide-stage]') as HTMLElement | null;
+    if (!stage) return null;
+    const box = stage.getBoundingClientRect();
+    return { w: box.width, h: box.height };
+  }
+
+  function currentRect(): BlockRect {
+    return ctx.contentZoneOverride ?? { x: zone.x, y: zone.y, width: zone.width, height: zone.height };
+  }
+
+  function handleMoveDown(event: ReactPointerEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    const stage = readStage();
+    if (!stage) return;
+    dragRef.current = { startX: event.clientX, startY: event.clientY, rect: currentRect(), w: stage.w, h: stage.h };
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  function handleMoveMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag) return;
+    event.stopPropagation();
+    const dxFrac = (event.clientX - drag.startX) / drag.w;
+    const dyFrac = (event.clientY - drag.startY) / drag.h;
+    const x = Math.min(Math.max(drag.rect.x + dxFrac, 0), 1 - drag.rect.width);
+    const y = Math.min(Math.max(drag.rect.y + dyFrac, 0), 1 - drag.rect.height);
+    ctx.commitContentZone({ x, y, width: drag.rect.width, height: drag.rect.height });
+  }
+
+  function handleMoveUp(event: ReactPointerEvent<HTMLDivElement>) {
+    dragRef.current = null;
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+  }
+
+  function handleResizeDown(event: ReactPointerEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    const stage = readStage();
+    if (!stage) return;
+    resizeRef.current = { startX: event.clientX, startY: event.clientY, rect: currentRect(), w: stage.w, h: stage.h };
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  function handleResizeMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const resize = resizeRef.current;
+    if (!resize) return;
+    event.stopPropagation();
+    const dxFrac = (event.clientX - resize.startX) / resize.w;
+    const dyFrac = (event.clientY - resize.startY) / resize.h;
+    const width = Math.min(Math.max(resize.rect.width + dxFrac, 0.15), 1 - resize.rect.x);
+    const height = Math.min(Math.max(resize.rect.height + dyFrac, 0.12), 1 - resize.rect.y);
+    ctx.commitContentZone({ x: resize.rect.x, y: resize.rect.y, width, height });
+  }
+
+  function handleResizeUp(event: ReactPointerEvent<HTMLDivElement>) {
+    resizeRef.current = null;
+    (event.target as HTMLElement).releasePointerCapture(event.pointerId);
+  }
+
+  return (
+    <ZoneBox zone={zone} className={className} style={style}>
+      <div ref={frameRef} className="relative h-full w-full">
+        {children}
+        {editable && (
+          <>
+            <div className="pointer-events-none absolute -inset-2.5 rounded-lg border border-dashed border-white/[0.14]" />
+            <div
+              onPointerDown={handleMoveDown}
+              onPointerMove={handleMoveMove}
+              onPointerUp={handleMoveUp}
+              title="Mover área de texto"
+              className="pointer-events-auto absolute -left-2.5 -top-2.5 flex h-6 w-6 cursor-move items-center justify-center rounded-md border border-white/20 bg-surface-3 text-ink-secondary shadow-[0_4px_10px_rgba(0,0,0,0.4)] transition-colors duration-150 hover:text-ink"
+              style={{ touchAction: 'none' }}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <circle cx="6" cy="5" r="1.4" />
+                <circle cx="14" cy="5" r="1.4" />
+                <circle cx="6" cy="10" r="1.4" />
+                <circle cx="14" cy="10" r="1.4" />
+                <circle cx="6" cy="15" r="1.4" />
+                <circle cx="14" cy="15" r="1.4" />
+              </svg>
+            </div>
+            {ctx.contentZoneOverride && (
+              <button
+                type="button"
+                onClick={() => ctx.resetContentZone()}
+                title="Restaurar posição padrão do template"
+                className="pointer-events-auto absolute -left-2.5 top-6 flex h-6 w-6 items-center justify-center rounded-md border border-white/20 bg-surface-3 text-ink-secondary shadow-[0_4px_10px_rgba(0,0,0,0.4)] transition-colors duration-150 hover:text-ink"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                  <path d="M4 10a6 6 0 1 1 1.76 4.24.75.75 0 1 1 1.06-1.06A4.5 4.5 0 1 0 5.5 10a.75.75 0 0 1-1.5 0Z" />
+                  <path d="M4 5.5v3a.75.75 0 0 0 .75.75h3a.75.75 0 0 0 0-1.5H5.5v-2.25a.75.75 0 0 0-1.5 0Z" />
+                </svg>
+              </button>
+            )}
+            <div
+              onPointerDown={handleResizeDown}
+              onPointerMove={handleResizeMove}
+              onPointerUp={handleResizeUp}
+              title="Redimensionar área de texto"
+              className="pointer-events-auto absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-full border-2 border-surface-3 bg-brand"
+              style={{ touchAction: 'none' }}
+            />
+          </>
+        )}
+      </div>
+    </ZoneBox>
+  );
 }
 
 /* ------------------------------------------------------------------------ */
@@ -325,14 +471,15 @@ function SlideText({ block, spec, designAlign, multiline = false, ariaLabel, cla
  * (kicker, título display, subtítulo), deixando a escultura respirar à direita.
  */
 function CoverLayout({ plan, manifest }: { plan: ComposedSlide; manifest: TemplateManifest }) {
-  const contentZone = effectiveContentZone(manifest, !!plan.highlight);
+  const ctx = useContext(CompositionContext);
+  const contentZone = effectiveContentZone(manifest, !!plan.highlight, ctx.contentZoneOverride);
   return (
     <>
       <ZoneBox zone={manifest.logo.zone}>
         <img src={manifest.logo.src} alt="" className="h-full w-full object-contain object-left-top" draggable={false} />
       </ZoneBox>
 
-      <ZoneBox zone={contentZone}>
+      <ContentZoneFrame zone={contentZone}>
         <FitText>
           <div className="flex w-full flex-col items-start" style={{ gap: '3cqh' }}>
             {plan.label && <EyebrowLabel block={plan.label} designAlign="left" withDash />}
@@ -363,18 +510,19 @@ function CoverLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Templa
             ))}
           </div>
         </FitText>
-      </ZoneBox>
+      </ContentZoneFrame>
       {plan.highlight && manifest.banner && <BannerStrip block={plan.highlight} zone={manifest.banner} />}
     </>
   );
 }
 
 function StatementLayout({ plan, manifest }: { plan: ComposedSlide; manifest: TemplateManifest }) {
-  const contentZone = effectiveContentZone(manifest, !!plan.highlight);
+  const ctx = useContext(CompositionContext);
+  const contentZone = effectiveContentZone(manifest, !!plan.highlight, ctx.contentZoneOverride);
   return (
     <>
       <BrandChrome manifest={manifest} />
-      <ZoneBox zone={contentZone}>
+      <ContentZoneFrame zone={contentZone}>
         <FitText anchor="center">
           <div className="flex w-full flex-col items-center text-center" style={{ gap: '2.8cqh' }}>
             {plan.label && <EyebrowLabel block={plan.label} designAlign="center" />}
@@ -400,7 +548,7 @@ function StatementLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Te
             ))}
           </div>
         </FitText>
-      </ZoneBox>
+      </ContentZoneFrame>
       {plan.highlight && manifest.banner && <BannerStrip block={plan.highlight} zone={manifest.banner} />}
     </>
   );
@@ -408,14 +556,15 @@ function StatementLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Te
 
 function CardsLayout({ plan, manifest }: { plan: ComposedSlide; manifest: TemplateManifest }) {
   const items = plan.items;
-  const contentZone = effectiveContentZone(manifest, !!plan.highlight);
+  const ctx = useContext(CompositionContext);
+  const contentZone = effectiveContentZone(manifest, !!plan.highlight, ctx.contentZoneOverride);
   // 2 cards ficam elegantes mais estreitos e centrados; 3+ ocupam a zona inteira.
   const slim = items.length <= 2;
   return (
     <>
       <BrandChrome manifest={manifest} />
       {manifest.header && <TemplateHeader plan={plan} zone={manifest.header} />}
-      <ZoneBox zone={contentZone}>
+      <ContentZoneFrame zone={contentZone}>
         <div
           className="grid h-full"
           style={{
@@ -429,7 +578,7 @@ function CardsLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Templa
           ))}
         </div>
         <AddItemButton items={items} />
-      </ZoneBox>
+      </ContentZoneFrame>
       {plan.highlight && manifest.banner && <BannerStrip block={plan.highlight} zone={manifest.banner} />}
     </>
   );
@@ -437,30 +586,32 @@ function CardsLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Templa
 
 function RowsLayout({ plan, manifest }: { plan: ComposedSlide; manifest: TemplateManifest }) {
   const items = plan.items;
-  const contentZone = effectiveContentZone(manifest, !!plan.highlight);
+  const ctx = useContext(CompositionContext);
+  const contentZone = effectiveContentZone(manifest, !!plan.highlight, ctx.contentZoneOverride);
   return (
     <>
       <BrandChrome manifest={manifest} />
       {manifest.header && <TemplateHeader plan={plan} zone={manifest.header} />}
-      <ZoneBox zone={contentZone}>
+      <ContentZoneFrame zone={contentZone}>
         <div className="flex h-full flex-col" style={{ gap: '1.5cqh' }}>
           {items.map((item, i) => (
             <TemplateRow key={`${item.blockId}-${item.index}`} order={i} item={item} />
           ))}
         </div>
         <AddItemButton items={items} />
-      </ZoneBox>
+      </ContentZoneFrame>
       {plan.highlight && manifest.banner && <BannerStrip block={plan.highlight} zone={manifest.banner} />}
     </>
   );
 }
 
 function BigNumberLayout({ plan, manifest }: { plan: ComposedSlide; manifest: TemplateManifest }) {
-  const contentZone = effectiveContentZone(manifest, !!plan.highlight);
+  const ctx = useContext(CompositionContext);
+  const contentZone = effectiveContentZone(manifest, !!plan.highlight, ctx.contentZoneOverride);
   return (
     <>
       <BrandChrome manifest={manifest} />
-      <ZoneBox zone={contentZone}>
+      <ContentZoneFrame zone={contentZone}>
         <FitText anchor="center">
           <div className="flex w-full flex-col items-center text-center" style={{ gap: '2.6cqh' }}>
             {plan.label && <EyebrowLabel block={plan.label} designAlign="center" />}
@@ -504,7 +655,7 @@ function BigNumberLayout({ plan, manifest }: { plan: ComposedSlide; manifest: Te
             ))}
           </div>
         </FitText>
-      </ZoneBox>
+      </ContentZoneFrame>
       {plan.highlight && manifest.banner && <BannerStrip block={plan.highlight} zone={manifest.banner} />}
     </>
   );

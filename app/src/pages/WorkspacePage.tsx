@@ -149,6 +149,19 @@ export function WorkspacePage() {
     [presentation, currentSlide],
   );
 
+  const handleContentZoneMove = useCallback(
+    (rect: BlockRect) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.setContentZone(presentation.id, currentSlide.id, rect);
+    },
+    [presentation, currentSlide],
+  );
+
+  const handleContentZoneReset = useCallback(() => {
+    if (!presentation || !currentSlide) return;
+    presentationsStore.resetContentZone(presentation.id, currentSlide.id);
+  }, [presentation, currentSlide]);
+
   const canExport = presentation ? canExportPresentation(presentation) : false;
 
   const handleExport = useCallback(async () => {
@@ -308,6 +321,8 @@ export function WorkspacePage() {
                   onBlockChange={handleBlockChange}
                   onDecorationMove={handleDecorationMove}
                   onDecorationDelete={handleDecorationDelete}
+                  onContentZoneMove={handleContentZoneMove}
+                  onContentZoneReset={handleContentZoneReset}
                 />
               </div>
               <p className="m-0 mt-2.5 text-center text-[11.5px] text-ink-muted">

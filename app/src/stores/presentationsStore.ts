@@ -140,6 +140,8 @@ export interface PresentationsApi {
   updateDecoration(id: string, slideId: string, decorationId: string, patch: Partial<Decoration>): void;
   moveDecoration(id: string, slideId: string, decorationId: string, rect: BlockRect): void;
   removeDecoration(id: string, slideId: string, decorationId: string): void;
+  setContentZone(id: string, slideId: string, rect: BlockRect): void;
+  resetContentZone(id: string, slideId: string): void;
   appendChatMessage(id: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): ChatMessage;
   setStatus(id: string, status: PresentationStatus): void;
   duplicate(id: string): string | null;
@@ -397,6 +399,18 @@ export const presentationsStore = {
         ...s,
         decorations: (s.decorations ?? []).filter((d) => d.id !== decorationId),
       })),
+    );
+  },
+
+  setContentZone(id, slideId, rect) {
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({ ...s, contentZoneOverride: clampRect(rect) })),
+    );
+  },
+
+  resetContentZone(id, slideId) {
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({ ...s, contentZoneOverride: undefined })),
     );
   },
 

@@ -56,6 +56,13 @@ export interface Slide {
   layout: SlideLayout;
   blocks: Block[];
   decorations?: Decoration[];
+  /**
+   * Sobrescreve a área de conteúdo (título+corpo) do template pra essa slide —
+   * o usuário pode mover/redimensionar a área toda no editor. Ausente = usa a
+   * posição padrão calculada do template (comportamento original). Os blocos
+   * dentro continuam se organizando sozinhos; só a área muda de lugar/tamanho.
+   */
+  contentZoneOverride?: BlockRect;
 }
 
 export const BLOCK_KIND_META: Record<Block['kind'], { label: string; hint: string }> = {
