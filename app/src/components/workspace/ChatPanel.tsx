@@ -17,14 +17,14 @@ import { fileToChatAttachment, pickImageFiles, type ChatImageAttachment } from '
 import { pushToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 import type { ChatMessage } from '@/types/chat';
-import type { PresentationSize, VisualStyle } from '@/types/creation';
+import type { PresentationGoal, VisualStyle } from '@/types/creation';
 import type { Slide } from '@/types/slide';
 
 interface ChatPanelProps {
   presentationId: string;
   messages: ChatMessage[];
   idea: string;
-  size: PresentationSize;
+  goal: PresentationGoal;
   style: VisualStyle;
   slides: Slide[];
   /** Geração inicial em andamento — a orb pensa antes mesmo da primeira mensagem. */
@@ -39,7 +39,7 @@ const MAX_ATTACHMENTS = 4;
 /** O que a API recebe quando o usuário manda só imagem, sem texto (message é obrigatório lá). */
 const IMAGE_ONLY_MESSAGE = '(anexei imagem como referência)';
 
-export function ChatPanel({ presentationId, messages, idea, size, style, slides, busy = false }: ChatPanelProps) {
+export function ChatPanel({ presentationId, messages, idea, goal, style, slides, busy = false }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachments, setAttachments] = useState<ChatImageAttachment[]>([]);
@@ -80,7 +80,7 @@ export function ChatPanel({ presentationId, messages, idea, size, style, slides,
         pushToast(`Máximo de ${MAX_ATTACHMENTS} imagens por mensagem.`);
         return;
       }
-      if (images.length > room) pushToast(`Anexei só ${room} — o limite é ${MAX_ATTACHMENTS} imagens por mensagem.`);
+      if (images.length > room) pushToast(`Anexei só ${room}, porque o limite é ${MAX_ATTACHMENTS} imagens por mensagem.`);
       setIsReadingFiles(true);
       try {
         const prepared = await Promise.all(images.slice(0, room).map(fileToChatAttachment));
@@ -112,7 +112,7 @@ export function ChatPanel({ presentationId, messages, idea, size, style, slides,
     try {
       const replyText = await sendChatMessage({
         idea,
-        size,
+        goal,
         style,
         slides,
         history,

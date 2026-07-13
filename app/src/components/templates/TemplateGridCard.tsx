@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { TemplateCardArt } from '@/components/home/TemplateCardArt';
 import { Icon } from '@/components/ui/Icon';
-import { SIZE_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
+import { GOAL_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
 import type { PresentationTemplate } from '@/types/template';
 
 /**
@@ -10,7 +10,7 @@ import type { PresentationTemplate } from '@/types/template';
  */
 export function TemplateGridCard({ template }: { template: PresentationTemplate }) {
   const navigate = useNavigate();
-  const size = SIZE_OPTIONS.find((o) => o.value === template.size);
+  const goal = GOAL_OPTIONS.find((o) => o.value === template.goal);
   const style = STYLE_OPTIONS.find((o) => o.value === template.style);
 
   function applyTemplate() {
@@ -48,10 +48,15 @@ export function TemplateGridCard({ template }: { template: PresentationTemplate 
         <p className="mb-0 mt-1.5 line-clamp-2 text-[12.5px] leading-[1.5] text-ink-muted">{template.description}</p>
 
         <div className="mt-3 flex flex-wrap gap-1.5 text-[10.5px] font-medium text-ink-muted">
-          {size && <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5">{size.hint}</span>}
+          {goal && (
+            <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5">{goal.label}</span>
+          )}
+          <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5">
+            {template.slideCount} slides
+          </span>
           {style && (
             <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5">
-              Estilo {style.label}
+              Voz {style.label}
             </span>
           )}
         </div>

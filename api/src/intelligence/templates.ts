@@ -1,82 +1,74 @@
 /**
- * Especificações ricas dos templates de geração: OCASIÃO (o momento em que a
- * apresentação vive) e ESTILO (a voz e a densidade visual do texto).
+ * Especificações ricas que alimentam o estrategista e a geradora:
+ * OBJETIVO (o que a apresentação precisa alcançar), TOM (a voz e a densidade do
+ * texto) e QUANTIDADE (como a narrativa se distribui no espaço escolhido).
  *
- * Cada spec é um guia profissional completo. É daqui que o estrategista e a
- * geradora tiram orientação de público, narrativa, tom e restrições. Enriquecer
- * um template aqui melhora a geração inteira sem tocar em mais nada.
+ * Cada spec é um guia profissional completo. Enriquecer aqui melhora a geração
+ * inteira sem tocar em mais nada.
  *
- * SYNC_WITH: app/src/data/creationOptions.ts (rótulos dos cards do wizard).
- * Se o texto dos cards mudar de significado, estas specs precisam acompanhar.
+ * SYNC_WITH: app/src/data/creationOptions.ts (rótulos e descrições do wizard).
+ * Se um card mudar de significado, estas specs precisam acompanhar.
  */
-import type { PresentationSize, VisualStyle } from '../types.js';
+import type { PresentationGoal, VisualStyle } from '../types.js';
 
-export interface OccasionSpec {
+export interface GoalSpec {
   label: string;
-  /** Faixa de slides quando o usuário deixa a quantidade no automático. */
-  autoRange: { min: number; max: number };
   objetivo: string;
-  quandoUsar: string;
-  quandoNaoUsar: string;
-  publico: string;
+  sucesso: string;
   estrategiaNarrativa: string;
   tom: string;
   boasPraticas: string;
   restricoes: string;
 }
 
-export const OCCASIONS: Record<PresentationSize, OccasionSpec> = {
-  focused: {
-    label: 'Reunião rápida',
-    autoRange: { min: 4, max: 6 },
-    objetivo: 'Alinhar um time e sair da sala com UMA decisão tomada ou um caminho claro.',
-    quandoUsar: 'Conversa interna, decisão pontual, atualização de projeto, proposta de mudança de rota.',
-    quandoNaoUsar: 'Quando o público ainda precisa ser convencido do problema. Contexto raso demais mata a decisão.',
-    publico: 'Pessoas que já conhecem o contexto geral. Não perca slides explicando o que todos já sabem.',
+export const GOALS: Record<PresentationGoal, GoalSpec> = {
+  convince: {
+    label: 'Convencer',
+    objetivo: 'Conseguir um sim: fechar negócio, aprovar proposta, ganhar orçamento ou mandato.',
+    sucesso: 'A plateia sai com uma decisão tomada ou um próximo passo aceito.',
     estrategiaNarrativa:
-      'Direto ao ponto: situação em uma tela, a questão central, a recomendação com justificativa, o que acontece a seguir. A recomendação aparece cedo, o deck existe pra sustentá-la.',
-    tom: 'Colega experiente falando com colegas. Zero cerimônia, zero enrolação, máxima clareza.',
+      'Tensão e resolução. O problema ou oportunidade entra cedo, com consequência real. A proposta só aparece quando o terreno está preparado. Os argumentos mais fortes vêm depois do diagnóstico, e as duas objeções mais prováveis são respondidas dentro da narrativa, antes de alguém levantá-las.',
+    tom: 'Confiante e preparado, sem arrogância. Afirma, sustenta com o concreto, segue.',
     boasPraticas:
-      'Uma decisão por apresentação. Se aparecerem duas decisões no briefing, escolha a principal e trate a outra como desdobramento.',
-    restricoes: 'Sem slide de agenda, sem seção, sem contexto histórico longo. Cada slide ganha o direito de existir.',
+      'O fechamento pede algo específico: valor, prazo, recurso ou decisão. Uma apresentação de convencimento que termina só em agradecimento falhou.',
+    restricoes: 'Nada de detalhe operacional profundo, isso é anexo ou conversa seguinte. Nada de promessa sem lastro.',
   },
-  balanced: {
-    label: 'Pitch ou diretoria',
-    autoRange: { min: 6, max: 8 },
-    objetivo: 'Defender uma ideia diante de quem decide e conseguir um sim, um orçamento ou um mandato.',
-    quandoUsar: 'Pitch interno, proposta pra diretoria, defesa de investimento, apresentação de plano.',
-    quandoNaoUsar: 'Relatório de acompanhamento sem pedido no final. Sem "ask", esse formato perde a força.',
-    publico:
-      'Decisores com pouco tempo e visão ampla. Eles julgam clareza de raciocínio antes de julgar a ideia. Antecipe as duas objeções mais prováveis e responda dentro da narrativa.',
+  inform: {
+    label: 'Informar',
+    objetivo: 'Transmitir uma situação com clareza total: resultados, status, prestação de contas.',
+    sucesso: 'A plateia entende o quadro completo em uma passada e sabe o que muda pra ela.',
     estrategiaNarrativa:
-      'Tensão e resolução: contexto que importa, o problema ou oportunidade com consequência real, a proposta, por que ela funciona, o que se ganha, o pedido explícito. O argumento mais forte entra depois do problema estar estabelecido, nunca antes.',
-    tom: 'Confiante e preparado, sem arrogância. Frases afirmativas, dados quando existirem, zero hedge desnecessário.',
+      'Sem suspense: a conclusão mais importante abre a apresentação, o detalhamento vem depois, em ordem de relevância. Cada seção responde uma pergunta que a plateia faria. O fechamento aponta prioridades e o que acontece a seguir.',
+    tom: 'Sóbrio e transparente. Os fatos falam, inclusive os desconfortáveis.',
     boasPraticas:
-      'O pedido final é concreto: valor, prazo, recurso ou decisão. Um pitch que termina em "obrigado" sem pedido falhou.',
-    restricoes: 'Nada de detalhe operacional profundo. Detalhe é anexo ou reunião seguinte, não slide.',
+      'Separar com honestidade o que foi bem do que não foi. Um relatório que só celebra perde credibilidade na segunda edição.',
+    restricoes: 'Nada de floreio pra inflar resultado. Sem dado concreto do usuário, a leitura é qualitativa e diz isso.',
   },
-  complete: {
-    label: 'Cliente ou institucional',
-    autoRange: { min: 9, max: 12 },
-    objetivo: 'Contar a história inteira pra alguém de fora: contexto, valor, prova e caminho, construindo confiança.',
-    quandoUsar: 'Proposta comercial, apresentação institucional, relatório de resultados pra cliente, kickoff.',
-    quandoNaoUsar: 'Público interno que já conhece a empresa. Repetir a história institucional pra quem vive nela desperdiça atenção.',
-    publico:
-      'Pessoas de fora do contexto, possivelmente comparando com alternativas. Elas precisam entender rápido quem somos, o que está sendo proposto e por que confiar.',
+  inspire: {
+    label: 'Inspirar',
+    objetivo: 'Mover a sala: visão de futuro, lançamento, discurso de virada, celebração.',
+    sucesso: 'A plateia sai com vontade de fazer parte e uma frase na memória.',
     estrategiaNarrativa:
-      'Jornada completa: quem somos em uma tela, o diagnóstico da situação do cliente, a proposta, como funciona na prática, prova ou casos, investimento ou resultado, próximos passos. O cliente é o protagonista da história, a CITi é o guia.',
-    tom: 'Profissional e próximo. Institucional não significa frio: escreva pra pessoa que lê, não pra empresa abstrata.',
-    boasPraticas:
-      'Traduza toda capacidade técnica em benefício pro cliente. Ninguém compra stack, compram o que ela resolve.',
-    restricoes: 'Sem autoelogios vazios ("empresa líder", "excelência"). Prova concreta ou nada.',
+      'Arco emocional: o presente como ponto de partida, a visão como destino, o caminho como convite. Menos dados, mais significado. Frases curtas que ficam. O ritmo alterna momentos fortes com respiros, e o final é o ponto mais alto.',
+    tom: 'Elevado sem ser piegas. Convicção genuína, zero autoajuda corporativa.',
+    boasPraticas: 'Uma imagem central forte (uma ideia, um lema) que atravessa a apresentação e volta no fechamento.',
+    restricoes: 'Proibido superlativo vazio. Inspiração vem de visão concreta, não de adjetivo empilhado.',
+  },
+  train: {
+    label: 'Capacitar',
+    objetivo: 'Ensinar de verdade: treinamento, workshop, onboarding, transferência de conhecimento.',
+    sucesso: 'A plateia consegue aplicar o que viu, não apenas concordar com ele.',
+    estrategiaNarrativa:
+      'Didática progressiva: do panorama ao detalhe, do simples ao complexo. Cada conceito novo se apoia no anterior e ganha um exemplo concreto. Em apresentações longas, os capítulos funcionam como módulos, e o fechamento recapitula o essencial e aponta onde praticar.',
+    tom: 'Próximo e claro, de quem já esteve do outro lado. Paciência sem condescendência.',
+    boasPraticas: 'Terminar seções com o ponto chave em uma frase. Repetição intencional é ferramenta didática, não redundância.',
+    restricoes: 'Nunca dois conceitos novos disputando o mesmo slide. Jargão só se for ensinado antes.',
   },
 };
 
 export interface StyleSpec {
   label: string;
   objetivo: string;
-  quandoUsar: string;
-  quandoNaoUsar: string;
   densidade: string;
   linguagem: string;
   boasPraticas: string;
@@ -87,43 +79,37 @@ export const STYLES: Record<VisualStyle, StyleSpec> = {
   minimal: {
     label: 'Sereno',
     objetivo: 'Silêncio visual e leitura sem esforço. O slide respira e cada palavra carrega mais peso.',
-    quandoUsar: 'Telão, plateia grande, temas sensíveis, mensagens que precisam de gravidade.',
-    quandoNaoUsar: 'Conteúdo denso em dados ou processo com muitas etapas. Esse estilo pede pouco texto por tela.',
     densidade:
       'Pouquíssimo texto por slide: frases curtas, no máximo 2 ou 3 bullets quando bullets existirem. Prefira afirmações centrais vivendo sozinhas na tela.',
     linguagem: 'Econômica e precisa. Corte todo advérbio que não muda o sentido. O espaço em branco faz parte da mensagem.',
-    boasPraticas: 'Se um slide ficou cheio, divida em dois. Nesse estilo, densidade é defeito, nunca aproveitamento.',
+    boasPraticas: 'Se um slide ficou cheio, divida em dois. Nesse tom, densidade é defeito.',
     restricoes: 'Nunca mais de um bloco de bullets por slide. Nunca parágrafos.',
   },
   balanced: {
     label: 'Preciso',
     objetivo: 'O equilíbrio profissional padrão: informação suficiente pra sustentar o argumento, sem sobrecarregar.',
-    quandoUsar: 'A maioria das ocasiões: reuniões, propostas, relatórios. É o estilo seguro quando há dúvida.',
-    quandoNaoUsar: 'Quando a ocasião pede drama (lançamento, keynote) ou contemplação (visão, manifesto).',
     densidade: 'De 3 a 4 bullets por slide quando fizer sentido, títulos informativos, um apoio curto onde ajudar.',
     linguagem: 'Confiante e direta, sem gritar. Afirma, justifica, segue em frente.',
-    boasPraticas: 'Cada slide sustenta UMA ideia com no máximo dois níveis de informação: a tese e o apoio.',
-    restricoes: 'Sem paredes de texto. Se precisar de mais de 4 bullets, o conteúdo pede dois slides ou uma lista numerada.',
+    boasPraticas: 'Cada slide sustenta UMA ideia com no máximo dois níveis: a tese e o apoio.',
+    restricoes: 'Sem paredes de texto. Mais de 4 bullets pede dois slides ou uma lista numerada.',
   },
   bold: {
     label: 'Presença',
-    objetivo: 'Impacto e atitude. A apresentação que ninguém consegue ignorar, com frases que ficam na memória.',
-    quandoUsar: 'Pitch competitivo, lançamento, momento de virada, quando a energia da sala importa tanto quanto o conteúdo.',
-    quandoNaoUsar: 'Relatórios sóbrios, temas delicados, públicos conservadores. Atitude fora de hora vira ruído.',
-    densidade: 'Frases de impacto curtas e diretas. Pode usar até 4 ou 5 bullets quando o conteúdo pedir, mas afirmações fortes dominam.',
-    linguagem: 'Assertiva, verbos fortes, presente do indicativo. Cada título soa como manchete, nunca como rótulo.',
+    objetivo: 'Impacto e atitude. A apresentação que ninguém consegue ignorar, com frases que ficam.',
+    densidade: 'Frases de impacto curtas dominam. Até 4 ou 5 bullets quando o conteúdo pedir de verdade.',
+    linguagem: 'Assertiva, verbos fortes, presente do indicativo. Título soa como manchete, nunca como rótulo.',
     boasPraticas: 'Alterne intensidade: um slide forte precisa de um vizinho mais calmo pra continuar forte.',
     restricoes: 'Impacto vem da ideia, não de exagero. Proibido superlativo vazio e promessa sem lastro.',
   },
 };
 
-/** Converte a spec de ocasião em texto de prompt. */
-export function occasionGuidance(size: PresentationSize): string {
-  const spec = OCCASIONS[size];
+/** Converte a spec de objetivo em texto de prompt. */
+export function goalGuidance(goal: PresentationGoal): string {
+  const spec = GOALS[goal];
   return `
-OCASIÃO DA APRESENTAÇÃO: ${spec.label}
-- Objetivo do formato: ${spec.objetivo}
-- Público típico: ${spec.publico}
+OBJETIVO DA APRESENTAÇÃO: ${spec.label}
+- O que precisa acontecer: ${spec.objetivo}
+- Como é o sucesso: ${spec.sucesso}
 - Estratégia narrativa recomendada: ${spec.estrategiaNarrativa}
 - Tom: ${spec.tom}
 - Boas práticas: ${spec.boasPraticas}
@@ -131,11 +117,11 @@ OCASIÃO DA APRESENTAÇÃO: ${spec.label}
 `.trim();
 }
 
-/** Converte a spec de estilo em texto de prompt. */
+/** Converte a spec de tom em texto de prompt. */
 export function styleGuidance(style: VisualStyle): string {
   const spec = STYLES[style];
   return `
-ESTILO DE ESCRITA: ${spec.label}
+TOM DA ESCRITA: ${spec.label}
 - Intenção: ${spec.objetivo}
 - Densidade por slide: ${spec.densidade}
 - Linguagem: ${spec.linguagem}
@@ -144,11 +130,38 @@ ESTILO DE ESCRITA: ${spec.label}
 `.trim();
 }
 
-/** Regra de quantidade: exata quando o usuário escolheu, faixa da ocasião no automático. */
-export function slideCountRule(size: PresentationSize, slideCount: number | null): string {
-  if (slideCount !== null) {
-    return `QUANTIDADE DE SLIDES: exatamente ${slideCount}. Este número é uma decisão do usuário, não uma sugestão. A apresentação final tem ${slideCount} slides, nem mais, nem menos.`;
+/** Como a narrativa se distribui na quantidade escolhida. Faixas, não fórmulas. */
+function countBand(slideCount: number): string {
+  if (slideCount === 1) {
+    return 'Um slide único funciona como cartaz: uma mensagem forte e autocontida, sem promessa de continuação.';
   }
-  const range = OCCASIONS[size].autoRange;
-  return `QUANTIDADE DE SLIDES: escolha a quantidade ideal entre ${range.min} e ${range.max} slides, conforme a densidade real do conteúdo. Nunca estique conteúdo pra preencher, nunca esprema conteúdo pra caber.`;
+  if (slideCount <= 4) {
+    return 'Pouquíssimo espaço: só a mensagem central, uma sustentação e o próximo passo. Corte sem dó tudo que for complementar.';
+  }
+  if (slideCount <= 7) {
+    return 'Espaço pra um argumento com começo, meio e fim, sem gordura. Um ponto por slide, transições limpas.';
+  }
+  if (slideCount <= 12) {
+    return 'A faixa clássica: contexto, desenvolvimento, prova e fechamento respiram. Dá pra aprofundar o essencial sem pressa.';
+  }
+  if (slideCount <= 20) {
+    return 'Narrativa em capítulos: agrupe o conteúdo em partes com separadores e mantenha a curva de interesse crescendo entre elas.';
+  }
+  return 'Jornada longa: cada capítulo precisa de função própria e clímax próprio. Planeje os separadores como respiros e recapitulações estratégicas.';
+}
+
+export function slideCountGuidance(slideCount: number): string {
+  return `
+QUANTIDADE DE SLIDES: exatamente ${slideCount}. Este número é uma decisão do usuário, não uma sugestão. A apresentação final tem ${slideCount} slides, nem mais, nem menos.
+Como usar esse espaço: ${countBand(slideCount)}
+Distribua a profundidade com equilíbrio: nunca estique conteúdo pra preencher, nunca esprema dois assuntos num slide só.
+`.trim();
+}
+
+/** Linha de público pro prompt: o que o usuário declarou, ou a instrução de deduzir. */
+export function audienceLine(audience: string): string {
+  const trimmed = audience.trim();
+  return trimmed.length > 0
+    ? `PÚBLICO INFORMADO PELO USUÁRIO: "${trimmed}". Escreva para essas pessoas: o nível técnico, as referências e o que elas valorizam vêm daí.`
+    : 'O usuário não descreveu o público. Deduza da ideia quem vai assistir e escreva pra essa plateia.';
 }

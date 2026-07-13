@@ -3,7 +3,7 @@ import { generateJson } from '../llm/gemini.js';
 import { llmErrorToHttp } from '../llm/errors.js';
 import { logger } from '../logger.js';
 import { normalizeImproveResponse, normalizeSlide } from '../normalize.js';
-import { IMPROVE_SYSTEM_INSTRUCTION, buildImprovePrompt } from '../prompts.js';
+import { IMPROVE_SYSTEM_INSTRUCTION, buildImprovePrompt } from '../intelligence/index.js';
 import { improveResponseSchema } from '../schema.js';
 import { improveBodySchema, parseBody } from '../validation.js';
 import type { GeneratedSlide } from '../types.js';
@@ -34,7 +34,7 @@ improveRouter.post('/', async (req, res) => {
   try {
     const raw = await generateJson<unknown>({
       systemInstruction: IMPROVE_SYSTEM_INSTRUCTION,
-      prompt: buildImprovePrompt({ idea: body.idea, size: body.size, style: body.style, slide, otherSlides }),
+      prompt: buildImprovePrompt({ idea: body.idea, goal: body.goal, style: body.style, slide, otherSlides }),
       responseSchema: improveResponseSchema,
     });
     const result = normalizeImproveResponse(raw);

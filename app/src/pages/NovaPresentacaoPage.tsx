@@ -4,16 +4,29 @@ import { AnimatePresence, motion } from 'motion/react';
 import { WizardShell } from '@/components/creation/WizardShell';
 import { WizardNav } from '@/components/creation/WizardNav';
 import { StepIdea, MIN_IDEA_CHARS } from '@/components/creation/StepIdea';
-import { StepSize } from '@/components/creation/StepSize';
-import { StepStyle } from '@/components/creation/StepStyle';
+import { StepDirection } from '@/components/creation/StepDirection';
+import { StepSlides } from '@/components/creation/StepSlides';
 import { StepAssets } from '@/components/creation/StepAssets';
 import { StepSummary } from '@/components/creation/StepSummary';
-import { EMPTY_DRAFT, type CreationDraft, type DraftAsset, type PresentationSize, type VisualStyle } from '@/types/creation';
+import {
+  EMPTY_DRAFT,
+  type CreationDraft,
+  type DraftAsset,
+  type PresentationGoal,
+  type VisualStyle,
+} from '@/types/creation';
 import { presentationsStore } from '@/stores/presentationsStore';
 import { settingsStore } from '@/stores/settingsStore';
+import { suggestSlideCount } from '@/lib/slidePlan';
 import { TEMPLATES } from '@/data/templates';
 
-const STEP_LABELS = ['Ideia', 'Contexto', 'Estilo', 'Anexos', 'Revisão'] as const;
+/**
+ * A ordem tem intenção. A ideia vem primeiro porque é a matéria bruta. A direção
+ * vem antes da extensão porque o objetivo muda quantos slides a história pede
+ * (capacitar precisa de espaço, inspirar precisa de corte), e é isso que deixa a
+ * recomendação do passo 3 nascer já calibrada.
+ */
+const STEP_LABELS = ['Ideia', 'Direção', 'Extensão', 'Anexos', 'Revisão'] as const;
 const TOTAL_STEPS = STEP_LABELS.length;
 
 const IS_MAC = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.userAgent);
@@ -28,18 +41,22 @@ interface WizardLocationState {
 function buildInitialDraft(state: WizardLocationState | null): CreationDraft {
   const settings = settingsStore.getState();
   const template = state?.templateId ? TEMPLATES.find((t) => t.id === state.templateId) : undefined;
+
   if (template) {
     return {
       idea: template.ideaSkeleton,
-      size: template.size,
+      slideCount: template.slideCount,
+      goal: template.goal,
+      audience: '',
       style: template.style,
       assets: [],
     };
   }
+
   return {
     ...EMPTY_DRAFT,
     idea: state?.idea?.trim() ?? '',
-    size: settings.defaultSize,
+    goal: settings.defaultGoal,
     style: settings.defaultStyle,
   };
 }
@@ -59,7 +76,14 @@ export function NovaPresentacaoPage() {
   const [draft, setDraft] = useState<CreationDraft>(() =>
     buildInitialDraft(location.state as WizardLocationState | null),
   );
-  // Evita criar duas apresentações num duplo clique/Enter no passo final.
+  // A quantidade é a recomendação do sistema até alguém encostar nela. Depois
+  // disso a escolha manda, e nenhuma edição de briefing sobrescreve.
+  // Vindo de um template, a contagem JÁ foi escolhida a dedo por quem escreveu o
+  // template: isso conta como decisão tomada, e a heurística não passa por cima.
+  const slideCountTouched = useRef(
+    Boolean((location.state as WizardLocationState | null)?.templateId),
+  );
+  // Evita criar duas apresentações num duplo clique ou Enter no passo final.
   const creatingRef = useRef(false);
 
   const canContinue = useMemo(() => {
@@ -67,9 +91,8 @@ export function NovaPresentacaoPage() {
       case 1:
         return draft.idea.trim().length >= MIN_IDEA_CHARS;
       case 2:
-        return draft.size !== null;
+        return draft.goal !== null && draft.style !== null;
       case 3:
-        return draft.style !== null;
       case 4:
       case 5:
         return true;
@@ -81,6 +104,11 @@ export function NovaPresentacaoPage() {
   const goNext = useCallback(() => {
     if (!canContinue) return;
     if (step < TOTAL_STEPS) {
+      // Ao entrar na Extensão, a recomendação já vem aplicada: a pessoa encontra
+      // o número ideal na tela em vez de um palpite genérico esperando por ela.
+      if (step === 2 && !slideCountTouched.current) {
+        setDraft((d) => ({ ...d, slideCount: suggestSlideCount(d.idea, d.goal).count }));
+      }
       setDirection(1);
       setStep((s) => s + 1);
       return;
@@ -111,8 +139,8 @@ export function NovaPresentacaoPage() {
   );
 
   // Enter avança de qualquer lugar "neutro" da página; dentro do texto da ideia
-  // é ⌘/Ctrl+Enter (Enter puro quebra linha). Botões do app seguem nativos —
-  // a exceção são os cards de opção (role="radio"), onde Enter significa seguir.
+  // é ⌘/Ctrl+Enter (Enter puro quebra linha). Botões do app seguem nativos, e a
+  // exceção são os cards de opção (role="radio"), onde Enter significa seguir.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Enter') return;
@@ -126,8 +154,7 @@ export function NovaPresentacaoPage() {
         return;
       }
       if (isTypingField) return;
-      const isNeutralTarget =
-        !target || target === document.body || target.getAttribute('role') === 'radio';
+      const isNeutralTarget = !target || target === document.body || target.getAttribute('role') === 'radio';
       if (!isNeutralTarget) return;
       event.preventDefault();
       goNext();
@@ -137,25 +164,35 @@ export function NovaPresentacaoPage() {
   }, [goNext]);
 
   const onIdea = useCallback((idea: string) => setDraft((d) => ({ ...d, idea })), []);
-  const onSize = useCallback((size: PresentationSize) => setDraft((d) => ({ ...d, size })), []);
+  const onGoal = useCallback((goal: PresentationGoal) => setDraft((d) => ({ ...d, goal })), []);
+  const onAudience = useCallback((audience: string) => setDraft((d) => ({ ...d, audience })), []);
   const onStyle = useCallback((style: VisualStyle) => setDraft((d) => ({ ...d, style })), []);
   const onAssets = useCallback((assets: DraftAsset[]) => setDraft((d) => ({ ...d, assets })), []);
+  const onSlideCount = useCallback((slideCount: number) => {
+    slideCountTouched.current = true;
+    setDraft((d) => ({ ...d, slideCount }));
+  }, []);
 
   const continueHint = step === 1 ? (IS_MAC ? '⌘ Enter' : 'Ctrl Enter') : 'Enter';
 
   return (
-    <WizardShell step={step} totalSteps={TOTAL_STEPS} stepLabel={STEP_LABELS[step - 1] ?? ''} footer={
-      <WizardNav
-        step={step}
-        stepLabels={STEP_LABELS}
-        onBack={step > 1 ? goBack : undefined}
-        onContinue={goNext}
-        onStepSelect={goToStep}
-        canContinue={canContinue}
-        continueLabel={step === TOTAL_STEPS ? 'Bora começar' : 'Continuar'}
-        continueHint={continueHint}
-      />
-    }>
+    <WizardShell
+      step={step}
+      totalSteps={TOTAL_STEPS}
+      stepLabel={STEP_LABELS[step - 1] ?? ''}
+      footer={
+        <WizardNav
+          step={step}
+          stepLabels={STEP_LABELS}
+          onBack={step > 1 ? goBack : undefined}
+          onContinue={goNext}
+          onStepSelect={goToStep}
+          canContinue={canContinue}
+          continueLabel={step === TOTAL_STEPS ? 'Bora começar' : 'Continuar'}
+          continueHint={continueHint}
+        />
+      }
+    >
       <AnimatePresence mode="wait" initial={false} custom={direction}>
         <motion.div
           key={step}
@@ -167,8 +204,19 @@ export function NovaPresentacaoPage() {
           transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
         >
           {step === 1 && <StepIdea value={draft.idea} onChange={onIdea} />}
-          {step === 2 && <StepSize value={draft.size} onChange={onSize} />}
-          {step === 3 && <StepStyle value={draft.style} onChange={onStyle} />}
+          {step === 2 && (
+            <StepDirection
+              goal={draft.goal}
+              audience={draft.audience}
+              style={draft.style}
+              onGoalChange={onGoal}
+              onAudienceChange={onAudience}
+              onStyleChange={onStyle}
+            />
+          )}
+          {step === 3 && (
+            <StepSlides idea={draft.idea} goal={draft.goal} value={draft.slideCount} onChange={onSlideCount} />
+          )}
           {step === 4 && <StepAssets assets={draft.assets} onChange={onAssets} />}
           {step === 5 && <StepSummary draft={draft} onEdit={goToStep} />}
         </motion.div>

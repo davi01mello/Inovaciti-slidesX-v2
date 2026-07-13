@@ -56,11 +56,11 @@ export function StepAssets({ assets, onChange }: StepAssetsProps) {
     const next = [...assets];
     for (const file of list) {
       if (!isAccepted(file)) {
-        pushToast(`"${file.name}" não é PNG, JPG, SVG ou PDF — ignorei.`);
+        pushToast(`"${file.name}" não é PNG, JPG, SVG ou PDF, então ignorei.`);
         continue;
       }
       if (file.size > MAX_FILE_BYTES) {
-        pushToast(`"${file.name}" passa de 20MB — ignorei.`);
+        pushToast(`"${file.name}" passa de 20MB, então ignorei.`);
         continue;
       }
       if (next.some((a) => a.name === file.name && a.sizeLabel === formatSize(file.size))) {
@@ -106,7 +106,7 @@ export function StepAssets({ assets, onChange }: StepAssetsProps) {
       <StepHeader
         kicker="Bagagem"
         title="Tem algo que precisa entrar?"
-        subtitle="Logo, manual de marca, alguma imagem específica, um PDF de referência. Pode pular esta etapa — sempre dá pra anexar dentro do workspace."
+        subtitle="Logo, manual de marca, alguma imagem específica, um PDF de referência. Pode pular esta etapa, sempre dá pra anexar dentro do workspace."
       />
 
       <div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_1fr]">

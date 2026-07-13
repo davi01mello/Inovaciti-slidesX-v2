@@ -1,26 +1,28 @@
 /**
  * Preferências locais que a UI de fato aplica:
  * - reduceMotion: espelha prefers-reduced-motion via data attribute no <html> (ver index.css).
- * - defaultSize / defaultStyle: pré-seleção dos passos 2 e 3 do wizard.
+ * - defaultGoal / defaultStyle: pré-seleção do passo Direção do wizard.
  * - confirmBeforeTrash: pular ou não o diálogo de confirmação ao mandar pra Lixeira.
  * Nada aqui é decorativo — cada chave tem um efeito real em algum lugar do app.
  */
 import { useSyncExternalStore } from 'react';
 import { loadJson, saveJson } from '@/lib/storage';
-import type { PresentationSize, VisualStyle } from '@/types/creation';
+import type { PresentationGoal, VisualStyle } from '@/types/creation';
 
-const STORAGE_KEY = 'citi-slides:settings:v1';
+// v2: defaultSize (as antigas caixas de tamanho) virou defaultGoal. Chave nova
+// pra preferência velha não voltar como valor inválido.
+const STORAGE_KEY = 'citi-slides:settings:v2';
 
 export interface AppSettings {
   reduceMotion: boolean;
-  defaultSize: PresentationSize | null;
+  defaultGoal: PresentationGoal | null;
   defaultStyle: VisualStyle | null;
   confirmBeforeTrash: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   reduceMotion: false,
-  defaultSize: null,
+  defaultGoal: null,
   defaultStyle: null,
   confirmBeforeTrash: true,
 };

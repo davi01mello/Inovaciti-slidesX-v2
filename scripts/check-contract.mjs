@@ -20,7 +20,7 @@ const APP_FILES = [
 
 // Toda declaração que cruza a fronteira HTTP precisa estar idêntica nos dois lados.
 const CONTRACT_TYPES = [
-  'PresentationSize',
+  'PresentationGoal',
   'VisualStyle',
   'SlideLayout',
   'BlockAlign',

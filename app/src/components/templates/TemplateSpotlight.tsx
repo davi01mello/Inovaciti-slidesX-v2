@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { LiquidBlob } from '@/components/ui/LiquidBlob';
-import { SIZE_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
+import { GOAL_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
 import type { PresentationTemplate } from '@/types/template';
 
 /** O ideaSkeleton com os [colchetes] virando chips: mostra exatamente o que
@@ -33,7 +33,7 @@ function BriefingPreview({ skeleton }: { skeleton: string }) {
  */
 export function TemplateSpotlight({ template }: { template: PresentationTemplate }) {
   const navigate = useNavigate();
-  const size = SIZE_OPTIONS.find((o) => o.value === template.size);
+  const goal = GOAL_OPTIONS.find((o) => o.value === template.goal);
   const style = STYLE_OPTIONS.find((o) => o.value === template.style);
 
   return (
@@ -65,14 +65,17 @@ export function TemplateSpotlight({ template }: { template: PresentationTemplate
           <p className="mt-3 max-w-[440px] text-[14.5px] leading-[1.6] text-ink-secondary">{template.description}</p>
 
           <div className="mt-5 flex flex-wrap gap-1.5 text-[11px] font-medium text-ink-muted">
-            {size && (
+            {goal && (
               <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-1">
-                {size.label} · {size.hint}
+                {goal.label} · {goal.outcome}
               </span>
             )}
+            <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-1">
+              {template.slideCount} slides
+            </span>
             {style && (
               <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-1">
-                Estilo {style.label}
+                Voz {style.label}
               </span>
             )}
           </div>

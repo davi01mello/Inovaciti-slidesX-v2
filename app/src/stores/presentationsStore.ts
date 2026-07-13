@@ -169,7 +169,9 @@ async function runGeneration(id: string): Promise<void> {
   try {
     const result = await generatePresentation({
       idea: pres.meta.idea,
-      size: pres.meta.size,
+      slideCount: pres.meta.slideCount,
+      goal: pres.meta.goal,
+      audience: pres.meta.audience,
       style: pres.meta.style,
       assets: pres.meta.assets,
     });
@@ -248,7 +250,7 @@ export const presentationsStore = {
   createFromDraft(draft: CreationDraft): string {
     const id = createId();
     const now = Date.now();
-    const size = draft.size ?? 'balanced';
+    const goal = draft.goal ?? 'inform';
     const style = draft.style ?? 'balanced';
     // Cria o "casco" da apresentação na hora (navegação instantânea pro workspace, igual antes) e
     // dispara a geração real em background — o workspace mostra um estado de carregamento até
@@ -259,7 +261,14 @@ export const presentationsStore = {
       status: 'generating',
       createdAt: now,
       updatedAt: now,
-      meta: { idea: draft.idea, size, style, assets: draft.assets },
+      meta: {
+        idea: draft.idea,
+        slideCount: draft.slideCount,
+        goal,
+        audience: draft.audience.trim(),
+        style,
+        assets: draft.assets,
+      },
       slides: [],
       chat: [],
     };
@@ -350,7 +359,7 @@ export const presentationsStore = {
     const otherSlides = pres.slides.filter((s) => s.id !== slideId);
     const blocks = await improveSlideRemote({
       idea: pres.meta.idea,
-      size: pres.meta.size,
+      goal: pres.meta.goal,
       style: pres.meta.style,
       slide,
       otherSlides,

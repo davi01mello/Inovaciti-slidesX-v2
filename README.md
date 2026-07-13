@@ -7,9 +7,16 @@ identidade CITi (dark premium, verde, escultura 3D, tipografia bold).
 
 ## Como funciona
 
-1. **Briefing**: um wizard de 5 passos coleta ideia, tamanho e estilo.
-2. **Storyboard**: o Gemini gera só o conteúdo textual estruturado (títulos, bullets,
-   destaques). Posição, cor e tipografia são código determinístico, nunca decisão da IA.
+1. **Briefing**: um wizard de 5 passos coleta ideia, direção (objetivo, público e voz),
+   extensão (quantos slides, com o sistema recomendando o número lido do próprio
+   briefing) e anexos, e fecha numa revisão.
+2. **Storyboard em duas etapas**: primeiro um Agente Estrategista (Gemini) recebe o
+   briefing completo do wizard e produz um plano interno (arco narrativo, papel e
+   mensagem de cada slide) que nunca aparece pro usuário; depois a IA geradora escreve
+   o conteúdo textual estruturado seguindo o plano. A quantidade de slides vai de 1 a
+   50 (exata quando o usuário escolhe, automática na faixa da ocasião quando não).
+   Posição, cor e tipografia são código determinístico, nunca decisão da IA. Todos os
+   prompts, specs de ocasião/estilo e regras de escrita vivem em `api/src/intelligence/`.
 3. **Revisão**: workspace WYSIWYG — o palco é o próprio template, clicou no texto,
    edita no lugar. Chat com contexto do storyboard e botão de reescrever slide.
 4. **Composição no template**: cada slide é montado sobre a arte real do template

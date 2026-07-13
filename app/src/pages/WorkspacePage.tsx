@@ -355,7 +355,7 @@ export function WorkspacePage() {
           presentationId={presentation.id}
           messages={presentation.chat}
           idea={presentation.meta.idea}
-          size={presentation.meta.size}
+          goal={presentation.meta.goal}
           style={presentation.meta.style}
           slides={presentation.slides}
           busy={presentation.status === 'generating'}
@@ -464,7 +464,7 @@ function GeneratingNotice() {
       <div className="mt-2">
         <div className="text-[16px] font-semibold tracking-[-0.01em] text-ink">Montando Sua Apresentação</div>
         <p className="mt-1.5 text-[13px] leading-[1.55] text-ink-muted">
-          Isso leva só alguns segundos. O storyboard aparece aqui assim que estiver pronto pra você revisar.
+          Estamos fazendo a mágica acontecer. Leva só alguns segundos.
         </p>
       </div>
     </div>

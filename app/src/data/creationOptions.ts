@@ -1,35 +1,54 @@
-import type { PresentationSize, VisualStyle } from '@/types/creation';
+/**
+ * As escolhas do wizard, com o texto que o usuário lê.
+ * SYNC_WITH: api/src/intelligence/templates.ts (as specs ricas que a IA recebe
+ * pra cada uma dessas opções). Se um rótulo mudar de significado aqui, a spec
+ * correspondente precisa acompanhar.
+ */
+import type { PresentationGoal, VisualStyle } from '@/types/creation';
+import type { IconName } from '@/components/ui/Icon';
 
-export interface SizeOption {
-  value: PresentationSize;
+export interface GoalOption {
+  value: PresentationGoal;
+  icon: IconName;
   label: string;
-  hint: string;
+  /** Uma linha: o que precisa acontecer quando o último slide fechar. */
+  outcome: string;
   description: string;
-  recommended?: boolean;
 }
 
 /**
- * Buckets by audience/context, not "how much stuff you want".
- * The AI picks the exact slide count inside each range.
+ * O objetivo é a pergunta mais importante do fluxo: é dele que nasce a narrativa.
+ * Uma mesma ideia vira decks completamente diferentes se o fim for convencer ou
+ * capacitar.
  */
-export const SIZE_OPTIONS: SizeOption[] = [
+export const GOAL_OPTIONS: GoalOption[] = [
   {
-    value: 'focused',
-    label: 'Reunião rápida',
-    hint: '4 a 6 slides',
-    description: 'Aquela conversa direta com o time. Uma decisão, poucos pontos, sem enrolar.',
+    value: 'convince',
+    icon: 'sparkle-design',
+    label: 'Convencer',
+    outcome: 'A sala decide sim.',
+    description: 'Proposta, pitch, defesa de orçamento. A narrativa constrói tensão e fecha pedindo algo concreto.',
   },
   {
-    value: 'balanced',
-    label: 'Pitch ou diretoria',
-    hint: '6 a 8 slides',
-    description: 'Espaço pra defender uma ideia com contexto e próximos passos. Sem excessos.',
+    value: 'inform',
+    icon: 'structure',
+    label: 'Informar',
+    outcome: 'A sala entende o quadro.',
+    description: 'Relatório, status, prestação de contas. A conclusão abre a apresentação, o detalhe vem depois.',
   },
   {
-    value: 'complete',
-    label: 'Cliente ou institucional',
-    hint: '9 a 12 slides',
-    description: 'A apresentação que precisa contar a história inteira. Contexto, valor e provas.',
+    value: 'inspire',
+    icon: 'idea',
+    label: 'Inspirar',
+    outcome: 'A sala quer fazer parte.',
+    description: 'Visão, lançamento, celebração. Menos dado, mais significado, com um final no ponto mais alto.',
+  },
+  {
+    value: 'train',
+    icon: 'compass',
+    label: 'Capacitar',
+    outcome: 'A sala consegue aplicar.',
+    description: 'Treinamento, workshop, onboarding. Do simples ao complexo, com exemplo a cada conceito novo.',
   },
 ];
 
@@ -39,20 +58,29 @@ export interface StyleOption {
   description: string;
 }
 
+/** O tom modula a voz e a densidade do texto dentro do objetivo escolhido. */
 export const STYLE_OPTIONS: StyleOption[] = [
   {
     value: 'minimal',
     label: 'Sereno',
-    description: 'Muito espaço em branco, tipografia grande, silêncio visual. Elegante e fácil de ler no telão.',
+    description: 'Pouco texto, muito respiro. Cada palavra pesa mais.',
   },
   {
     value: 'balanced',
     label: 'Preciso',
-    description: 'O equilíbrio certo pra maioria das ocasiões. Confiante sem gritar.',
+    description: 'O equilíbrio profissional. Confiante sem gritar.',
   },
   {
     value: 'bold',
     label: 'Presença',
-    description: 'Tipografia grande, contraste alto, atitude. Ideal quando você quer que ninguém desvie o olhar.',
+    description: 'Frases de impacto, atitude, manchetes no lugar de rótulos.',
   },
+];
+
+/** Exemplos que ensinam o formato do campo de público sem obrigar a preencher. */
+export const AUDIENCE_EXAMPLES: string[] = [
+  'Diretoria de uma varejista',
+  'Time técnico do cliente',
+  'Novos membros da CITi',
+  'Investidores anjo',
 ];

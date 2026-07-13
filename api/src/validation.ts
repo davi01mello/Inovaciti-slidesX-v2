@@ -6,16 +6,16 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { logger } from './logger.js';
-import type { PresentationSize, VisualStyle } from './types.js';
+import type { PresentationGoal, VisualStyle } from './types.js';
 
-export const VALID_SIZES = ['focused', 'balanced', 'complete'] as const satisfies readonly PresentationSize[];
+export const VALID_GOALS = ['convince', 'inform', 'inspire', 'train'] as const satisfies readonly PresentationGoal[];
 export const VALID_STYLES = ['minimal', 'balanced', 'bold'] as const satisfies readonly VisualStyle[];
 
 // IDs vêm do createId() do front (base64url). Só esse charset pra nunca virar caminho de arquivo.
 export const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
-// Enums com fallback: valor fora do enum vira 'balanced' (comportamento que as rotas já tinham).
-const sizeSchema = z.enum(VALID_SIZES).catch('balanced');
+// Enums com fallback: valor fora do enum cai no neutro em vez de derrubar a request.
+const goalSchema = z.enum(VALID_GOALS).catch('inform');
 const styleSchema = z.enum(VALID_STYLES).catch('balanced');
 
 const richRunSchema = z.object({
@@ -59,7 +59,10 @@ export const generateBodySchema = z.object({
     .string({ required_error: 'idea é obrigatório', invalid_type_error: 'idea precisa ser texto' })
     .min(100, 'a ideia precisa ter pelo menos 100 caracteres')
     .max(10_000, 'a ideia pode ter no máximo 10000 caracteres'),
-  size: sizeSchema.default('balanced'),
+  // O wizard sempre manda a quantidade exata; valor ausente ou inválido cai no padrão da casa.
+  slideCount: z.number().int().min(1).max(50).default(8).catch(8),
+  goal: goalSchema.default('inform'),
+  audience: z.string().max(200, 'descrição de público com no máximo 200 caracteres').default(''),
   style: styleSchema.default('balanced'),
   assets: z.array(assetSchema).max(20, 'máximo de 20 anexos').default([]),
 });
@@ -80,7 +83,7 @@ export const chatBodySchema = z.object({
     .min(1, 'a mensagem não pode ser vazia')
     .max(24_000, 'a mensagem pode ter no máximo 24000 caracteres'),
   idea: z.string().max(10_000).default(''),
-  size: sizeSchema.default('balanced'),
+  goal: goalSchema.default('inform'),
   style: styleSchema.default('balanced'),
   slides: slidesArraySchema.default([]),
   history: z
@@ -93,7 +96,7 @@ export const chatBodySchema = z.object({
 export const improveBodySchema = z.object({
   slide: slideSchema,
   idea: z.string().max(10_000).default(''),
-  size: sizeSchema.default('balanced'),
+  goal: goalSchema.default('inform'),
   style: styleSchema.default('balanced'),
   otherSlides: slidesArraySchema.default([]),
 });

@@ -1,7 +1,7 @@
 import { createId } from '@/lib/id';
 import { fromGeneratedSlide, toGeneratedSlide } from '@/lib/generatedSlide';
 import type { ChatMessage } from '@/types/chat';
-import type { DraftAsset, PresentationSize, VisualStyle } from '@/types/creation';
+import type { DraftAsset, PresentationGoal, VisualStyle } from '@/types/creation';
 import type { GeneratedBlock, GeneratedSlide } from '@/types/generated';
 import type { Slide } from '@/types/slide';
 
@@ -83,13 +83,19 @@ export interface GeneratePresentationResult {
 
 export async function generatePresentation(params: {
   idea: string;
-  size: PresentationSize;
+  /** Quantidade exata de slides escolhida no wizard. */
+  slideCount: number;
+  goal: PresentationGoal;
+  /** Público em texto livre. Vazio significa "deduza da ideia". */
+  audience: string;
   style: VisualStyle;
   assets: DraftAsset[];
 }): Promise<GeneratePresentationResult> {
   const data = await postJson<GenerateResponse>('/api/presentations/generate', {
     idea: params.idea,
-    size: params.size,
+    slideCount: params.slideCount,
+    goal: params.goal,
+    audience: params.audience,
     style: params.style,
     assets: params.assets.map((a) => ({ name: a.name, kind: a.kind })),
   });
@@ -124,7 +130,7 @@ export interface ChatImagePayload {
 
 export async function sendChatMessage(params: {
   idea: string;
-  size: PresentationSize;
+  goal: PresentationGoal;
   style: VisualStyle;
   slides: Slide[];
   history: ChatMessage[];
@@ -133,7 +139,7 @@ export async function sendChatMessage(params: {
 }): Promise<string> {
   const data = await postJson<ChatResponse>('/api/chat', {
     idea: params.idea,
-    size: params.size,
+    goal: params.goal,
     style: params.style,
     slides: params.slides.map(toGeneratedSlide),
     history: params.history.map((m) => ({ author: m.author, text: m.text })),
@@ -149,14 +155,14 @@ interface ImproveResponse {
 
 export async function improveSlideRemote(params: {
   idea: string;
-  size: PresentationSize;
+  goal: PresentationGoal;
   style: VisualStyle;
   slide: Slide;
   otherSlides: Slide[];
 }): Promise<GeneratedBlock[]> {
   const data = await postJson<ImproveResponse>('/api/slides/improve', {
     idea: params.idea,
-    size: params.size,
+    goal: params.goal,
     style: params.style,
     slide: toGeneratedSlide(params.slide),
     otherSlides: params.otherSlides.map(toGeneratedSlide),

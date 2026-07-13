@@ -5,7 +5,7 @@
  * predev/prebuild dos dois lados se alguma declaração do contrato divergir.
  */
 
-export type PresentationSize = 'focused' | 'balanced' | 'complete';
+export type PresentationGoal = 'convince' | 'inform' | 'inspire' | 'train';
 export type VisualStyle = 'minimal' | 'balanced' | 'bold';
 export type SlideLayout = 'cover' | 'section' | 'content' | 'closing';
 export type BlockAlign = 'left' | 'center' | 'right' | 'justify';
@@ -56,7 +56,12 @@ export interface DraftAssetMeta {
 
 export interface GenerateRequestBody {
   idea: string;
-  size: PresentationSize;
+  /** Quantidade exata de slides escolhida no wizard (1 a 50). */
+  slideCount: number;
+  /** O que a apresentação precisa alcançar: guia a narrativa do estrategista. */
+  goal: PresentationGoal;
+  /** Público descrito pelo usuário em texto livre (opcional, pode vir vazio). */
+  audience?: string;
   style: VisualStyle;
   assets?: DraftAssetMeta[];
 }
@@ -78,7 +83,7 @@ export interface ChatAttachmentPayload {
 }
 export interface ChatRequestBody {
   idea: string;
-  size: PresentationSize;
+  goal: PresentationGoal;
   style: VisualStyle;
   slides: GeneratedSlide[];
   history: ChatHistoryMessage[];
@@ -91,7 +96,7 @@ export interface ChatResponseBody {
 
 export interface ImproveRequestBody {
   idea: string;
-  size: PresentationSize;
+  goal: PresentationGoal;
   style: VisualStyle;
   slide: GeneratedSlide;
   otherSlides: GeneratedSlide[];

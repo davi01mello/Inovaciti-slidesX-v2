@@ -3,7 +3,7 @@ import { generateText } from '../llm/gemini.js';
 import { llmErrorToHttp } from '../llm/errors.js';
 import { logger } from '../logger.js';
 import { normalizeSlide } from '../normalize.js';
-import { CHAT_SYSTEM_INSTRUCTION, buildChatPrompt } from '../prompts.js';
+import { CHAT_SYSTEM_INSTRUCTION, buildChatPrompt } from '../intelligence/index.js';
 import { chatBodySchema, parseBody, warnIfInjectionAttempt } from '../validation.js';
 import type { GeneratedSlide } from '../types.js';
 
@@ -21,7 +21,7 @@ chatRouter.post('/', async (req, res) => {
       systemInstruction: CHAT_SYSTEM_INSTRUCTION,
       prompt: buildChatPrompt({
         idea: body.idea,
-        size: body.size,
+        goal: body.goal,
         style: body.style,
         slides,
         history: body.history,

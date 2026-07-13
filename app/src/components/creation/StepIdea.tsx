@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { StepHeader } from '@/components/creation/StepHeader';
+import { TEMPLATES } from '@/data/templates';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
 
@@ -12,26 +13,21 @@ interface StepIdeaProps {
 export const MIN_IDEA_CHARS = 100;
 
 const PLACEHOLDER =
-  'Ex.: proposta pra levar nosso produto de análise de dados pro time de ops de uma varejista grande. Queria focar em ganho de tempo de decisão e mostrar 2 cases parecidos. Se quiser, já pode descrever slide por slide, quanto mais detalhe você me der, melhor.';
+  'Ex.: proposta pra levar nosso produto de análise de dados pro time de ops de uma varejista grande. Queria focar em ganho de tempo de decisão e mostrar dois cases parecidos. Se quiser, já pode descrever slide por slide. Quanto mais detalhe você me der, melhor fica.';
 
-/** Pontos de partida com [colchetes] marcando o que o usuário troca. */
-const STARTERS: { label: string; skeleton: string }[] = [
-  {
-    label: 'Proposta comercial',
-    skeleton:
-      'Proposta comercial para [cliente]. O problema que ele trouxe: [dor central]. Nossa proposta: [solução em uma frase]. Quero mostrar o diagnóstico, a solução em etapas, um case parecido e fechar com investimento e próximos passos.',
-  },
-  {
-    label: 'Pitch de produto',
-    skeleton:
-      'Pitch do produto [nome] para [público-alvo]. O problema: [dor central em uma frase]. A solução: [o que o produto faz]. Diferencial: [por que é melhor que as alternativas]. Fechar com o pedido: [investimento, piloto ou parceria].',
-  },
-  {
-    label: 'Resultados do período',
-    skeleton:
-      'Relatório de [período] da [área]. Principais resultados: [3 destaques com números]. O que não saiu como planejado: [ponto com aprendizado]. Prioridades do próximo período: [duas ou três frentes].',
-  },
-];
+/**
+ * Pontos de partida. Não são frases de efeito: são o briefing inteiro daquele
+ * tipo de deck, com [colchetes] no que a pessoa troca. O atalho existe pra ela
+ * chegar no passo seguinte com contexto de verdade, e não com duas linhas que a
+ * IA teria que adivinhar. São os mesmos esqueletos dos templates, então o texto
+ * mora num lugar só (ver data/templates.ts).
+ */
+const STARTER_IDS = ['proposta-comercial', 'pitch-produto', 'relatorio-executivo'] as const;
+
+const STARTERS = STARTER_IDS.map((id) => {
+  const template = TEMPLATES.find((t) => t.id === id);
+  return { label: template?.name ?? id, skeleton: template?.ideaSkeleton ?? '' };
+}).filter((starter) => starter.skeleton.length > 0);
 
 export function StepIdea({ value, onChange }: StepIdeaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);

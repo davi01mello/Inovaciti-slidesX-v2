@@ -11,9 +11,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SettingsSection, SettingRow } from '@/components/settings/SettingsSection';
 import { Toggle, ChipGroup } from '@/components/settings/SettingsControls';
 import { settingsStore, useSettings } from '@/stores/settingsStore';
-import { SIZE_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
+import { GOAL_OPTIONS, STYLE_OPTIONS } from '@/data/creationOptions';
 import { pushToast } from '@/lib/toast';
-import type { PresentationSize, VisualStyle } from '@/types/creation';
+import type { PresentationGoal, VisualStyle } from '@/types/creation';
 
 export function ConfiguracoesPage() {
   const settings = useSettings();
@@ -75,20 +75,20 @@ export function ConfiguracoesPage() {
         >
           <SettingRow
             layout="stacked"
-            title="Contexto padrão"
-            description="Pré-seleciona o passo 'Onde ela vai viver?' do wizard. Clique de novo pra tirar o padrão."
+            title="Objetivo padrão"
+            description="Pré-seleciona o objetivo no passo Direção do wizard. Clique de novo pra tirar o padrão."
           >
-            <ChipGroup<PresentationSize>
-              options={SIZE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-              value={settings.defaultSize}
-              onChange={(next) => settingsStore.update({ defaultSize: next })}
+            <ChipGroup<PresentationGoal>
+              options={GOAL_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              value={settings.defaultGoal}
+              onChange={(next) => settingsStore.update({ defaultGoal: next })}
             />
           </SettingRow>
 
           <SettingRow
             layout="stacked"
-            title="Estilo visual padrão"
-            description="Pré-seleciona o passo 'Qual é o clima?' do wizard."
+            title="Voz padrão"
+            description="Pré-seleciona o tom da escrita no passo Direção do wizard."
           >
             <ChipGroup<VisualStyle>
               options={STYLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}

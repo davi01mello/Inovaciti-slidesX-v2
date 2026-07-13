@@ -1,5 +1,5 @@
 import type { ChatMessage } from '@/types/chat';
-import type { PresentationSize, VisualStyle, DraftAsset } from '@/types/creation';
+import type { PresentationGoal, VisualStyle, DraftAsset } from '@/types/creation';
 import type { Slide } from '@/types/slide';
 
 export type PresentationStatus = 'draft' | 'generating' | 'ready';
@@ -15,7 +15,11 @@ export interface Presentation {
   deletedAt?: number;
   meta: {
     idea: string;
-    size: PresentationSize;
+    /** Quantidade de slides pedida na criação. */
+    slideCount: number;
+    goal: PresentationGoal;
+    /** Público descrito no wizard. Vazio significa que a IA deduziu pela ideia. */
+    audience: string;
     style: VisualStyle;
     assets: DraftAsset[];
   };
