@@ -207,6 +207,7 @@ async function runGeneration(id: string): Promise<void> {
 
 export interface PresentationsApi {
   createFromDraft(draft: CreationDraft): string;
+  markNotionSynced(id: string): void;
   retryGeneration(id: string): void;
   updateTitle(id: string, title: string): void;
   addSlide(id: string, afterSlideId: string | null, layout?: SlideLayout): string;
@@ -271,6 +272,7 @@ export const presentationsStore = {
       },
       slides: [],
       chat: [],
+      notionPageId: draft.notionPageId,
     };
     state = { ...state, presentations: [presentation, ...state.presentations] };
     emit();
@@ -278,6 +280,11 @@ export const presentationsStore = {
     void runGeneration(id);
 
     return id;
+  },
+
+  /** Marca que o link já foi escrito de volta na página do Notion de origem. */
+  markNotionSynced(id) {
+    updatePresentation(id, (p) => ({ ...p, notionSyncedAt: Date.now() }));
   },
 
   retryGeneration(id) {

@@ -27,4 +27,8 @@ export interface Presentation {
   chat: ChatMessage[];
   /** Preenchido quando a geração inicial (via IA) falha — UI mostra e oferece "tentar de novo". */
   generationError?: string;
+  /** ID da página do Notion de onde essa apresentação veio (via "Importar do Notion" no wizard). */
+  notionPageId?: string;
+  /** Timestamp da última vez que o link foi escrito de volta na página do Notion. */
+  notionSyncedAt?: number;
 }

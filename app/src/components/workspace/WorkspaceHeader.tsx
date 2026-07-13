@@ -21,6 +21,11 @@ interface WorkspaceHeaderProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  /** Só aparece quando a apresentação veio de uma página do Notion (ver notionPageId). */
+  showNotionSync?: boolean;
+  onNotionSync?: () => void;
+  notionSyncing?: boolean;
+  notionSynced?: boolean;
 }
 
 /**
@@ -43,6 +48,10 @@ export function WorkspaceHeader({
   canRedo,
   onUndo,
   onRedo,
+  showNotionSync = false,
+  onNotionSync,
+  notionSyncing = false,
+  notionSynced = false,
 }: WorkspaceHeaderProps) {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
@@ -124,6 +133,21 @@ export function WorkspaceHeader({
       <div className="mx-1.5 h-6 w-px bg-white/[0.10]" />
 
       <div className="flex items-center gap-2">
+        {showNotionSync && (
+          <SecondaryButton
+            icon={notionSynced ? 'check' : 'restore'}
+            onClick={() => onNotionSync?.()}
+            busy={notionSyncing}
+            disabled={notionSyncing}
+            title={
+              notionSynced
+                ? 'Link já foi salvo na página do Notion. Clique pra atualizar de novo.'
+                : 'Escreve o link desta apresentação de volta na página do Notion de origem'
+            }
+          >
+            {notionSyncing ? 'Salvando…' : notionSynced ? 'Salvo no Notion' : 'Salvar no Notion'}
+          </SecondaryButton>
+        )}
         <SecondaryButton
           icon="compass"
           onClick={onExportCanva}
@@ -192,7 +216,7 @@ function SecondaryButton({
   disabled = false,
   title,
 }: {
-  icon: 'import' | 'compass';
+  icon: 'import' | 'compass' | 'restore' | 'check';
   onClick: () => void;
   children: React.ReactNode;
   busy?: boolean;

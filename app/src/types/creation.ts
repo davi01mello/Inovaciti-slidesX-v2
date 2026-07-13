@@ -32,6 +32,8 @@ export interface CreationDraft {
   audience: string;
   style: VisualStyle | null;
   assets: DraftAsset[];
+  /** Preenchido quando a ideia veio de "Importar do Notion" — permite escrever o link de volta depois. */
+  notionPageId?: string;
 }
 
 export const EMPTY_DRAFT: CreationDraft = {

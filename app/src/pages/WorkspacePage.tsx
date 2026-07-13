@@ -13,6 +13,7 @@ import { presentationsStore, usePresentation } from '@/stores/presentationsStore
 import { AiClientError } from '@/services/aiClient';
 import { canExportPresentation, exportPresentationAsPptx } from '@/lib/exportPptx';
 import { exportPresentationToCanva } from '@/services/canvaClient';
+import { writeBackToNotion } from '@/services/notionClient';
 import { fileToSlideImage, pickImageFiles, type LoadedImage } from '@/lib/imageFile';
 import { isInsertDrag, readInsertPayload } from '@/services/insertDnd';
 import { addSessionUpload, getSessionUpload } from '@/services/sessionUploads';
@@ -40,6 +41,7 @@ export function WorkspacePage() {
   const [improvingSlideId, setImprovingSlideId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [canvaExporting, setCanvaExporting] = useState(false);
+  const [notionSyncing, setNotionSyncing] = useState(false);
   const [stageDragOver, setStageDragOver] = useState(false);
 
   useEffect(() => {
@@ -314,6 +316,21 @@ export function WorkspacePage() {
     }
   }, [presentation]);
 
+  const handleNotionSync = useCallback(async () => {
+    if (!presentation?.notionPageId) return;
+    setNotionSyncing(true);
+    try {
+      const url = `${window.location.origin}/workspace/${presentation.id}`;
+      await writeBackToNotion(presentation.notionPageId, url);
+      presentationsStore.markNotionSynced(presentation.id);
+      pushToast('Link salvo na página do Notion.');
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'Não consegui salvar o link no Notion agora.');
+    } finally {
+      setNotionSyncing(false);
+    }
+  }, [presentation]);
+
   if (!presentation) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-app-bg px-8 text-center">
@@ -348,6 +365,10 @@ export function WorkspacePage() {
         canRedo={presentationsStore.canRedo(presentation.id)}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        showNotionSync={Boolean(presentation.notionPageId)}
+        onNotionSync={handleNotionSync}
+        notionSyncing={notionSyncing}
+        notionSynced={Boolean(presentation.notionSyncedAt)}
       />
 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(320px,30%)_1fr]">

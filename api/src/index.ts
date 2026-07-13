@@ -7,7 +7,15 @@ import { pinoHttp } from 'pino-http';
 import { assertProductionConfig, config } from './config.js';
 import { logger } from './logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { authLimits, chatLimits, generateLimits, imageLimits, improveLimits } from './middleware/rateLimits.js';
+import {
+  authLimits,
+  chatLimits,
+  generateLimits,
+  imageGenLimits,
+  imageLimits,
+  improveLimits,
+  notionLimits,
+} from './middleware/rateLimits.js';
 import { requestId } from './middleware/requestId.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { sessionCookie } from './middleware/sessionCookie.js';
@@ -16,7 +24,9 @@ import { canvaAuthRouter } from './routes/canvaAuth.js';
 import { chatRouter } from './routes/chat.js';
 import { exportCanvaRouter } from './routes/exportCanva.js';
 import { generateRouter } from './routes/generate.js';
+import { imagesRouter } from './routes/images.js';
 import { improveRouter } from './routes/improve.js';
+import { notionRouter } from './routes/notion.js';
 
 assertProductionConfig((msg) => logger.warn(msg));
 
@@ -90,6 +100,12 @@ app.use('/api/presentations', exportCanvaRouter);
 // Handshake OAuth da integração Canva -- aberto manualmente no navegador, uma vez,
 // não é chamado pelo front do CITi Slides. Ver routes/canvaAuth.ts.
 app.use('/api/canva/oauth', canvaAuthRouter);
+
+// Geração de imagem com IA: ação mais cara do app, rate limit dedicado e bem apertado.
+app.use('/api/images', imageGenLimits, imagesRouter);
+
+// Importar briefing do Notion: só leitura, teto mais folgado que as rotas de IA.
+app.use('/api/notion', notionLimits, notionRouter);
 
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.', request_id: req.requestId });

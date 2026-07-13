@@ -164,6 +164,12 @@ export function NovaPresentacaoPage() {
   }, [goNext]);
 
   const onIdea = useCallback((idea: string) => setDraft((d) => ({ ...d, idea })), []);
+  // Importar de outra página do Notion depois de já ter vindo de uma substitui o alvo
+  // do link de volta — só a página mais recente importada recebe a escrita.
+  const onNotionPageId = useCallback(
+    (notionPageId: string) => setDraft((d) => ({ ...d, notionPageId })),
+    [],
+  );
   const onGoal = useCallback((goal: PresentationGoal) => setDraft((d) => ({ ...d, goal })), []);
   const onAudience = useCallback((audience: string) => setDraft((d) => ({ ...d, audience })), []);
   const onStyle = useCallback((style: VisualStyle) => setDraft((d) => ({ ...d, style })), []);
@@ -203,7 +209,7 @@ export function NovaPresentacaoPage() {
           exit="exit"
           transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
         >
-          {step === 1 && <StepIdea value={draft.idea} onChange={onIdea} />}
+          {step === 1 && <StepIdea value={draft.idea} onChange={onIdea} onNotionPageId={onNotionPageId} />}
           {step === 2 && (
             <StepDirection
               goal={draft.goal}

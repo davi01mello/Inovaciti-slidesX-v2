@@ -2,6 +2,7 @@ import { SearchField } from '@/components/layout/SearchField';
 import { NotificationsPanel } from '@/components/layout/NotificationsPanel';
 import { IconButton } from '@/components/ui/IconButton';
 import { Icon } from '@/components/ui/Icon';
+import { openOnboarding } from '@/stores/onboardingStore';
 
 export function Topbar() {
   return (
@@ -9,7 +10,7 @@ export function Topbar() {
       <SearchField />
       <div className="flex items-center gap-2">
         <NotificationsPanel />
-        <IconButton aria-label="Ajuda">
+        <IconButton aria-label="Ajuda: ver guia rápido" title="Ver guia rápido" onClick={() => openOnboarding()}>
           <Icon name="help" size={18} />
         </IconButton>
       </div>

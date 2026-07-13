@@ -62,3 +62,7 @@ export const imageLimits = dual(config.rate.imageIpPerHour, config.rate.imageSes
 export const authLimits = dual(config.rate.authIpPerHour, config.rate.authSessionPerHour, {
   skipSuccessfulRequests: true,
 });
+// Geração de imagem com IA: a ação mais cara do app, teto propositalmente baixo.
+export const imageGenLimits = dual(config.rate.imageGenIpPerHour, config.rate.imageGenSessionPerHour);
+// Leitura do Notion: barata (só requests HTTP normais), teto mais folgado.
+export const notionLimits = dual(config.rate.notionIpPerHour, config.rate.notionSessionPerHour);

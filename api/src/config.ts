@@ -21,6 +21,14 @@ function readOrigins(): string[] {
     .filter((o) => o.length > 0);
 }
 
+type OpenAiImageQuality = 'low' | 'medium' | 'high';
+
+/** 'low' por padrão -- geração de imagem é a ação mais cara do app, custo nunca deve surpreender. */
+function readImageQuality(): OpenAiImageQuality {
+  const raw = process.env.OPENAI_IMAGE_QUALITY;
+  return raw === 'low' || raw === 'medium' || raw === 'high' ? raw : 'low';
+}
+
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProduction = nodeEnv === 'production';
 
@@ -42,6 +50,15 @@ export const config = {
   canvaClientSecret: process.env.CANVA_CLIENT_SECRET ?? '',
   canvaRedirectUri: process.env.CANVA_REDIRECT_URI ?? '',
 
+  // Geração de imagem sob demanda no editor (OpenAI Images). Ação cara e opcional --
+  // sem a chave, o botão continua na UI mas a rota devolve 503 (ver routes/images.ts).
+  openaiApiKey: process.env.OPENAI_API_KEY ?? '',
+  openaiImageQuality: readImageQuality(),
+
+  // Importar briefing direto de uma página do Notion (integração interna, ver
+  // notion/client.ts). Opcional -- sem a chave, o botão de importar avisa e some.
+  notionApiKey: process.env.NOTION_API_KEY ?? '',
+
   allowedOrigins: readOrigins(),
   trustProxy: process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true',
 
@@ -61,6 +78,11 @@ export const config = {
     imageSessionPerHour: readInt('RATE_IMAGE_SESSION', 10),
     authIpPerHour: readInt('RATE_AUTH_IP', 20),
     authSessionPerHour: readInt('RATE_AUTH_SESSION', 10),
+    // Geração de imagem com IA: teto baixo de propósito -- é a ação mais cara do app.
+    imageGenIpPerHour: readInt('RATE_IMAGE_GEN_IP', 12),
+    imageGenSessionPerHour: readInt('RATE_IMAGE_GEN_SESSION', 6),
+    notionIpPerHour: readInt('RATE_NOTION_IP', 40),
+    notionSessionPerHour: readInt('RATE_NOTION_SESSION', 20),
   },
 } as const;
 

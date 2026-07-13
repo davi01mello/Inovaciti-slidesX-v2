@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { StepHeader } from '@/components/creation/StepHeader';
+import { NotionImportButton } from '@/components/creation/NotionImportButton';
 import { TEMPLATES } from '@/data/templates';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
@@ -8,6 +9,8 @@ import { cn } from '@/lib/cn';
 interface StepIdeaProps {
   value: string;
   onChange: (value: string) => void;
+  /** Chamado quando a ideia veio de uma página do Notion — guarda o ID pra escrever o link de volta depois. */
+  onNotionPageId?: (pageId: string) => void;
 }
 
 export const MIN_IDEA_CHARS = 100;
@@ -29,7 +32,7 @@ const STARTERS = STARTER_IDS.map((id) => {
   return { label: template?.name ?? id, skeleton: template?.ideaSkeleton ?? '' };
 }).filter((starter) => starter.skeleton.length > 0);
 
-export function StepIdea({ value, onChange }: StepIdeaProps) {
+export function StepIdea({ value, onChange, onNotionPageId }: StepIdeaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -52,9 +55,19 @@ export function StepIdea({ value, onChange }: StepIdeaProps) {
         subtitle="Descreva do jeito que fizer sentido pra você. Se preferir jogar a ideia livre, ótimo. Se quiser descrever slide por slide, melhor ainda."
       />
 
+      <div className="mt-7 flex justify-end">
+        <NotionImportButton
+          onImport={(text, pageId) => {
+            onChange(text);
+            onNotionPageId?.(pageId);
+            ref.current?.focus();
+          }}
+        />
+      </div>
+
       <div
         className={cn(
-          'mt-7 overflow-hidden rounded-2xl border bg-surface transition-colors duration-200 focus-within:bg-surface-2',
+          'mt-2.5 overflow-hidden rounded-2xl border bg-surface transition-colors duration-200 focus-within:bg-surface-2',
           reached ? 'border-brand/30 focus-within:border-brand/45' : 'border-white/[0.06] focus-within:border-brand/40',
         )}
       >

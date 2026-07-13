@@ -106,6 +106,20 @@ export const loginBodySchema = z.object({
   password: z.string({ required_error: 'senha é obrigatória' }).min(1, 'senha é obrigatória').max(200),
 });
 
+export const generateImageBodySchema = z.object({
+  prompt: z
+    .string({ required_error: 'prompt é obrigatório' })
+    .min(3, 'descreva a imagem com pelo menos 3 caracteres')
+    .max(600, 'prompt de imagem com no máximo 600 caracteres'),
+});
+
+export const notionWriteBackBodySchema = z.object({
+  url: z
+    .string({ required_error: 'url é obrigatória' })
+    .url('url inválida')
+    .max(2000, 'url com no máximo 2000 caracteres'),
+});
+
 /**
  * Valida o body de uma request. Em caso de falha responde 400 com o primeiro problema
  * apontando o campo, em português, e retorna null pro handler encerrar.

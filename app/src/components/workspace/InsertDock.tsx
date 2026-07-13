@@ -4,6 +4,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ELEMENTS, ELEMENT_COLORS, elementColorLabel, elementShapeLabel, hasElements } from '@/services/elementsManifest';
 import { addSessionUpload, listSessionUploads, type SessionUpload } from '@/services/sessionUploads';
 import { writeInsertPayload } from '@/services/insertDnd';
+import { generateAiImage } from '@/services/imageGenClient';
 import { fileToSlideImage, pickImageFiles, IMAGE_ACCEPT_ATTR, type LoadedImage } from '@/lib/imageFile';
 import { pushToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
@@ -281,6 +282,8 @@ function ImagesTab({ onInsert }: { onInsert: (image: LoadedImage) => void }) {
         <span className="text-[11px] leading-snug text-ink-muted">Ou arraste um arquivo direto pro slide</span>
       </button>
 
+      <AiImageGenerator onInsert={onInsert} />
+
       {recents.length > 0 && (
         <div>
           <div className="px-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Recentes</div>
@@ -304,6 +307,84 @@ function ImagesTab({ onInsert }: { onInsert: (image: LoadedImage) => void }) {
               </button>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Gerar com IA — ação mais cara do editor, aviso de custo sempre visível      */
+/* -------------------------------------------------------------------------- */
+
+function AiImageGenerator({ onInsert }: { onInsert: (image: LoadedImage) => void }) {
+  const [open, setOpen] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setGenerating] = useState(false);
+
+  async function handleGenerate() {
+    const trimmed = prompt.trim();
+    if (trimmed.length < 3) {
+      pushToast('Descreve a imagem em algumas palavras antes de gerar.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await generateAiImage(trimmed);
+      const image: LoadedImage = { dataUrl: result.dataUrl, mimeType: 'image/png', width: result.width, height: result.height };
+      addSessionUpload(image);
+      onInsert(image);
+      pushToast('Imagem gerada e adicionada ao slide.');
+      setPrompt('');
+      setOpen(false);
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'Não consegui gerar a imagem agora.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title="Gera uma imagem única com IA — mais lenta e mais cara que os elementos prontos. Use com moderação."
+        className="flex w-full items-center gap-2 text-left"
+      >
+        <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-brand/30 bg-brand/[0.12] text-brand">
+          <Icon name="sparkles" size={14} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12.5px] font-semibold text-ink">Gerar imagem com IA</span>
+          <span className="block text-[10.5px] leading-snug text-ink-muted">Mais cara que os elementos prontos</span>
+        </span>
+        <Icon name={open ? 'chevron-down' : 'chevron-right'} size={12} className="flex-none text-ink-muted" />
+      </button>
+
+      {open && (
+        <div className="mt-3 flex flex-col gap-2">
+          <textarea
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            placeholder="Descreva a imagem, ex: um foguete decolando, estilo 3D"
+            maxLength={600}
+            rows={3}
+            disabled={isGenerating}
+            className="w-full resize-none rounded-lg border border-white/[0.09] bg-black/20 px-2.5 py-2 text-[12px] text-ink placeholder:text-ink-muted focus:border-brand/40 focus:outline-none disabled:opacity-60"
+          />
+          <p className="text-[10.5px] leading-snug text-ink-muted">
+            Custo real de API por imagem gerada — evite gerar sem necessidade. Prefira os elementos prontos quando servirem.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleGenerate()}
+            disabled={isGenerating || prompt.trim().length < 3}
+            className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-[#36E66A] to-brand px-3 py-2 text-[12px] font-semibold text-[#07130b] transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isGenerating ? <Spinner size="sm" /> : <Icon name="sparkles" size={13} />}
+            {isGenerating ? 'Gerando…' : 'Gerar imagem'}
+          </button>
         </div>
       )}
     </div>
