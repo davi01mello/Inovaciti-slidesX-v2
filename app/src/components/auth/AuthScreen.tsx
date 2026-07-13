@@ -1,7 +1,7 @@
 /**
  * A tela de login: logo, a frase da casa, o campo único e o apoio do passo atual.
  *
- * A headline NÃO muda entre os passos, de propósito — ela é a âncora da marca. O
+ * A headline NÃO muda entre os passos, de propósito: ela é a âncora da marca. O
  * que muda é o campo e o texto de apoio, e é essa combinação (moldura firme, miolo
  * vivo) que dá a sensação de um fluxo só em vez de três telas.
  *
@@ -12,27 +12,32 @@ import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { cn } from '@/lib/cn';
 import logo from '@/assets/citi-slides-logo.png';
 import { AuthField } from './AuthField';
+import { EASE } from './easing';
 import type { AuthFlow } from './useAuthFlow';
 
-const EASE = [0.16, 1, 0.3, 1] as const;
-
+/**
+ * A entrada é deliberadamente lenta pro padrão de telas de app (0.9s por item,
+ * stagger de 0.11): logo, frase, campo, pontos e apoio se apresentam um por um,
+ * como cortina subindo, não como interface carregando. O fundo colabora: o shader
+ * só monta depois que este stagger assentou (ver AuthBackdrop).
+ */
 const CONTAINER: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.11, delayChildren: 0.2 } },
   exit: {
     opacity: 0,
-    y: -28,
-    filter: 'blur(10px)',
-    transition: { duration: 0.42, ease: EASE },
+    y: -24,
+    filter: 'blur(8px)',
+    transition: { duration: 0.45, ease: EASE },
   },
 };
 
 const ITEM: Variants = {
-  hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: EASE } },
+  hidden: { opacity: 0, y: 16, filter: 'blur(8px)' },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.9, ease: EASE } },
 };
 
-/** Progresso do fluxo. Some quando só há um passo — um pontinho sozinho não informa nada. */
+/** Progresso do fluxo. Some quando só há um passo: um pontinho sozinho não informa nada. */
 function StepDots({ index, total }: { index: number; total: number }) {
   if (total < 2) return null;
   return (
@@ -93,7 +98,7 @@ export function AuthScreen({ flow }: AuthScreenProps) {
         className="relative m-0 text-center text-[clamp(1.85rem,5.5vw,3.15rem)] font-light italic leading-[1.1] tracking-[-0.02em] text-ink text-balance"
         style={{ textShadow: '0 2px 26px rgba(0,0,0,0.6), 0 0 52px rgba(45,219,96,0.22)' }}
       >
-        Fazemos a Mágica Acontecer
+        Fazemos Mágica Acontecer
       </motion.h1>
 
       <motion.div variants={ITEM} className="relative mt-10 w-full max-w-xl">
@@ -112,13 +117,10 @@ export function AuthScreen({ flow }: AuthScreenProps) {
         <StepDots index={index} total={total} />
       </motion.div>
 
-      {/* Apoio + voltar: o bloco tem altura mínima pra troca de passo não sacudir a
+      {/* Apoio e voltar: o bloco tem altura mínima pra troca de passo não sacudir a
           coluna. O texto é ink-secondary (e não ink-muted) com sombra: sobre um fundo
           que se mexe e clareia, cinza fraco simplesmente some. */}
-      <motion.div
-        variants={ITEM}
-        className="relative mt-7 flex min-h-[5.5rem] flex-col items-center gap-4"
-      >
+      <motion.div variants={ITEM} className="relative mt-7 flex min-h-[5.5rem] flex-col items-center gap-4">
         <AnimatePresence mode="wait" initial={false}>
           <motion.p
             key={step.id}

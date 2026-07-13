@@ -459,6 +459,15 @@ textarea:focus-visible,
   transition-duration: 0.01ms !important;
 }
 
+/* Exceção deliberada: o fundo ambiente do login (orbes em deriva de 60s, o plano B
+ * do shader). É decoração lenta e difusa, sem risco vestibular, e é a identidade
+ * da tela. Congelado junto com o resto, o login virava um retângulo morto e foi
+ * reportado como bug. Nada mais no app recebe essa isenção. */
+[data-ambient='true'] {
+  animation-duration: 60s !important;
+  animation-iteration-count: infinite !important;
+}
+
 * {
   scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
 }

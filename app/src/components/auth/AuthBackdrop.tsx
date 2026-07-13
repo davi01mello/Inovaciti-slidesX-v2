@@ -1,25 +1,59 @@
 /**
- * O fundo vivo da tela de login: o shader Warp (WebGL) nas cores da marca, coberto
- * por camadas que existem por motivo, não por enfeite —
+ * O fundo vivo da tela de login: o shader Warp (WebGL2) nas cores da marca.
  *
- *   scrims    garantem contraste do texto por cima de um fundo que se mexe;
- *   vinheta   fecha as bordas e empurra o olho pro centro (onde está o campo);
- *   grão      tira o aspecto "gradiente de CSS" e dá textura de filme.
+ * TRÊS GARANTIAS, e cada linha aqui existe por uma delas.
  *
- * O shader nunca é o caminho crítico: carrega sob demanda e, se o WebGL não
- * existir ou o chunk falhar de verdade, cai num fundo estático equivalente (as
- * mesmas cores, os mesmos orbes do Hero). Preferência de menos movimento NÃO
- * remove o shader: só congela a animação (speed 0). A tela nunca fica preta nem
- * sem identidade.
+ * 1. A tela nunca fica preta. O plano B (BackdropBase) está montado SEMPRE, por
+ *    baixo, e pinta no primeiro frame. O shader é melhoria progressiva: entra em
+ *    crossfade por cima quando (e só quando) está de fato desenhando. Qualquer
+ *    falha (WebGL2 ausente, chunk que não baixou, exceção no mount, canvas que
+ *    nunca apareceu, GPU perdida no meio) só remove a camada de cima e revela o
+ *    que já estava lá. Não existe estado intermediário.
+ *
+ * 2. O fundo chega ANTES do conteúdo. O chunk é aquecido no boot do app (fetch no
+ *    nível do módulo) e o shader monta imediatamente, sem espera artificial. Quando
+ *    ele está vivo, avisa o palco (onReady) e só então a tela de login entra. Era o
+ *    inverso antes: texto primeiro, fundo depois, e o fundo "aparecia" de repente.
+ *
+ * 3. O crossfade é ANIMADO EM JS, não em CSS. O corte global de reduce-motion
+ *    (index.css) zera transition-duration com !important, o que transformava o
+ *    fade de 1s do shader num piscar seco: ele surgia como uma imagem colada.
+ *    Em JS a curva é minha, e o respeito à preferência é explícito e auditável
+ *    (menos movimento = deriva calma e sem scale, nunca congelamento).
+ *
+ * Por que tanta cerca? A lib exige WebGL2 e, quando ele falta, estoura DENTRO de
+ * uma função async dela: vira unhandled rejection, que error boundary NÃO captura.
+ * Um boundary sozinho aqui era proteção de mentira.
  */
-import { Component, Suspense, lazy, useState, type ReactNode } from 'react';
+import {
+  Component,
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { motion } from 'motion/react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { StaticBackdrop } from './BackdropBase';
+import { EASE } from './easing';
 
-// Uma falha transitória de rede no chunk não pode custar o fundo da tela:
-// o import tenta uma segunda vez antes de entregar pro ShaderBoundary.
+const loadShader = () => import('@paper-design/shaders-react');
+
+/**
+ * Aquecimento no boot: o chunk (27KB gzip) começa a baixar assim que este módulo é
+ * avaliado, muito antes de qualquer render. Quando a tela monta, em geral só falta
+ * compilar o programa WebGL. É a diferença entre o fundo chegar em ~200ms e chegar
+ * em ~1s. Falha aqui é irrelevante: o lazy abaixo tenta de novo e, se insistir em
+ * quebrar, o plano B assume.
+ */
+void loadShader().catch(() => {});
+
 const Warp = lazy(() =>
-  import('@paper-design/shaders-react')
-    .catch(() => import('@paper-design/shaders-react'))
+  loadShader()
+    .catch(() => loadShader())
     .then((module) => ({ default: module.Warp })),
 );
 
@@ -41,10 +75,6 @@ const WARP_COLORS = [
  *   swirl / swirlIterations / distortion   intensidade dos redemoinhos.
  *   shape "checks" + shapeScale 0.1        padrão base.
  *   speed 0.9               velocidade da animação.
- *
- * O contraste do texto NÃO é resolvido aqui abafando o fundo: quem garante
- * legibilidade são os próprios componentes (pílula de vidro escuro, sombra no
- * texto, halo atrás da coluna de conteúdo). Ver AuthScreen e AuthField.
  */
 const WARP = {
   proportion: 0.3,
@@ -59,28 +89,56 @@ const WARP = {
   speed: 0.9,
 } as const;
 
+/** Menos movimento = deriva calma, não congelamento. O fundo segue vivo. */
+const WARP_CALM_SPEED = 0.35;
+
+/**
+ * Custo controlado num shader de tela cheia:
+ *
+ *   minPixelRatio 1   sem supersampling. O default da lib renderiza a 2x até em
+ *                     tela 1x (4x mais fragmentos por frame). Num warp difuso a
+ *                     diferença é invisível; o custo, não.
+ *   maxPixelCount     teto de ~2x 1080p. Telas 4K e Retina renderizam nesse teto e
+ *                     sobem por CSS, de novo invisível num fundo desfocado, e é o
+ *                     que impede o login de esquentar notebook fraco.
+ */
+const WARP_MIN_PIXEL_RATIO = 1;
+const WARP_MAX_PIXEL_COUNT = 1920 * 1080 * 2;
+
+/** O crossfade de chegada. Ease-out: o fundo se estabelece cedo e assenta devagar. */
+const FADE_IN_S = 1;
+
+/** Depois do mount, quanto tempo o canvas tem pra aparecer antes de desistirmos. */
+const WATCHDOG_TIMEOUT_MS = 4000;
+const WATCHDOG_POLL_MS = 100;
+
+/**
+ * Teto de espera do conteúdo. Se em 1,2s o shader não deu sinal de vida, a tela de
+ * login entra assim mesmo sobre o plano B: fundo bonito não vale segurar o login.
+ */
+const READY_FALLBACK_MS = 1200;
+
 /** Grão fino em SVG (feTurbulence), embutido pra não custar uma requisição. */
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E\")";
 
-/** WebGL pode simplesmente não existir (VM, driver capado, flag desligada). */
-function supportsWebGl(): boolean {
+/** A lib só fala WebGL2, e WebGL1 disponível não conta. Detectar errado aqui era
+ *  o fundo preto: o mount estourava fora do alcance do boundary. */
+function supportsWebGl2(): boolean {
   try {
-    const canvas = document.createElement('canvas');
-    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
+    return Boolean(document.createElement('canvas').getContext('webgl2'));
   } catch {
     return false;
   }
 }
 
 interface ShaderBoundaryProps {
-  fallback: ReactNode;
   children: ReactNode;
 }
 
 /**
- * Se o shader estourar (contexto WebGL perdido, chunk que não baixou), o fundo
- * estático entra no lugar. Um fundo bonito não vale derrubar a tela de login.
+ * Se o shader estourar durante render (chunk quebrado, erro síncrono de mount),
+ * esta camada some e pronto: o plano B já está desenhado por baixo.
  */
 class ShaderBoundary extends Component<ShaderBoundaryProps, { failed: boolean }> {
   override state = { failed: false };
@@ -90,87 +148,172 @@ class ShaderBoundary extends Component<ShaderBoundaryProps, { failed: boolean }>
   }
 
   override render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
+    return this.state.failed ? null : this.props.children;
   }
 }
 
-/** O plano B: mesmas cores, mesma direção de luz, sem WebGL. */
-function StaticBackdrop() {
+interface WarpLayerProps {
+  speed: number;
+  /** O shader começou a desenhar de verdade. */
+  onLive: () => void;
+  /** Nunca desenhou, ou perdeu a GPU no meio da sessão. */
+  onFailure: () => void;
+}
+
+/**
+ * A camada do shader. Nasce invisível e só faz o crossfade quando está VIVO: a lib
+ * monta num passo assíncrono que pode falhar sem lançar nada capturável, então quem
+ * decide é o watchdog olhando o DOM, não a árvore React.
+ *
+ * O sinal de vida exige DUAS provas. `data-paper-shader` a lib grava em mais de um
+ * elemento (um <style> e a div do shader), então "o primeiro que aparecer" podia ser
+ * o <style>. E o canvas sozinho não prova nada: ele entra no DOM antes do getContext
+ * e fica lá mesmo quando o mount morre no meio. Vida = marca da lib + canvas real.
+ */
+function WarpLayer({ speed, onLive, onFailure }: WarpLayerProps) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    let canvas: HTMLCanvasElement | null = null;
+    const startedAt = performance.now();
+    const handleContextLost = () => onFailure();
+
+    const pollId = window.setInterval(() => {
+      const marked = host.querySelector('[data-paper-shader]');
+      const mountedCanvas = host.querySelector('canvas');
+
+      if (marked && mountedCanvas) {
+        window.clearInterval(pollId);
+        canvas = mountedCanvas;
+        canvas.addEventListener('webglcontextlost', handleContextLost);
+        setLive(true);
+        onLive();
+        return;
+      }
+      if (performance.now() - startedAt > WATCHDOG_TIMEOUT_MS) {
+        window.clearInterval(pollId);
+        onFailure();
+      }
+    }, WATCHDOG_POLL_MS);
+
+    return () => {
+      window.clearInterval(pollId);
+      canvas?.removeEventListener('webglcontextlost', handleContextLost);
+    };
+  }, [onLive, onFailure]);
+
   return (
-    <div className="absolute inset-0">
-      <div className="absolute inset-0 bg-[radial-gradient(125%_100%_at_50%_-10%,rgba(45,219,96,0.20),transparent_60%)]" />
-      <div
-        className="absolute -left-[12%] top-[8%] h-[560px] w-[560px] rounded-full opacity-[0.28]"
-        style={{
-          background: 'radial-gradient(circle, #2ddb60 0%, transparent 65%)',
-          filter: 'blur(90px)',
-          animation: 'aurora-drift-a 60s ease-in-out infinite',
-        }}
+    <motion.div
+      ref={hostRef}
+      // data-shader-layer: âncora estável pra inspeção (é por aqui que se verifica,
+      // de fora, se o crossfade está mesmo acontecendo em vez de piscar).
+      data-shader-layer="true"
+      className="absolute inset-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: live ? 1 : 0 }}
+      transition={{ duration: FADE_IN_S, ease: 'easeOut' }}
+    >
+      <Warp
+        {...WARP}
+        speed={speed}
+        colors={WARP_COLORS}
+        minPixelRatio={WARP_MIN_PIXEL_RATIO}
+        maxPixelCount={WARP_MAX_PIXEL_COUNT}
+        style={{ width: '100%', height: '100%' }}
       />
-      <div
-        className="absolute -right-[10%] bottom-[6%] h-[480px] w-[480px] rounded-full opacity-[0.18]"
-        style={{
-          background: 'radial-gradient(circle, #7af2a5 0%, transparent 65%)',
-          filter: 'blur(90px)',
-          animation: 'aurora-drift-b 60s ease-in-out infinite',
-        }}
-      />
-    </div>
+    </motion.div>
   );
 }
 
 interface AuthBackdropProps {
   /**
-   * O "estouro" de luz do momento do login: o fundo avança e acende. Não é um
-   * estado novo do shader (uniform não muda, WebGL não é re-renderizado) — é uma
-   * transição CSS de transform/filter por cima da mesma tela, que custa nada.
+   * O "estouro" de luz do momento do login: o fundo avança e acende. Só duas
+   * propriedades, as duas de compositor (scale e opacity), pra seguir liso mesmo
+   * com a thread principal ocupada montando o app atrás da cortina.
    */
   surge: boolean;
+  /** O fundo está estabelecido: o palco pode trazer a tela de login. */
+  onReady: () => void;
 }
 
-export function AuthBackdrop({ surge }: AuthBackdropProps) {
+export function AuthBackdrop({ surge, onReady }: AuthBackdropProps) {
   const reduced = useReducedMotion();
-  const [webGlOk] = useState(supportsWebGl);
-  // O shader monta SEMPRE que houver WebGL. Preferência de menos movimento
-  // congela a animação (speed 0 renderiza um frame parado, ainda lindo) em vez
-  // de trocar o fundo — desmontar aqui era exatamente o bug do "fundo sumiu"
-  // pra quem tinha reduce motion ligado no sistema ou nas Configurações.
-  const useShader = webGlOk;
+  const [webGl2] = useState(supportsWebGl2);
+  const [shaderFailed, setShaderFailed] = useState(false);
+
+  // onReady dispara UMA vez, venha por onde vier: shader vivo, ausência de WebGL2,
+  // falha, ou o teto de espera. O conteúdo nunca fica refém do fundo.
+  const readyFired = useRef(false);
+  const signalReady = useCallback(() => {
+    if (readyFired.current) return;
+    readyFired.current = true;
+    onReady();
+  }, [onReady]);
+
+  const handleShaderFailure = useCallback(() => {
+    setShaderFailed(true);
+    signalReady();
+  }, [signalReady]);
+
+  useEffect(() => {
+    if (!webGl2) {
+      signalReady();
+      return;
+    }
+    const id = window.setTimeout(signalReady, READY_FALLBACK_MS);
+    return () => window.clearTimeout(id);
+  }, [webGl2, signalReady]);
+
+  const showShader = webGl2 && !shaderFailed;
 
   return (
     <div aria-hidden="true" className="absolute inset-0 overflow-hidden bg-[#050607]">
-      <div
-        className="absolute inset-0 transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-        style={{
-          transform: surge ? 'scale(1.16)' : 'scale(1)',
-          filter: surge ? 'brightness(1.5) saturate(1.25)' : 'brightness(1) saturate(1)',
-        }}
+      <motion.div
+        className="absolute inset-0"
+        initial={false}
+        // O avanço do fundo é transform puro. Menos movimento pula o scale (é
+        // justamente o tipo de movimento que a preferência pede pra evitar) e fica
+        // só com a luz, que é opacidade.
+        animate={{ scale: surge && !reduced ? 1.16 : 1 }}
+        transition={{ duration: 1.4, ease: EASE }}
       >
-        {useShader ? (
-          <ShaderBoundary fallback={<StaticBackdrop />}>
-            {/* O fallback do Suspense é o fundo estático: enquanto o shader baixa,
-                a tela já está pintada e na identidade certa. */}
-            <Suspense fallback={<StaticBackdrop />}>
-              <Warp
-                {...WARP}
-                speed={reduced ? 0 : WARP.speed}
-                colors={WARP_COLORS}
-                style={{ width: '100%', height: '100%' }}
+        <StaticBackdrop />
+
+        {showShader && (
+          <ShaderBoundary>
+            {/* Sem fallback de Suspense: enquanto o chunk resolve, o plano B por
+                baixo já está pintado. Trocar camadas aqui era o "pulo" do fundo. */}
+            <Suspense fallback={null}>
+              <WarpLayer
+                speed={reduced ? WARP_CALM_SPEED : WARP.speed}
+                onLive={signalReady}
+                onFailure={handleShaderFailure}
               />
             </Suspense>
           </ShaderBoundary>
-        ) : (
-          <StaticBackdrop />
         )}
-      </div>
+      </motion.div>
+
+      {/* O véu do surge: a luz que "acende" o sistema no login aceito. */}
+      <motion.div
+        className="absolute inset-0 mix-blend-screen"
+        initial={false}
+        animate={{ opacity: surge ? 1 : 0 }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        style={{
+          background:
+            'radial-gradient(80% 80% at 50% 42%, rgba(122,242,165,0.5), rgba(45,219,96,0.22) 45%, transparent 75%)',
+        }}
+      />
 
       {/* Overlay de profundidade e contraste, o gradiente vertical do design. */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#050607]/40 via-transparent to-[#050607]/70" />
       {/* Grão: textura de filme, quase invisível, e é pra ser. */}
-      <div
-        className="absolute inset-0 opacity-[0.045] mix-blend-overlay"
-        style={{ backgroundImage: GRAIN }}
-      />
+      <div className="absolute inset-0 opacity-[0.045] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
     </div>
   );
 }

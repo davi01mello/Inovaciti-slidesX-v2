@@ -1,16 +1,23 @@
 /**
- * O miolo da transição login → app: a luz verde que "abre" o sistema e a saudação.
+ * O miolo da transição login para app: a luz verde que "abre" o sistema e a saudação.
  *
  * Aparece depois que a tela de login já saiu e enquanto o app monta ATRÁS da
- * cortina — quando o AuthStage dissolve, o que está embaixo já está pronto. Sem
+ * cortina. Quando o AuthStage dissolve, o que está embaixo já está pronto. Sem
  * spinner, sem tela branca: o carregamento acontece dentro da animação.
  */
 import { motion } from 'motion/react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { firstNameOf } from '@/stores/userStore';
 
+/**
+ * A saudação espera a tela de login TERMINAR de sair (0.45s, ver AuthScreen) antes
+ * de entrar. Sem essa pausa, "Fazemos Mágica..." subindo e "Bem-vindo" nascendo
+ * disputavam o centro da tela ao mesmo tempo, e era isso que parecia grosseiro.
+ */
+const ENTER_DELAY_S = 0.4;
+
 interface LaunchOverlayProps {
-  /** Vazio pra quem não tem nome pessoal salvo — aí a saudação é genérica. */
+  /** Vazio pra quem não tem nome pessoal salvo: aí a saudação é genérica. */
   displayName: string;
 }
 
@@ -31,28 +38,41 @@ export function LaunchOverlay({ displayName }: LaunchOverlayProps) {
           }}
           initial={{ scale: 0.2, opacity: 0 }}
           animate={{ scale: [0.2, 1.4, 4.4], opacity: [0, 0.85, 0] }}
-          // ATENÇÃO: com keyframes + `times`, o Framer lê um `ease` em ARRAY como
-          // "uma curva por segmento" — passar a cubic-bezier [0.16,1,0.3,1] aqui vira
+          // ATENÇÃO: com keyframes e `times`, o Framer lê um `ease` em ARRAY como
+          // "uma curva por segmento". Passar a cubic-bezier [0.16,1,0.3,1] aqui vira
           // 4 easings inválidos e a animação simplesmente não roda (o bloom não
           // aparecia). Em keyframes, easing tem que ser string ou array DE curvas.
-          transition={{ duration: 1.3, times: [0, 0.32, 1], ease: 'easeOut' }}
+          transition={{ delay: ENTER_DELAY_S, duration: 1.25, times: [0, 0.32, 1], ease: 'easeOut' }}
         />
       )}
 
+      {/* A saudação entra, segura o palco sozinha e começa a se recolher já dentro
+          da janela da dissolução da cortina: ela nunca some num corte, vai junto
+          com a luz.
+
+          Menos movimento NÃO significa "aparecer pronta na tela". Significa sem
+          deslocamento e sem desfoque: o fade fica, com os mesmos tempos. Mostrar a
+          saudação instantaneamente (era o que este ramo fazia) é justamente o que
+          fazia a entrada na home parecer um corte seco. */}
       <motion.p
         className="relative m-0 text-center text-[clamp(1.5rem,4vw,2.5rem)] font-light italic tracking-[-0.02em] text-ink"
         style={{ textShadow: '0 0 40px rgba(45,219,96,0.35)' }}
-        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 16, filter: 'blur(12px)' }}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 14, filter: 'blur(10px)' }}
         animate={
           reduced
-            ? { opacity: 1 }
+            ? { opacity: [0, 1, 1, 0] }
             : {
                 opacity: [0, 1, 1, 0],
-                y: [16, 0, 0, -12],
-                filter: ['blur(12px)', 'blur(0px)', 'blur(0px)', 'blur(8px)'],
+                y: [14, 0, 0, -10],
+                filter: ['blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(6px)'],
               }
         }
-        transition={reduced ? { duration: 0 } : { duration: 1.55, times: [0, 0.3, 0.74, 1], ease: 'easeOut' }}
+        transition={{
+          delay: ENTER_DELAY_S,
+          duration: 1.5,
+          times: reduced ? [0, 0.28, 0.72, 1] : [0, 0.3, 0.75, 1],
+          ease: 'easeOut',
+        }}
       >
         {greeting}
       </motion.p>

@@ -7,7 +7,11 @@ import { loginBodySchema, parseBody } from '../validation.js';
 export const authRouter = Router();
 
 authRouter.get('/status', (req, res) => {
-  res.json({ authenticated: isAuthenticated(req) });
+  const authenticated = isAuthenticated(req);
+  // Validade deslizante: cada visita autenticada renova a sessão por mais 30 dias.
+  // Quem usa o app segue logado pra sempre; um cookie parado expira sozinho.
+  if (authenticated) issueAuthCookie(res);
+  res.json({ authenticated });
 });
 
 authRouter.post('/login', (req, res) => {
@@ -20,8 +24,11 @@ authRouter.post('/login', (req, res) => {
     return;
   }
 
-  const ok = safeEqual(body.username, config.authUsername) && safeEqual(body.password, config.authPassword);
-  if (!ok) {
+  // As duas comparações SEMPRE rodam: com curto-circuito, a resposta mais rápida
+  // pro usuário errado entregava de graça quais usuários existem.
+  const userOk = safeEqual(body.username, config.authUsername);
+  const passOk = safeEqual(body.password, config.authPassword);
+  if (!userOk || !passOk) {
     logger.warn({ request_id: req.requestId }, 'tentativa de login com credenciais inválidas');
     res.status(401).json({ error: 'Usuário ou senha incorretos.' });
     return;

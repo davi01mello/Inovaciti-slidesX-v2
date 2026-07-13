@@ -17,9 +17,8 @@ import { AnimatePresence, motion, useAnimationControls } from 'motion/react';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/cn';
+import { EASE } from './easing';
 import type { AuthStep } from './authSteps';
-
-const EASE = [0.16, 1, 0.3, 1] as const;
 
 interface AuthFieldProps {
   step: AuthStep;
