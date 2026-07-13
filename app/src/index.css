@@ -1,0 +1,479 @@
+@import '@fontsource-variable/inter';
+/* Itálico de verdade do Inter (eixo próprio, não o falso itálico inclinado pelo
+ * browser): a headline da tela de login é light itálica e é a primeira coisa que
+ * a pessoa vê — falso itálico ali entrega amadorismo. */
+@import '@fontsource-variable/inter/wght-italic.css';
+@import '@fontsource-variable/sora';
+/* Fontes extras oferecidas no editor de texto dos slides (ver richText.tsx
+ * FONT_FAMILY_OPTIONS) — cada apresentação pode misturar mais de uma. */
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/poppins/800.css';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/outfit';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Tipografia dos SLIDES: Sora (geométrica premium) em todo texto composto no
+   * template — títulos display e corpo. A UI do app continua em Inter. */
+  --font-slide: 'Sora Variable', 'Sora', 'Inter Variable', system-ui, sans-serif;
+
+  /* Surfaces: preto de verdade, neutro (sem a tinta azul que acinzentava).
+   * O fundo é #000 e as superfícies sobem bem devagar a partir dele. */
+  --color-app-bg: #000000;
+  --color-surface: #050607;
+  --color-surface-2: #0a0b0c;
+  --color-surface-3: #0f1011;
+  --color-surface-glass: rgba(5, 6, 7, 0.72);
+
+  /* Brand */
+  --color-brand: #2ddb60;
+  --color-brand-hover: #36e66a;
+  --color-brand-active: #24c856;
+  --color-brand-glow: #7af2a5;
+  --color-brand-glow-soft: rgba(45, 219, 96, 0.18);
+
+  /* Text */
+  --color-ink: #ffffff;
+  --color-ink-secondary: #c3cbd4;
+  /* #8a93a0 sobre #050607 dá ~6.6:1, AA até em texto pequeno. */
+  --color-ink-muted: #8a93a0;
+
+  /* Feedback */
+  --color-danger: #ff8a8a;
+  --color-danger-soft: rgba(255, 138, 138, 0.1);
+
+  /* Slide typography (used inside slide cards and preview) */
+  --color-slide-fg: #f7f7f7;
+  --color-slide-hl: #09e880;
+
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.1);
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-control: 14px;
+
+  /* Layout */
+  --height-topbar: 72px;
+  --width-content: 1600px;
+
+  --animate-menu-in: menu-in 160ms ease-out;
+  --animate-glow: glow 2.4s ease-in-out infinite;
+  --animate-slide-in: slide-in 240ms ease-out;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-reveal: reveal 560ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-breathe: breathe 2.6s ease-in-out infinite;
+  --animate-fade-up: fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* fill "backwards" (não "both"): both deixa a animação preenchendo pra sempre,
+   * o que mantém um stacking context e esconderia dropdowns atrás dos itens
+   * seguintes da lista. Com backwards, o contexto some quando a entrada termina. */
+  --animate-fade-in: fade-in 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  --animate-dialog-in: dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-message-in: message-in 480ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  --animate-orb-pop: orb-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  --animate-orb-ping: orb-ping 900ms cubic-bezier(0, 0, 0.2, 1) both;
+  --animate-dock-panel-in: dock-panel-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------------------------------------------------------------------
+ * Linguagem "liquid glass" do CITi Slides.
+ * .glass é O material de superfície flutuante do app (menus, cards em destaque,
+ * painéis sobre arte). Vidro escuro com blur real, borda de 1px e um fio de luz
+ * no topo — nunca branco leitoso.
+ * ------------------------------------------------------------------------- */
+@utility glass {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.012) 42%,
+    rgba(255, 255, 255, 0.028)
+  );
+  backdrop-filter: blur(24px) saturate(1.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 24px 48px -24px rgba(0, 0, 0, 0.55);
+}
+
+/* Variante mais densa, pra painéis maiores (sidebar, modais). Preto de verdade. */
+@utility glass-deep {
+  background: linear-gradient(170deg, rgba(7, 8, 10, 0.88), rgba(2, 2, 3, 0.94));
+  backdrop-filter: blur(30px) saturate(1.2);
+  -webkit-backdrop-filter: blur(30px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 40px 80px -40px rgba(0, 0, 0, 0.85);
+}
+
+/* Morfologia da bolha líquida: o border-radius deriva devagar, como líquido parado. */
+@keyframes blob-morph {
+  0%,
+  100% {
+    border-radius: 46% 54% 58% 42% / 48% 42% 58% 52%;
+  }
+  25% {
+    border-radius: 58% 42% 46% 54% / 42% 56% 44% 58%;
+  }
+  50% {
+    border-radius: 42% 58% 52% 48% / 56% 46% 54% 44%;
+  }
+  75% {
+    border-radius: 52% 48% 42% 58% / 46% 54% 42% 58%;
+  }
+}
+
+/* Flutuação suave da bolha e de elementos satélites. */
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
+}
+
+@keyframes blob-float-alt {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+/* Entrada suave de seções e cards (usar com animation-delay pra escalonar). */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Entrada só com opacidade: pra listas onde cada item pode abrir um dropdown.
+ * (fade-up mantém um transform residual que cria stacking context permanente
+ * e faria o menu de uma linha ficar atrás das linhas seguintes.) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modais: leve zoom de assentamento, sem drama. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Varredura de brilho dos skeletons de carregamento. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Entrada da imagem final de cada slide: fade com leve zoom de assentamento. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pulso suave do halo em elementos que indicam trabalho em andamento. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mensagem do chat chegando: sobe suave com um sopro de desfoque assentando. */
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(4px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* A orb "acorda" junto com a resposta: pop com halo que se dissipa. */
+@keyframes orb-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Anel de energia que emana da orb quando a resposta chega. */
+@keyframes orb-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+/* Texto "Pensando" com varredura de luz (usar com bg-clip-text + gradiente 200%). */
+@keyframes thinking-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Palavra da resposta se materializando (reveal progressivo do texto da IA). */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Painel do dock de inserção deslizando pra fora do rail. */
+@keyframes dock-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Orbes do AuroraBackground: deriva lentíssima, nunca chama mais atenção que o CTA. */
+@keyframes aurora-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(90px, 40px, 0) scale(1.12);
+  }
+  66% {
+    transform: translate3d(-50px, 80px, 0) scale(0.94);
+  }
+}
+
+@keyframes aurora-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  40% {
+    transform: translate3d(-80px, -50px, 0) scale(1.08);
+  }
+  70% {
+    transform: translate3d(60px, -30px, 0) scale(0.96);
+  }
+}
+
+/* Botão "Ver guia rápido" do card de onboarding: glass verde premium com hover.
+ * (A entrada/saída do card é animada via motion no OnboardingSlot.) */
+.onboarding-cta {
+  position: relative;
+  z-index: 1;
+  padding: 8px 10px 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(45, 219, 96, 0.16), rgba(45, 219, 96, 0.06));
+  color: #fff;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: -0.005em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(45, 219, 96, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 14px -8px rgba(45, 219, 96, 0.5);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: all 200ms;
+  cursor: pointer;
+  align-self: stretch;
+  overflow: hidden;
+}
+.onboarding-cta:hover {
+  background: linear-gradient(180deg, rgba(45, 219, 96, 0.26), rgba(45, 219, 96, 0.12));
+  border-color: rgba(45, 219, 96, 0.55);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 18px -8px rgba(45, 219, 96, 0.6);
+}
+
+/* Export "art-only": esconde SÓ os textos da composição (mantendo a arte e a
+ * geometria idênticas) pra rasterizar o fundo e emitir os textos como caixas
+ * de texto reais no PPTX. Ver lib/exportPptx.ts. */
+[data-slide-export='art'] [data-export-text] {
+  visibility: hidden !important;
+}
+
+html,
+body {
+  background: var(--color-app-bg);
+  color: var(--color-ink);
+  font-feature-settings:
+    'cv11',
+    'ss01',
+    'ss03';
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(45, 219, 96, 0.28);
+  color: #ffffff;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Foco visível em todo elemento interativo: acessibilidade real, não estética. */
+:focus-visible {
+  outline: 2px solid rgba(45, 219, 96, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Campos de texto vivem em containers que já sinalizam o foco (borda e fundo mudam).
+ * O outline global desenhava um retângulo verde dentro das barras de pesquisa. */
+input:focus-visible,
+textarea:focus-visible,
+[contenteditable]:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Espelho da media query acima pra preferência escolhida em Configurações. */
+:root[data-reduce-motion='true'] *,
+:root[data-reduce-motion='true'] *::before,
+:root[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
