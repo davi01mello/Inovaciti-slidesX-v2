@@ -12,3 +12,9 @@ api/_delete_me_node_modules
 # otimizadas em WebP que o app realmente usa ficam em app/src/assets/elements/.
 # Fica de fora do git; pode manter aqui como arquivo de origem ou apagar.
 /Elementos 3D/
+
+/node_modules/
+.shots/
+__pycache__/
+*.pyc
+
