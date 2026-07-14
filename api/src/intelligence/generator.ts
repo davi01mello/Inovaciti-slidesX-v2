@@ -1,0 +1,164 @@
+/**
+ * A IA GERADORA do storyboard. Segunda etapa da pipeline: recebe o plano do
+ * estrategista (ou, se ele falhou, o briefing direto enriquecido com as specs) e
+ * escreve o JSON dos slides.
+ *
+ * Tudo que é estável mora no system instruction: vocabulário de blocos, regras de
+ * variedade, estrutura por quantidade. O prompt por request carrega só o que muda:
+ * plano, ideia original, quantidade, objetivo, público e voz.
+ */
+import type { DraftAssetMeta, PresentationGoal, VisualStyle } from '../types.js';
+import { audienceLine, goalGuidance, slideCountGuidance, styleGuidance } from './templates.js';
+import { BASE_SYSTEM_INSTRUCTION } from './writing.js';
+
+export const GENERATOR_SYSTEM_INSTRUCTION = `
+${BASE_SYSTEM_INSTRUCTION}
+
+Seu papel específico: escrever o storyboard completo de uma apresentação, no JSON pedido pelo schema.
+
+VOCABULÁRIO DE SLIDES:
+- "layout" de um slide é um de: "cover" (abertura), "section" (separador entre partes), "content" (miolo), "closing" (encerramento).
+- "kind" de bloco:
+    section-label  rótulo pequeno que o design renderiza em maiúsculas
+    title-1        impacto máximo: capa, separador, encerramento
+    title-2        título padrão de slide de conteúdo
+    title-3        subseção (uso raro)
+    subtitle       uma linha que completa um título
+    body           PARÁGRAFO de 2 a 4 frases. É o coração de todo slide de conteúdo.
+    highlight      uma frase de síntese, com destaque visual
+    cards          até 3 itens {title, body} — conteúdo COM CORPO
+    topics         até 5 itens de uma linha — lista leve, SEM caixa
+
+ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):
+- 1 slide: um único "cover" autocontido: section-label, title-1 forte e um subtitle que carregue a mensagem inteira.
+- 2 slides: "cover" com a tese e "closing" com a conclusão e o próximo passo.
+- 3 ou mais: "cover" abre, "closing" fecha, conteúdo no meio.
+- Capa (cover): um section-label de contexto (2 a 4 palavras), um title-1 com ângulo forte e específico ao tema (jamais genérico tipo "Apresentação institucional") e UM subtitle de uma linha completando o título. Sem body, sem listas. A capa é a única exceção à regra de densidade.
+- Separador (section): só a partir de 8 slides. De 8 a 13, no máximo 1 ou 2. Em decks longos, um a cada 5 a 8 slides de conteúdo. Tem section-label e title-1, e nada mais. É um respiro, e é a outra exceção à densidade.
+- Encerramento (closing): title-1 curto e caloroso, um subtitle com o próximo passo concreto, e um highlight com a frase que você quer que fique. Nada de listas.
+- Slide de CONTEÚDO (content): SEMPRE title-2 + body. Sempre. O body é obrigatório e tem 2 a 4 frases. Cards, topics, subtitle e highlight entram por cima disso quando o conteúdo pedir.
+
+OS FORMATOS DE SLIDE DE CONTEÚDO. Cada slide de conteúdo nasce com UM formato:
+  a) AFIRMAÇÃO      title-2 + body longo (3 a 4 frases) + highlight. Sem lista. Pra tese, virada de argumento, conclusão parcial.
+  b) CARDS          title-2 + body (2 a 3 frases) + cards (2 ou 3 itens com corpo). Pra pilares, serviços, diferenciais que PRECISAM de explicação.
+  c) TÓPICOS        title-2 + body (2 a 3 frases) + topics (3 a 5 linhas). Pra etapas, entregas, checklist que se explicam sozinhos.
+  d) NÚMERO         title-2 curto contendo UMA métrica concreta do usuário + body que a contextualiza + subtitle. Nunca invente o número.
+  e) APROFUNDAMENTO title-2 + body longo (4 frases) + subtitle. Texto puro, sem lista. Pra explicar um mecanismo, um porquê, um caso.
+
+REGRAS DURAS DE VARIEDADE:
+- Dois slides consecutivos NUNCA usam o mesmo formato.
+- No máximo METADE dos slides de conteúdo tem lista (formatos b e c somados). O resto é texto.
+- Toda apresentação com 3 ou mais slides tem pelo menos UMA afirmação central (formato a).
+- Varie a contagem de itens conforme o conteúdo real, nunca todos com 3.
+- NUNCA cards e topics no mesmo slide.
+
+ALÉM DOS SLIDES, gere também:
+- "title": o nome da apresentação na plataforma. De 2 a 5 palavras, direto e específico ao tema (ex: "Pitch CITi Para Sympla"). Primeira letra de cada palavra principal em maiúscula, sem ponto final, sem aspas. É um nome, não um resumo.
+- "chat": 3 a 4 mensagens curtas (1 a 2 frases cada), em primeira pessoa como o assistente do CITi Slides, contando o que acabou de montar. Mencione o número real de slides e o tema real. A última convida a revisar. Tom de colega mostrando o rascunho.
+
+Responda só com o JSON pedido pelo schema.
+`.trim();
+
+interface GeneratorPromptParams {
+  /** Plano interno produzido pelo estrategista. Null quando ele falhou. */
+  plan: string | null;
+  idea: string;
+  slideCount: number;
+  goal: PresentationGoal;
+  audience: string;
+  style: VisualStyle;
+  assets: DraftAssetMeta[];
+}
+
+/**
+ * As FOTOS do usuário viram slides de verdade.
+ *
+ * O motor anexa cada foto a um slide de miolo depois da geração (arquétipo media:
+ * texto numa coluna, foto emoldurada na outra). Pra que o slide não fique com um
+ * texto que ignora a imagem ao lado, a geradora precisa saber que ela existe e
+ * escrever pelo menos um slide onde um apoio visual faz sentido.
+ */
+function assetsLine(assets: DraftAssetMeta[]): string {
+  if (assets.length === 0) return 'O usuário não anexou nenhum arquivo.';
+
+  const photos = assets.filter((a) => a.kind === 'image');
+  const others = assets.filter((a) => a.kind !== 'image');
+
+  const lines = [
+    `O usuário anexou: ${assets.map((a) => `${a.name} (${a.kind})`).join(', ')}. Você não vê o conteúdo deles.`,
+  ];
+  if (photos.length > 0) {
+    lines.push(
+      `${photos.length} ${photos.length === 1 ? 'é uma FOTO que vai ocupar' : 'são FOTOS que vão ocupar'} ${photos.length === 1 ? 'um slide de miolo' : `${photos.length} slides de miolo`}, com o texto numa coluna e a imagem na outra. Escreva ${photos.length === 1 ? 'esse slide' : 'esses slides'} em texto corrido (title-2 + body de 3 a 4 frases, sem listas): o corpo precisa sustentar a imagem, não descrevê-la. Trate ${photos.length === 1 ? 'a foto' : 'as fotos'} como evidência do argumento daquele slide.`,
+    );
+  }
+  if (others.length > 0) {
+    lines.push('Os demais anexos são contexto de que existem, e nada mais. Não invente o conteúdo deles.');
+  }
+  return lines.join(' ');
+}
+
+/**
+ * Lembrete estrutural no FIM do prompt, onde o modelo mais obedece. As regras já
+ * estão no system instruction, mas sem este reforço final o primeiro slide às
+ * vezes saía como "content" e os slides de conteúdo saíam sem body.
+ */
+function structuralReminder(slideCount: number): string {
+  if (slideCount === 1) {
+    return 'ESTRUTURA OBRIGATÓRIA: um único slide, layout "cover", autocontido.';
+  }
+  if (slideCount === 2) {
+    return 'ESTRUTURA OBRIGATÓRIA: o primeiro slide é layout "cover" e o segundo é layout "closing". Nenhum slide "content".';
+  }
+  return [
+    `ESTRUTURA OBRIGATÓRIA: exatamente ${slideCount} slides. O primeiro é layout "cover" e o último é layout "closing". O miolo usa "content" (e "section" só quando as regras permitirem).`,
+    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": ele tem um bloco "body" com 2 a 4 frases completas? Ele fecha entre 60 e 140 palavras? Se algum não fechar, ele está RASO: reescreva com mais substância antes de responder. Nenhum slide de conteúdo pode sair só com título.',
+    'CONFIRA TAMBÉM: no máximo 3 cards, no máximo 5 tópicos, nunca cards e tópicos juntos, e dois slides seguidos nunca no mesmo formato.',
+  ].join('\n');
+}
+
+export function buildGeneratorPrompt(params: GeneratorPromptParams): string {
+  const closing = `
+${slideCountGuidance(params.slideCount)}
+${structuralReminder(params.slideCount)}
+${assetsLine(params.assets)}
+`.trim();
+
+  if (params.plan) {
+    return `
+Um estrategista sênior já analisou o briefing completo e definiu o plano abaixo. Escreva o storyboard seguindo o plano fielmente: o arco narrativo, o papel de cada slide, as mensagens centrais e os formatos indicados. Você tem liberdade só na redação final das frases.
+
+PLANO ESTRATÉGICO:
+"""
+${params.plan}
+"""
+
+IDEIA ORIGINAL DO USUÁRIO (fonte da verdade factual; se o plano contradisser um fato daqui, vale a ideia):
+"""
+${params.idea}
+"""
+
+${styleGuidance(params.style)}
+
+${closing}
+`.trim();
+  }
+
+  // Caminho direto: sem plano, o briefing enriquecido guia a geração sozinho.
+  return `
+Gere o storyboard de uma apresentação nova a partir do briefing abaixo. Antes de escrever, defina internamente o arco narrativo e o papel de cada slide: cada slide prepara o seguinte, os argumentos mais fortes entram depois do contexto estar montado, o fechamento retoma a jornada.
+
+IDEIA DO USUÁRIO (pode vir livre ou já estruturada slide a slide; se vier estruturada, respeite a estrutura):
+"""
+${params.idea}
+"""
+
+${goalGuidance(params.goal)}
+
+${audienceLine(params.audience)}
+
+${styleGuidance(params.style)}
+
+${closing}
+`.trim();
+}

@@ -1,0 +1,14 @@
+# Cada subprojeto (api/, app/) já tem seu próprio .gitignore (node_modules, dist, .env).
+# Este arquivo cobre só o que sobra na raiz.
+
+.DS_Store
+Thumbs.db
+*.log
+
+# Pasta residual que não consegui apagar durante o desenvolvimento — pode remover manualmente.
+api/_delete_me_node_modules
+
+# Fonte original (alta resolução, ~580MB) dos elementos visuais 3D — as versões
+# otimizadas em WebP que o app realmente usa ficam em app/src/assets/elements/.
+# Fica de fora do git; pode manter aqui como arquivo de origem ou apagar.
+/Elementos 3D/
