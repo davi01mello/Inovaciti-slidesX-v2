@@ -10,7 +10,8 @@ const SLIDE_HEIGHT_IN = 7.5;
 const PX_PER_INCH = RASTER_WIDTH / SLIDE_WIDTH_IN;
 const PX_PER_POINT = 2;
 
-/** Verde CITi dos trechos com highlight (o mesmo --color-slide-hl do render). */
+/** Acento do destaque quando o palco não informou um (fallback; o normal é o run trazer
+ * o hex já resolvido pelo tom, medido do DOM em slideRaster). */
 const HIGHLIGHT_HEX = '09E880';
 
 /** A fonte dos slides. Quem não tiver a Sora instalada vê a substituta do sistema. */
@@ -41,7 +42,7 @@ function toPptxText(text: ExportText): { runs: PptxGenJS.TextProps[]; options: P
         text: part,
         options: {
           bold: text.bold || !!run.bold,
-          color: run.highlight ? HIGHLIGHT_HEX : (run.colorHex ?? text.color),
+          color: run.colorHex ?? (run.highlight ? HIGHLIGHT_HEX : text.color),
           fontFace: run.fontFace ?? SLIDE_FONT,
           ...(run.fontSizePx ? { fontSize: run.fontSizePx / PX_PER_POINT } : {}),
           breakLine: i < parts.length - 1,

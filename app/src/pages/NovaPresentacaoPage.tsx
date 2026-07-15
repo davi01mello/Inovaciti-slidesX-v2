@@ -11,7 +11,7 @@ import { StepSummary } from '@/components/creation/StepSummary';
 import {
   EMPTY_DRAFT,
   type CreationDraft,
-  type DraftAsset,
+  type DraftAssetFile,
   type PresentationGoal,
   type VisualStyle,
 } from '@/types/creation';
@@ -175,7 +175,8 @@ export function NovaPresentacaoPage() {
   const onGoal = useCallback((goal: PresentationGoal) => setDraft((d) => ({ ...d, goal })), []);
   const onAudience = useCallback((audience: string) => setDraft((d) => ({ ...d, audience })), []);
   const onStyle = useCallback((style: VisualStyle) => setDraft((d) => ({ ...d, style })), []);
-  const onAssets = useCallback((assets: DraftAsset[]) => setDraft((d) => ({ ...d, assets })), []);
+  const onTone = useCallback((tone: number) => setDraft((d) => ({ ...d, tone })), []);
+  const onAssets = useCallback((assets: DraftAssetFile[]) => setDraft((d) => ({ ...d, assets })), []);
   const onSlideCount = useCallback((slideCount: number) => {
     slideCountTouched.current = true;
     setDraft((d) => ({ ...d, slideCount }));
@@ -217,9 +218,11 @@ export function NovaPresentacaoPage() {
               goal={draft.goal}
               audience={draft.audience}
               style={draft.style}
+              tone={draft.tone}
               onGoalChange={onGoal}
               onAudienceChange={onAudience}
               onStyleChange={onStyle}
+              onToneChange={onTone}
             />
           )}
           {step === 3 && (

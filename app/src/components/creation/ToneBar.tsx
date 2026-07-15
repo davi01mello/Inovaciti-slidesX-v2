@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { accentAtLightness, accentFor, clampTone, toneBandOf, toneGradientCss, TONE_BANDS } from '@/services/tone';
+import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { accentFor, clampTone, toneBandOf, toneGradientCss, TONE_BANDS } from '@/services/tone';
 import { coversForTone } from '@/services/deckArt';
 import { cn } from '@/lib/cn';
 
@@ -33,10 +33,21 @@ interface ToneBarProps {
   onChange: (tone: number) => void;
   /** As três capas ao vivo. Desligado no header do workspace, onde não cabe. */
   showPreview?: boolean;
+  /** Barra mais baixa e compacta, pra caber numa faixa estreita (workspace). */
+  compact?: boolean;
+  /** Rótulos de faixa (Gelo/Azul/Verde) clicáveis abaixo do trilho. */
+  showLabels?: boolean;
   className?: string;
 }
 
-export function ToneBar({ value, onChange, showPreview = true, className }: ToneBarProps) {
+export function ToneBar({
+  value,
+  onChange,
+  showPreview = true,
+  compact = false,
+  showLabels = true,
+  className,
+}: ToneBarProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -51,13 +62,15 @@ export function ToneBar({ value, onChange, showPreview = true, className }: Tone
   /**
    * O ACENTO SOBRE A PRÓPRIA BARRA.
    *
-   * ARMADILHA: no extremo Névoa o acento é quase branco, e um marcador branco em cima
+   * ARMADILHA: no extremo Gelo o acento é quase branco, e um marcador branco em cima
    * de um trilho branco é um marcador invisível. O anel branco de 2px resolve o lado
    * verde (contraste contra a cor viva) e a sombra resolve o lado claro (contraste
    * contra o branco). O halo só existe onde ele é luz e não sujeira: some no claro.
    */
   const misty = tone < 0.28;
-  const halo = misty ? 'none' : `0 0 0 6px ${accentAtLightness(tone, 0.62)}22, 0 0 18px -2px ${accent}`;
+  // Dimensões do trilho premium. Alto e arredondado no wizard; mais baixo no compacto.
+  const trackH = compact ? 26 : 40;
+  const knob = compact ? 22 : 30;
 
   const setFromClientX = useCallback(
     (clientX: number) => {
@@ -105,54 +118,95 @@ export function ToneBar({ value, onChange, showPreview = true, className }: Tone
 
   return (
     <div className={cn('select-none', className)}>
-      {/* Trilho */}
-      <div
-        ref={trackRef}
-        role="slider"
-        tabIndex={0}
-        aria-label="Cor da apresentação"
-        aria-valuemin={0}
-        aria-valuemax={1}
-        aria-valuenow={Number(tone.toFixed(2))}
-        aria-valuetext={`${band.label}, ${Math.round(tone * 100)} por cento no eixo de cor`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={stopDrag}
-        onPointerCancel={stopDrag}
-        onKeyDown={onKeyDown}
-        className="relative h-[15px] w-full cursor-pointer rounded-full outline-none"
-        style={{
-          background: track,
-          // Anel interno de 1px + sombra interna: dá corpo ao trilho e o descola do fundo.
-          boxShadow:
-            'inset 0 0 0 1px rgba(255,255,255,0.24), inset 0 2px 5px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.05)',
-        }}
-      >
-        {/* Marcador */}
+      {/* Halo ambiente: um brilho suave na cor atual por baixo da barra, dá profundidade. */}
+      <div className="relative" style={{ paddingBlock: compact ? 3 : 5 }}>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2"
+          className="pointer-events-none absolute inset-x-1 rounded-full blur-xl"
           style={{
-            left: `${tone * 100}%`,
-            transform: `translate(-50%, -50%) scale(${dragging ? 1.16 : 1})`,
-            transition: dragging ? 'none' : 'transform 160ms cubic-bezier(0.16,1,0.3,1)',
+            top: '18%',
+            bottom: '18%',
+            background: track,
+            opacity: misty ? 0.28 : 0.5,
+            transition: 'opacity 200ms ease',
+          }}
+        />
+
+        {/* Trilho: retângulo arredondado com o degradê OKLab e profundidade de vidro. */}
+        <div
+          ref={trackRef}
+          role="slider"
+          tabIndex={0}
+          aria-label="Cor da apresentação"
+          aria-valuemin={0}
+          aria-valuemax={1}
+          aria-valuenow={Number(tone.toFixed(2))}
+          aria-valuetext={`${band.label}, ${Math.round(tone * 100)} por cento no eixo de cor`}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={stopDrag}
+          onPointerCancel={stopDrag}
+          onKeyDown={onKeyDown}
+          className="relative w-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          style={{
+            height: trackH,
+            borderRadius: Math.round(trackH * 0.42),
+            background: track,
+            // Anel de 1px + gloss no topo + sombra interna embaixo: o trilho ganha corpo,
+            // vira uma peça de vidro pintada, não uma linha.
+            boxShadow:
+              'inset 0 0 0 1px rgba(255,255,255,0.22), inset 0 1.5px 0 rgba(255,255,255,0.35), inset 0 -6px 12px -6px rgba(0,0,0,0.45), 0 6px 22px -10px rgba(0,0,0,0.7)',
           }}
         >
+          {/* Gloss superior: um brilho que corre no topo do vidro. */}
           <div
-            className="rounded-full"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[3%] top-[6%]"
             style={{
-              width: 24,
-              height: 24,
-              background: accent,
-              border: '2px solid #fff',
-              boxShadow: `${halo}${halo === 'none' ? '' : ', '}0 2px 8px rgba(0,0,0,0.45)`,
+              height: '38%',
+              borderRadius: 999,
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0))',
             }}
           />
+
+          {/* Marcador: núcleo branco com um miolo da cor atual e um anel que brilha. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2"
+            style={{
+              left: `${tone * 100}%`,
+              transform: `translate(-50%, -50%) scale(${dragging ? 1.12 : 1})`,
+              transition: dragging ? 'none' : 'transform 160ms cubic-bezier(0.16,1,0.3,1)',
+            }}
+          >
+            <div
+              className="grid place-items-center rounded-full"
+              style={{
+                width: knob,
+                height: knob,
+                background: '#fff',
+                boxShadow: `0 2px 10px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.06)${
+                  misty ? '' : `, 0 0 16px -1px ${accent}`
+                }`,
+              }}
+            >
+              <span
+                className="rounded-full"
+                style={{
+                  width: Math.round(knob * 0.46),
+                  height: Math.round(knob * 0.46),
+                  background: accent,
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Rótulos de faixa */}
-      <div className="mt-2.5 flex justify-between">
+      {/* Rótulos de faixa: presets clicáveis, o ativo pintado na cor atual. */}
+      {showLabels && (
+      <div className={cn('flex justify-between', compact ? 'mt-2' : 'mt-3')}>
         {TONE_BANDS.map((b) => {
           const active = b.label === band.label;
           return (
@@ -161,7 +215,7 @@ export function ToneBar({ value, onChange, showPreview = true, className }: Tone
               type="button"
               onClick={() => onChange(b.at)}
               className={cn(
-                'text-[11.5px] font-semibold tracking-[0.06em] transition-colors duration-200',
+                'text-[11.5px] font-semibold tracking-[0.04em] transition-colors duration-200',
                 active ? 'text-ink' : 'text-ink-muted hover:text-ink-secondary',
               )}
               style={active ? { color: misty ? '#e8f6f1' : accent } : undefined}
@@ -171,6 +225,7 @@ export function ToneBar({ value, onChange, showPreview = true, className }: Tone
           );
         })}
       </div>
+      )}
 
       {/* Preview: as capas REAIS que este tom traz. */}
       {showPreview && (
@@ -188,31 +243,4 @@ export function ToneBar({ value, onChange, showPreview = true, className }: Tone
       )}
     </div>
   );
-}
-
-/**
- * O tom aplicado ao vivo, sem re-render do deck a cada pixel do arrasto.
- *
- * Arrastar dispara dezenas de eventos por segundo, e cada um replaneja a arte do deck
- * inteiro (38 artes x N slides). Sem isto, a barra engasga. O estado local responde na
- * hora (a barra é fluida) e o deck só é recalculado quando o quadro seguinte chega.
- */
-export function useLiveTone(committed: number, commit: (tone: number) => void): [number, (tone: number) => void] {
-  const [local, setLocal] = useState(committed);
-  const frame = useRef(0);
-
-  useEffect(() => setLocal(committed), [committed]);
-
-  const set = useCallback(
-    (tone: number) => {
-      setLocal(tone);
-      cancelAnimationFrame(frame.current);
-      frame.current = requestAnimationFrame(() => commit(tone));
-    },
-    [commit],
-  );
-
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
-
-  return [local, set];
 }

@@ -58,7 +58,7 @@ export interface CreationDraft {
   /** Público em texto livre, opcional. Vazio significa "deduza da ideia". */
   audience: string;
   style: VisualStyle | null;
-  /** O EIXO DE COR: 0 = Névoa, 0.5 = Oceano, 1 = Floresta. Escolhe as artes E pinta o cromo. */
+  /** O EIXO DE COR: 0 = Gelo, 0.5 = Azul, 1 = Verde. Escolhe as artes E pinta o cromo. */
   tone: number;
   assets: DraftAssetFile[];
   /** Preenchido quando a ideia veio de "Importar do Notion". */

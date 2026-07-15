@@ -17,7 +17,7 @@ import { ProfileMenu } from '@/components/layout/ProfileMenu';
 import { OnboardingSlot } from '@/components/layout/OnboardingSlot';
 import { loadJson, saveJson } from '@/lib/storage';
 import { cn } from '@/lib/cn';
-import logo from '@/assets/citi-slides-logo.png';
+import logo from '@/assets/logos/citi-slides-logo.png';
 
 const STORAGE_KEY = 'citi-slides:sidebar:v3';
 const RAIL_WIDTH = 80;

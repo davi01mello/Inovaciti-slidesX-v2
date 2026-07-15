@@ -55,7 +55,7 @@ interface FitBoxProps {
  * de texto reais no PPTX. Sem transform, o tamanho computado JÁ é o tamanho final,
  * e o export não precisa desfazer escala nenhuma.
  */
-export function FitBox({ minScale = 0.72, anchor = 'top', className, style, children }: FitBoxProps) {
+export function FitBox({ minScale = 0.82, anchor = 'top', className, style, children }: FitBoxProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 

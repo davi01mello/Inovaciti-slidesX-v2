@@ -7,27 +7,28 @@ identidade CITi (dark premium, verde, escultura 3D, tipografia bold).
 
 ## Como funciona
 
-1. **Briefing**: um wizard de 5 passos coleta ideia, direção (objetivo, público e voz),
-   extensão (quantos slides, com o sistema recomendando o número lido do próprio
-   briefing) e anexos, e fecha numa revisão.
+1. **Briefing**: um wizard de 5 passos coleta ideia, direção (objetivo, público, voz e
+   **cor**), extensão (quantos slides, com o sistema recomendando o número lido do
+   próprio briefing) e anexos, e fecha numa revisão. Nenhuma página rola até o botão.
 2. **Storyboard em duas etapas**: primeiro um Agente Estrategista (Gemini) recebe o
-   briefing completo do wizard e produz um plano interno (arco narrativo, papel e
-   mensagem de cada slide) que nunca aparece pro usuário; depois a IA geradora escreve
-   o conteúdo textual estruturado seguindo o plano. A quantidade de slides vai de 1 a
-   50 (exata quando o usuário escolhe, automática na faixa da ocasião quando não).
-   Posição, cor e tipografia são código determinístico, nunca decisão da IA. Todos os
-   prompts, specs de ocasião/estilo e regras de escrita vivem em `api/src/intelligence/`.
-3. **Revisão**: workspace WYSIWYG — o palco é o próprio template, clicou no texto,
-   edita no lugar. Chat com contexto do storyboard e botão de reescrever slide.
-4. **Composição no template**: cada slide é montado sobre a arte real do template
-   (fundos limpos em `app/src/assets/templates/`, derivados das páginas do deck em
-   `api/assets/references/`). O motor detecta o arquétipo do conteúdo (capa,
-   afirmação, cards, linhas, número gigante) e posiciona os textos nas zonas que o
-   MANIFESTO de cada fundo declara (`app/src/services/templateManifest.ts`), com
-   tipografia Sora, área protegida da logo e quebras equilibradas (nunca órfãos).
-   Nada de geração de imagem por IA. Fundo novo entra pelo fluxo híbrido:
-   `api/scripts/proposeZones.ts` propõe as zonas com IA de visão, você ajusta e
-   registra no manifesto — o runtime segue 100% determinístico.
+   briefing completo e produz um plano interno (arco narrativo, papel e mensagem de
+   cada slide) que nunca aparece pro usuário; depois a IA geradora escreve o conteúdo
+   textual estruturado seguindo o plano. O texto é **pontos-chave escaneáveis** (cards
+   e tópicos), nunca parede de texto nem cartaz vazio. Posição, cor e tipografia são
+   código determinístico, nunca decisão da IA. Todos os prompts vivem em
+   `api/src/intelligence/`.
+3. **Revisão**: workspace WYSIWYG — o palco é o próprio template, clicou no texto, edita
+   no lugar. A barra de cor no palco repinta o deck inteiro em tempo real.
+4. **Composição: meça a arte, não a anote.** Cada slide é montado sobre uma arte real da
+   marca (`app/src/assets/templates/`, geradas de `brand/templates-src/`). Na build, um
+   script MEDE cada arte e guarda uma grade de ocupação 16×9; em runtime, cada arquétipo
+   propõe vários arranjos e o motor pontua cada um contra a grade daquela arte, e escolhe
+   o mais vazio (`app/src/services/artZones.ts`). O texto nunca cai sobre a escultura, e
+   um véu proporcional garante contraste quando nenhum arranjo fica limpo. O diretor de
+   arte (`deckArt.ts`) monta o deck inteiro de uma vez: artes variadas, todas na mesma
+   faixa do **eixo de cor** (`tone.ts`, interpolado em OKLab). Arte nova entra sozinha:
+   joga o PNG em `brand/templates-src/` e roda `python3 brand/tools/build_templates.py`.
+   Ver o mapa completo em `brand/README.md`.
 5. **Apresentar e exportar**: modo apresentação (setas, F pra tela cheia) e exportação
    PPTX real no navegador — a arte é rasterizada localmente e os textos entram como
    caixas de texto REAIS, editáveis no PowerPoint e na Canva.
@@ -35,11 +36,14 @@ identidade CITi (dark premium, verde, escultura 3D, tipografia bold).
 ## Estrutura
 
 ```
-api/   Express + TypeScript: Gemini (storyboard/chat) e integração Canva
-app/   React 19 + Vite + Tailwind 4: home, wizard, workspace, composição, apresentação
-docs/  AUDIT.md (mapa técnico), SMOKE_TEST.md, POSTPONED.md, QUESTIONS.md
+api/     Express + TypeScript: Gemini (storyboard/chat) e integração Canva
+app/     React 19 + Vite + Tailwind 4: home, wizard, workspace, composição, apresentação
+brand/   O sistema visual: artes mestras, o pipeline de medição e o MAPA (brand/README.md)
 scripts/check-contract.mjs  Falha o build se os tipos espelhados api/app divergirem
 ```
+
+**Comece por `brand/README.md`**: é o mapa de onde vive cada peça do sistema visual
+(artes, eixo de cor, motor de zonas, prompts, logos).
 
 ## Rodando localmente
 
@@ -74,4 +78,5 @@ limit enxergar o IP real. Todas as variáveis estão documentadas em `api/.env.e
 ## Manutenção
 
 - `node scripts/check-contract.mjs` roda sozinho no predev/prebuild dos dois pacotes.
-- Decisões de escopo adiadas: `docs/POSTPONED.md`. Pendências humanas: `docs/QUESTIONS.md`.
+- Decisões de escopo adiadas conscientemente: `docs/POSTPONED.md`.
+- Sistema visual (artes, cor, zonas, prompts, logos): `brand/README.md`.

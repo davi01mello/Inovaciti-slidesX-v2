@@ -7,6 +7,7 @@ import { useDeckPlan } from '@/services/deckPlan';
 import { SlideThumbnails } from '@/components/workspace/SlideThumbnails';
 import { FormattingToolbar } from '@/components/workspace/FormattingToolbar';
 import { InsertDock } from '@/components/workspace/InsertDock';
+import { DeckColorControl } from '@/components/workspace/DeckColorControl';
 import { CitiOrb } from '@/components/ui/CitiOrb';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
@@ -405,9 +406,12 @@ export function WorkspacePage() {
           {currentSlide && (
             <div className="flex min-h-0 flex-col" style={{ width: SLIDE_STAGE_WIDTH }}>
               <div className="mb-2.5 flex h-9 items-center justify-between">
-                <span className="text-[11.5px] font-medium text-ink-muted">
-                  Slide {slideNumber} de {presentation.slides.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11.5px] font-medium text-ink-muted">
+                    Slide {slideNumber} de {presentation.slides.length}
+                  </span>
+                  <DeckColorControl presentationId={presentation.id} tone={deckPlan.tone} />
+                </div>
                 <button
                   type="button"
                   onClick={handleImprove}

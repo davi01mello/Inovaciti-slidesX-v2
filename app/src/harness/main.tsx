@@ -38,6 +38,7 @@ function useQuery() {
 function OverflowReport({ deckKey }: { deckKey: string }) {
   const [report, setReport] = useState<string>('medindo...');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useMemo(() => {
     window.setTimeout(() => {
       const stages = Array.from(document.querySelectorAll<HTMLElement>('[data-slide-stage]'));

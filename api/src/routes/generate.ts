@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { generateJson, generateText } from '../llm/gemini.js';
 import { llmErrorToHttp } from '../llm/errors.js';
 import { logger } from '../logger.js';
-import { normalizeGenerateResponse, shallowContentSlides } from '../normalize.js';
+import { normalizeGenerateResponse, offBandContentSlides } from '../normalize.js';
 import {
   GENERATOR_SYSTEM_INSTRUCTION,
   STRATEGIST_SYSTEM_INSTRUCTION,
@@ -72,14 +72,14 @@ generateRouter.post('/', async (req, res) => {
         'contagem de slides divergiu do pedido do usuário',
       );
     }
-    // SLIDE RASO É DEFEITO. Não dá pra consertar aqui (inventar parágrafo seria
-    // inventar fato), mas dá pra enxergar: se isto começar a aparecer no log, o
-    // problema é o prompt, e é lá que se conserta.
-    const shallow = shallowContentSlides(result.slides);
-    if (shallow.length > 0) {
+    // O ponto-chave é o alvo: nem slide vazio, nem parede de texto. Não dá pra
+    // consertar aqui (mexer no conteúdo do usuário), mas dá pra enxergar no log
+    // quando o prompt escorrega pra um dos extremos.
+    const offBand = offBandContentSlides(result.slides);
+    if (offBand.shallow.length > 0 || offBand.heavy.length > 0) {
       logger.warn(
-        { request_id: req.requestId, slides: shallow, style: body.style },
-        'slides de conteúdo abaixo de 60 palavras (raso)',
+        { request_id: req.requestId, vazios: offBand.shallow, paredes: offBand.heavy, style: body.style },
+        'slides de conteúdo fora da faixa de densidade saudável',
       );
     }
     res.json(result);

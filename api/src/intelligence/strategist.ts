@@ -42,23 +42,21 @@ O PLANO QUE VOCÊ PRODUZ contém, nesta ordem:
    Papéis possíveis: abrir, contextualizar, criar tensão, apresentar a proposta, aprofundar, provar,
    responder objeção, dar respiro, convergir pra decisão, fechar.
    Formatos possíveis, e você DEVE nomear um por slide de conteúdo:
-       AFIRMAÇÃO      título + parágrafo longo + frase de síntese. Sem lista.
-       CARDS          título + parágrafo + até 3 cards (cada um com título curto E corpo próprio).
-       TÓPICOS        título + parágrafo + até 5 linhas soltas, numeradas, sem caixa.
-       NÚMERO         título com UMA métrica concreta do briefing + parágrafo que a contextualiza.
-       APROFUNDAMENTO título + parágrafo de 4 frases. Texto puro, sem lista.
+       AFIRMAÇÃO      título forte + no máximo UM apoio curto (uma linha de síntese OU nada). Sem lista. O respiro do deck, pouquíssimo texto.
+       TÓPICOS        título + até 5 linhas telegráficas (3 a 8 palavras cada), sem caixa, sem parágrafo. O formato mais usado.
+       CARDS          título + 2 ou 3 cards (título curto + UMA linha de apoio). Minoria; use quando o item pede um pingo de apoio.
+       NÚMERO         título com UMA métrica concreta do briefing + uma linha que a contextualiza.
    Além destes, os estruturais: CAPA, SEPARADOR, ENCERRAMENTO.
 
    Regras que o seu plano precisa respeitar, porque a geradora vai obedecer o plano:
-   - Dois slides consecutivos NUNCA no mesmo formato.
-   - No máximo METADE dos slides de conteúdo com lista (CARDS ou TÓPICOS). O resto é texto.
-   - Pelo menos uma AFIRMAÇÃO em qualquer deck de 3+ slides.
-   - Use CARDS só quando os itens PRECISAM de explicação. Se eles se explicam sozinhos, é TÓPICOS.
+   - Dois slides consecutivos NUNCA no mesmo formato. Todo slide deve parecer único.
+   - MENOS TEXTO É MELHOR: a base do deck são TÓPICOS e AFIRMAÇÕES enxutas. CARDS são minoria (no máximo cerca de um terço).
+   - A cada 3 ou 4 slides de conteúdo, pelo menos uma AFIRMAÇÃO seca de respiro.
+   - Use CARDS só quando o item pede uma frase de apoio. Se ele se explica sozinho, é TÓPICO.
 
-3. SUBSTÂNCIA POR SLIDE: pra cada slide de conteúdo, uma frase dizendo QUAL informação concreta ele carrega
-   (o argumento, o porquê, o exemplo, a consequência). É este item que impede o slide raso: se você não
-   consegue dizer o que o slide informa além do título, o slide não deveria existir e você deve fundi-lo
-   com outro.
+3. PONTOS POR SLIDE: pra cada slide de conteúdo, liste em poucas palavras QUAIS pontos-chave ele carrega
+   (as frentes, as etapas, os números). É este item que impede tanto o slide vazio quanto a parede de texto:
+   se você não consegue nomear os pontos, o slide não deveria existir; se são muitos, ele vira dois slides.
 
 4. CUIDADOS: 2 a 4 avisos específicos deste briefing (o que não repetir, que dado não inventar, que armadilha evitar).
 
@@ -66,8 +64,9 @@ REGRAS DA SUA SAÍDA:
 - Responda APENAS com o texto do plano. Sem preâmbulo, sem "aqui está", sem comentário sobre o seu processo, sem markdown, sem cerca de código.
 - O plano cobre EXATAMENTE a quantidade de slides pedida, uma linha por slide, numeradas de 1 até o total.
 - Cada slide do plano tem UM objetivo. Nenhum slide existe pra preencher espaço.
-- LEMBRE-SE de que cada slide de conteúdo vai virar 60 a 140 palavras. Planeje conteúdo que SUSTENTE isso: se o
-  slide não tem o que dizer, ele não é um slide, é uma linha de outro slide.
+- Cada slide de conteúdo é ENXUTO (10 a 40 palavras, menos é melhor), nunca um parágrafo. MENOS TEXTO É MELHOR:
+  planeje o slide como poucos pontos telegráficos ou uma afirmação seca. Um título forte com uma linha já basta.
+  Se o assunto rende um parágrafo, ele rende três tópicos melhores, ou vira a fala do apresentador, não a tela.
 - Seja denso e enxuto: o plano inteiro cabe confortavelmente numa tela.
 
 ${WRITING_PRINCIPLES}

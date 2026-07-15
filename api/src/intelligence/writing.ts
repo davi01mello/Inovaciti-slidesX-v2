@@ -22,27 +22,35 @@ O sistema gera apenas o CONTEÚDO TEXTUAL dos slides. Posição, tamanho, cor, f
 `.trim();
 
 /**
- * A REGRA QUE VIRA O JOGO, e ela contraria o instinto de todo gerador de slides.
+ * A REGRA DE DENSIDADE. MENOS É MAIS. Esta é a regra mais importante do sistema.
  *
- * O sistema antigo produzia slides rasos porque TUDO nele pedia brevidade: o prompt
- * pedia "uma linha, nunca um parágrafo", e a voz "Sereno" mandava literalmente
- * escrever pouquíssimo texto. O resultado era um deck de cartazes bonitos e vazios,
- * onde o apresentador não tinha o que falar e o leitor não tinha o que ler.
+ * O erro histórico e recorrente é escrever DEMAIS: o slide vira um documento denso,
+ * uma parede de texto que ninguém lê num telão. Slide profissional é o oposto: o
+ * texto na tela é o ANCORADOURO do que a pessoa FALA, não o roteiro dela. Quem
+ * apresenta fala; o slide mostra o essencial e cala o resto.
  *
- * Slide de apresentação institucional é DOCUMENTO. Ele é lido depois da reunião,
- * mandado por e-mail, anexado numa proposta. Um slide com um título e três palavras
- * não sustenta nada disso.
+ * A referência é a apresentação de topo (Apple, McKinsey, um bom TED): pouquíssimo
+ * texto por slide, muitas vezes só um título forte, ou um título e três palavras.
+ * Espaço em branco não é desperdício, é design. Na dúvida, corte.
  */
 export const DENSITY_RULE = `
-A REGRA MAIS IMPORTANTE DE TODAS:
+DENSIDADE DO SLIDE: MENOS É MAIS. Este é o princípio que manda em todos os outros.
 
-## SLIDE É DOCUMENTO, NÃO CARTAZ.
+Um slide não é um documento. É o apoio visual do que a pessoa FALA. O texto na tela é
+mínimo e escaneável em UM olhar; o aprofundamento é a fala do apresentador, não a tela.
 
-- Todo slide de conteúdo tem de 60 a 140 PALAVRAS. Menos que 60 é SLIDE RASO, e slide raso é DEFEITO, não estilo.
-- Todo slide de conteúdo tem, ALÉM do título, um bloco de texto corrido (kind "body") com 2 a 4 frases completas que desenvolvem a ideia: o argumento, o porquê, o exemplo, a consequência. O body NÃO é o resumo do título nem a repetição dele com outras palavras: ele avança a ideia.
-- TÍTULO NUNCA VIVE SOZINHO. Se um slide só tem título, ele não devia existir.
-- Escrever mais NÃO é escrever encheção. Cada frase entrega informação nova. Se uma frase pode sair sem perda, ela sai — e outra, com conteúdo, entra no lugar.
-- Um slide que você acha "elegante de tão enxuto" é um slide que deixou o trabalho pro apresentador improvisar. Escreva o que ele diria.
+- Slide de conteúdo fica na casa de 10 a 40 PALAVRAS no total, e quanto MENOS, melhor.
+  Passou de 45 já é texto demais para um telão. Um slide pode viver com muito pouco.
+- PROIBIDO PAREDE DE TEXTO. Nada de parágrafo, nada de duas frases empilhadas, nada de
+  card com duas linhas de explicação. Se precisa de tudo isso, o presenter FALA isso.
+- ESTRUTURA, QUASE NUNCA PROSA. A informação vive em tópicos (3 a 6 palavras cada) ou
+  cards (título + UMA linha curtíssima). Texto corrido (body) é RARO e é sempre UMA
+  frase curta; a maioria dos slides não tem body nenhum.
+- UM SÓ TÍTULO FORTE JÁ É UM SLIDE. É profissional e desejável ter slides que são só um
+  título de impacto, ou título + uma linha de síntese, sem lista e sem body. Não force
+  lista onde uma afirmação seca é mais forte. "Vazio" com intenção é elegante, não é bug.
+- Cada palavra luta pelo lugar dela. Corte adjetivo, corte a frase que repete o título,
+  corte a explicação que a fala cobre. O que sobra, e só ele, entra no slide.
 `.trim();
 
 /**
@@ -72,41 +80,43 @@ PRINCÍPIOS DE ESCRITA (obrigatórios em todo texto produzido):
 export const CONTENT_RULES = `
 CARD ≠ TÓPICO. Esta distinção é obrigatória e o sistema a aplica no código.
 
-  kind "cards"   Conteúdo COM CORPO. Cada card tem "title" (2 a 5 palavras) e "body" (2 a 3 frases,
-                 20 a 45 palavras). Vira uma caixa de vidro no slide.
-                 MÁXIMO 3 CARDS. NUNCA 4, NUNCA 5.
+  kind "cards"   Um ponto com um PINGO de apoio. Cada card tem "title" (2 a 4 palavras)
+                 e "body" curtíssimo (UMA frase de 5 a 14 palavras). Vira uma caixa de vidro.
+                 MÁXIMO 3 CARDS. NUNCA 4, NUNCA 5. Prefira 2 ou 3.
 
-  kind "topics"  Uma LINHA. Cada tópico é um texto único de 6 a 14 palavras.
+  kind "topics"  Uma LINHA telegráfica. Cada tópico tem 3 a 8 palavras, sem ponto final.
                  Vira uma lista leve numerada, SEM caixa, sem borda.
-                 MÁXIMO 5 TÓPICOS. NUNCA 6.
+                 MÁXIMO 5 TÓPICOS. NUNCA 6. Prefira 3 ou 4.
 
-Como escolher, é uma pergunta só: "este item precisa de EXPLICAÇÃO pra ser entendido?"
-  Precisa    -> card (e aí escreva o body de verdade, não repita o título).
-  Não precisa -> tópico.
+Como escolher, é uma pergunta só: "este item precisa de uma frase de apoio pra ser entendido?"
+  Precisa    -> card (e a frase de apoio é UMA, curtíssima, jamais um parágrafo).
+  Não precisa -> tópico (o normal; a maioria das listas é de tópicos, não de cards).
 
-Um tópico NUNCA vira card. Se você tem 5 itens e quer explicar cada um, você não tem 5 cards:
-você tem 2 slides, ou tem 5 tópicos. NUNCA use cards e tópicos no mesmo slide.
+Um tópico NUNCA vira card. NUNCA use cards e tópicos no mesmo slide.
 
-TAMANHO DE CADA PEÇA (o design reserva o espaço exato, respeite):
-  section-label   2 a 4 palavras
-  title-1         3 a 7 palavras     (capa, separador, encerramento)
-  title-2         3 a 8 palavras     (título padrão de slide de conteúdo)
-  title-3         3 a 6 palavras     (subseção, uso raro)
-  subtitle        8 a 16 palavras    (UMA linha que completa o título)
-  body            30 a 70 palavras   (2 a 4 frases completas: é o coração do slide)
-  highlight       10 a 20 palavras   (UMA frase de síntese)
-  card.title      2 a 5 palavras
-  card.body       20 a 45 palavras   (2 a 3 frases)
-  topics[i]       6 a 14 palavras
+TAMANHO DE CADA PEÇA (o design reserva o espaço exato, respeite). Fique no PISO de cada
+faixa, nunca no teto. O menor número que ainda diz a coisa vence:
+  section-label   2 a 3 palavras
+  title-1         3 a 6 palavras     (capa, separador, encerramento)
+  title-2         3 a 6 palavras     (título padrão de slide de conteúdo)
+  title-3         3 a 5 palavras     (subseção, uso raro)
+  subtitle        5 a 12 palavras    (UMA linha que completa o título)
+  body            8 a 22 palavras    (UMA frase curta, RARO, nunca a estrela; a maioria dos slides não tem)
+  highlight       4 a 10 palavras    (UMA frase de síntese)
+  card.title      2 a 4 palavras
+  card.body       5 a 14 palavras    (UMA frase de apoio, curtíssima)
+  topics[i]       3 a 8 palavras
 
-REGRA DO DESTAQUE (run com "highlight": true), seja cirúrgico:
-- No máximo UM trecho marcado por slide inteiro. Muitos slides devem sair SEM nenhum destaque.
-- Só marque o coração do slide: um número ("R$ 40 mil", "3x"), um nome próprio, ou o termo âncora da tese ("sem fila", "em 48h").
-- O trecho tem 1 a 3 palavras. Nunca marque uma frase inteira, nunca marque verbo de ligação, artigo ou palavra genérica ("qualidade", "sucesso", "melhor").
-- Na dúvida, NÃO marque. Um deck com poucos destaques certeiros parece caro. Um deck todo marcado parece aleatório.
+REGRA DO DESTAQUE (run com "highlight": true), seja CIRÚRGICO. O sistema corta o excesso:
+- No máximo UM trecho marcado por slide inteiro, e de 1 a 3 palavras. A MAIORIA dos slides
+  sai SEM destaque nenhum. Destaque é exceção, não enfeite de cada slide.
+- Só marque o CORAÇÃO do slide: um número ("R$ 40 mil", "3x"), um nome próprio, ou o termo
+  âncora da tese ("sem fila", "em 48h"). Nunca uma frase inteira, nunca duas ou mais coisas.
+- NUNCA marque verbo de ligação, artigo, ou palavra genérica ("qualidade", "sucesso", "melhor").
+- Na dúvida, NÃO marque. Poucos destaques certeiros parecem caros; texto todo verde parece aleatório.
 
-BULLETS PARALELOS: itens da mesma lista têm a mesma estrutura sintática e comprimento parecido entre si
-(variação de no máximo 20%). Nada de um item de 4 palavras ao lado de um de 14.
+BULLETS PARALELOS: itens da mesma lista têm a mesma estrutura sintática e comprimento parecido
+entre si (variação de no máximo 20%). Nada de um item de 3 palavras ao lado de um de 8.
 `.trim();
 
 /** O prompt base completo: quem somos, o quanto escrevemos, como escrevemos, como formatamos. */

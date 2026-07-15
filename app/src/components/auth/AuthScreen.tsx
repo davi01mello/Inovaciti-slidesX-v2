@@ -10,7 +10,7 @@
  */
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { cn } from '@/lib/cn';
-import logo from '@/assets/citi-slides-logo.png';
+import logo from '@/assets/logos/citi-slides-logo.png';
 import { AuthField } from './AuthField';
 import { EASE } from './easing';
 import type { AuthFlow } from './useAuthFlow';

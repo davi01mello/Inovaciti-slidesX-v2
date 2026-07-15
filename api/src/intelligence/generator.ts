@@ -24,33 +24,37 @@ VOCABULÁRIO DE SLIDES:
     title-2        título padrão de slide de conteúdo
     title-3        subseção (uso raro)
     subtitle       uma linha que completa um título
-    body           PARÁGRAFO de 2 a 4 frases. É o coração de todo slide de conteúdo.
-    highlight      uma frase de síntese, com destaque visual
-    cards          até 3 itens {title, body} — conteúdo COM CORPO
-    topics         até 5 itens de uma linha — lista leve, SEM caixa
+    body           UMA frase curta de apoio, RARO. Coadjuvante, nunca a estrela. A maioria dos slides não tem.
+    highlight      uma frase curta de síntese, com destaque visual
+    cards          até 3 itens {title, body curtíssimo} — um ponto com um pingo de apoio
+    topics         até 5 itens de uma linha telegráfica — lista leve, SEM caixa
+
+MENOS TEXTO É SEMPRE MELHOR. A espinha do deck são TÓPICOS curtos e AFIRMAÇÕES secas.
+Cards são o tempero, texto corrido é raríssimo. Um slide que é só um título forte é um
+ótimo slide. Na dúvida entre dizer mais ou dizer menos, diga MENOS: o resto é a fala.
 
 ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):
 - 1 slide: um único "cover" autocontido: section-label, title-1 forte e um subtitle que carregue a mensagem inteira.
 - 2 slides: "cover" com a tese e "closing" com a conclusão e o próximo passo.
 - 3 ou mais: "cover" abre, "closing" fecha, conteúdo no meio.
-- Capa (cover): um section-label de contexto (2 a 4 palavras), um title-1 com ângulo forte e específico ao tema (jamais genérico tipo "Apresentação institucional") e UM subtitle de uma linha completando o título. Sem body, sem listas. A capa é a única exceção à regra de densidade.
-- Separador (section): só a partir de 8 slides. De 8 a 13, no máximo 1 ou 2. Em decks longos, um a cada 5 a 8 slides de conteúdo. Tem section-label e title-1, e nada mais. É um respiro, e é a outra exceção à densidade.
+- Capa (cover): um section-label de contexto (2 a 3 palavras), um title-1 com ângulo forte e específico ao tema (jamais genérico tipo "Apresentação institucional") e UM subtitle de uma linha completando o título. Sem body, sem listas.
+- Separador (section): só a partir de 8 slides. De 8 a 13, no máximo 1 ou 2. Em decks longos, um a cada 5 a 8 slides de conteúdo. Tem section-label e title-1, e nada mais. É um respiro.
 - Encerramento (closing): title-1 curto e caloroso, um subtitle com o próximo passo concreto, e um highlight com a frase que você quer que fique. Nada de listas.
-- Slide de CONTEÚDO (content): SEMPRE title-2 + body. Sempre. O body é obrigatório e tem 2 a 4 frases. Cards, topics, subtitle e highlight entram por cima disso quando o conteúdo pedir.
+- Slide de CONTEÚDO (content): title-2 + no MÁXIMO um formato de apoio. Pode ser só o título com um subtitle. NUNCA parede de texto.
 
-OS FORMATOS DE SLIDE DE CONTEÚDO. Cada slide de conteúdo nasce com UM formato:
-  a) AFIRMAÇÃO      title-2 + body longo (3 a 4 frases) + highlight. Sem lista. Pra tese, virada de argumento, conclusão parcial.
-  b) CARDS          title-2 + body (2 a 3 frases) + cards (2 ou 3 itens com corpo). Pra pilares, serviços, diferenciais que PRECISAM de explicação.
-  c) TÓPICOS        title-2 + body (2 a 3 frases) + topics (3 a 5 linhas). Pra etapas, entregas, checklist que se explicam sozinhos.
-  d) NÚMERO         title-2 curto contendo UMA métrica concreta do usuário + body que a contextualiza + subtitle. Nunca invente o número.
-  e) APROFUNDAMENTO title-2 + body longo (4 frases) + subtitle. Texto puro, sem lista. Pra explicar um mecanismo, um porquê, um caso.
+OS FORMATOS DE SLIDE DE CONTEÚDO. Cada slide de conteúdo nasce com UM formato. TÓPICOS e
+AFIRMAÇÃO são os mais comuns; todos são enxutos:
+  c) TÓPICOS        title-2 + topics (3 a 5 linhas telegráficas, sem body). Pra etapas, entregas, frentes, benefícios. É o formato mais usado.
+  a) AFIRMAÇÃO      title-2 forte + no máximo UM apoio curto (um subtitle de uma linha, OU um highlight, OU um body de UMA frase). Sem lista. Pra tese, virada, conclusão parcial. Pode ser quase só o título: isso é elegante.
+  b) CARDS          title-2 + cards (2 ou 3 itens: título + UMA linha curtíssima). Pra pilares, serviços, diferenciais. Sem body antes dos cards. Use com parcimônia.
+  d) NÚMERO         title-2 curto contendo UMA métrica concreta do usuário + subtitle de contexto. Nunca invente o número.
 
-REGRAS DURAS DE VARIEDADE:
-- Dois slides consecutivos NUNCA usam o mesmo formato.
-- No máximo METADE dos slides de conteúdo tem lista (formatos b e c somados). O resto é texto.
-- Toda apresentação com 3 ou mais slides tem pelo menos UMA afirmação central (formato a).
-- Varie a contagem de itens conforme o conteúdo real, nunca todos com 3.
-- NUNCA cards e topics no mesmo slide.
+REGRAS DURAS DE VARIEDADE (todo slide único, nunca dois iguais seguidos):
+- Dois slides consecutivos NUNCA usam o mesmo formato. Alterne tópicos, afirmação, cards, número.
+- A cada 3 ou 4 slides de conteúdo, pelo menos UM é AFIRMAÇÃO enxuta (respiro, pouquíssimo texto).
+- Não repita a mesma contagem de itens em listas vizinhas (não faça três slides seguidos com 3 tópicos).
+- CARDS é minoria: no máximo cerca de um terço dos slides de conteúdo. Se estiver usando card em quase todo slide, troque a maioria por tópicos ou afirmação.
+- NUNCA cards e topics no mesmo slide. NUNCA body junto de uma lista.
 
 ALÉM DOS SLIDES, gere também:
 - "title": o nome da apresentação na plataforma. De 2 a 5 palavras, direto e específico ao tema (ex: "Pitch CITi Para Sympla"). Primeira letra de cada palavra principal em maiúscula, sem ponto final, sem aspas. É um nome, não um resumo.
@@ -89,7 +93,7 @@ function assetsLine(assets: DraftAssetMeta[]): string {
   ];
   if (photos.length > 0) {
     lines.push(
-      `${photos.length} ${photos.length === 1 ? 'é uma FOTO que vai ocupar' : 'são FOTOS que vão ocupar'} ${photos.length === 1 ? 'um slide de miolo' : `${photos.length} slides de miolo`}, com o texto numa coluna e a imagem na outra. Escreva ${photos.length === 1 ? 'esse slide' : 'esses slides'} em texto corrido (title-2 + body de 3 a 4 frases, sem listas): o corpo precisa sustentar a imagem, não descrevê-la. Trate ${photos.length === 1 ? 'a foto' : 'as fotos'} como evidência do argumento daquele slide.`,
+      `${photos.length} ${photos.length === 1 ? 'é uma FOTO que vai ocupar' : 'são FOTOS que vão ocupar'} ${photos.length === 1 ? 'um slide de miolo' : `${photos.length} slides de miolo`}, com o texto numa coluna e a imagem na outra. Escreva ${photos.length === 1 ? 'esse slide' : 'esses slides'} com title-2 + um body CURTO (1 a 2 frases) e, se ajudar, um subtitle: o texto sustenta a imagem, não a descreve. Trate ${photos.length === 1 ? 'a foto' : 'as fotos'} como evidência do argumento daquele slide.`,
     );
   }
   if (others.length > 0) {
@@ -112,8 +116,8 @@ function structuralReminder(slideCount: number): string {
   }
   return [
     `ESTRUTURA OBRIGATÓRIA: exatamente ${slideCount} slides. O primeiro é layout "cover" e o último é layout "closing". O miolo usa "content" (e "section" só quando as regras permitirem).`,
-    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": ele tem um bloco "body" com 2 a 4 frases completas? Ele fecha entre 60 e 140 palavras? Se algum não fechar, ele está RASO: reescreva com mais substância antes de responder. Nenhum slide de conteúdo pode sair só com título.',
-    'CONFIRA TAMBÉM: no máximo 3 cards, no máximo 5 tópicos, nunca cards e tópicos juntos, e dois slides seguidos nunca no mesmo formato.',
+    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": ele fica entre 10 e 40 palavras no total? Se passar de 45, ENXUGUE SEM DÓ: corte adjetivo, corte a frase que repete o título, corte o que a fala do apresentador cobre. MENOS TEXTO É MELHOR. Nenhum slide vira parede de texto.',
+    'CONFIRA TAMBÉM: a MAIORIA dos slides usa tópicos curtos ou afirmação enxuta; cards são minoria (no máximo cerca de um terço); nenhuma lista tem body junto; no máximo 3 cards; no máximo 5 tópicos; nunca cards e tópicos juntos; dois slides seguidos nunca no mesmo formato; e nenhum trecho longo marcado como destaque (no máximo 3 palavras, no máximo um por slide).',
   ].join('\n');
 }
 

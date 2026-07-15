@@ -3,8 +3,8 @@
  * OBJETIVO (o que a apresentação precisa alcançar), VOZ (o ritmo das frases) e
  * QUANTIDADE (como a narrativa se distribui no espaço escolhido).
  *
- * A densidade do texto NÃO é uma spec: ela é fixa e vive em writing.ts (DENSITY_RULE).
- * Todo slide de conteúdo tem de 60 a 140 palavras, em qualquer voz, com qualquer objetivo.
+ * A densidade geral vive em writing.ts (DENSITY_RULE): menos é mais, sempre. Cada VOZ
+ * modula onde, dentro do enxuto, o deck cai (ver o campo `densidade` de cada StyleSpec).
  *
  * Cada spec é um guia profissional completo. Enriquecer aqui melhora a geração
  * inteira sem tocar em mais nada.
@@ -70,29 +70,25 @@ export const GOALS: Record<PresentationGoal, GoalSpec> = {
 };
 
 /**
- * A VOZ É RITMO, NÃO QUANTIDADE.
+ * A VOZ MUDA O RITMO E O QUANTO DE TEXTO.
  *
- * ARMADILHA REAL, e ela custou caro: na versão anterior a voz "Sereno" mandava,
- * com todas as letras, escrever "pouquíssimo texto por slide" e dizia que
- * "densidade é defeito". Um terço dos decks do sistema nascia raso por DESIGN, e
- * o gerador estava obedecendo direitinho. O defeito não era do modelo: era do
- * prompt.
+ * Todas as três vozes são enxutas (menos é mais, sempre — ver DENSITY_RULE em
+ * writing.ts). O que a voz faz é escolher ONDE, dentro do enxuto, cada deck cai, e
+ * COMO as frases soam:
  *
- * As três vozes agora são DENSAS. Todas as três entregam 60 a 140 palavras por
- * slide de conteúdo. O que muda entre elas é COMO as frases soam:
+ *   Sereno    o mais silencioso: quase só títulos e tópicos soltos, muito respiro
+ *   Preciso   o equilíbrio: tópicos estruturados, um card ou outro, ainda enxuto
+ *   Presença  manchetes secas: afirmações de impacto, verbo forte na frente
  *
- *   Sereno    prosa fluida, frases longas e respiradas
- *   Preciso   prosa estruturada, afirma / justifica / conclui
- *   Presença  prosa de manchete, frases curtas e verbos fortes
- *
- * "Respiro" virou uma propriedade do DESENHO (o motor de zonas decide quanto
- * espaço em branco o slide tem, medindo a arte), não uma desculpa pra escrever
- * menos. Espaço em branco é trabalho do designer. Texto é trabalho do escritor.
+ * "Respiro" também é do DESENHO: o motor de zonas decide o espaço em branco medindo
+ * a arte. Nenhuma voz é desculpa pra escrever parágrafo.
  */
 export interface StyleSpec {
   label: string;
   objetivo: string;
-  /** Como as frases SOAM. Nunca "quanto texto" — isso é fixo em 60 a 140 palavras. */
+  /** Quanto texto esta voz coloca na tela, dentro do enxuto geral. */
+  densidade: string;
+  /** Como as frases SOAM. */
   ritmo: string;
   linguagem: string;
   boasPraticas: string;
@@ -102,41 +98,37 @@ export interface StyleSpec {
 export const STYLES: Record<VisualStyle, StyleSpec> = {
   minimal: {
     label: 'Sereno',
-    objetivo:
-      'Leitura sem esforço. O texto flui como um bom parágrafo de ensaio: o leitor chega ao fim sem perceber que leu.',
+    objetivo: 'Leitura sem esforço. Cada ponto respira, e o olho pousa em um de cada vez.',
+    densidade:
+      'O MAIS ENXUTO dos três: 8 a 24 palavras por slide de conteúdo. Muitos slides são só um título com uma linha de síntese, ou um título e três tópicos de três palavras. Cards são raros aqui; body praticamente não existe.',
     ritmo:
-      'Prosa fluida. Frases mais longas e respiradas, ligadas por conectivos naturais, sem staccato. Um parágrafo de body soa como um trecho de texto bem escrito, não como uma lista disfarçada. Densidade normal do sistema: de 60 a 140 palavras por slide de conteúdo, sempre.',
+      'Frases limpas e calmas, uma ideia por linha. Tópicos telegráficos. Silêncio é bem-vindo: o que não está na tela, a pessoa fala.',
     linguagem:
-      'Econômica no adjetivo, generosa no argumento. Corte todo advérbio que não muda o sentido, mas nunca corte a explicação: é ela que faz o slide valer a pena.',
-    boasPraticas:
-      'Prefira desenvolver UMA ideia por slide até o fim a espalhar três pela metade. Um slide sereno é aquele em que a única ideia foi explicada inteira.',
-    restricoes:
-      'Sereno NÃO significa curto. Um slide com título e três palavras não é sereno, é vazio. Se o slide ficou raso, o problema não é o tom: é a falta de conteúdo.',
+      'Econômica ao osso. Corte todo adjetivo e advérbio que não muda o sentido. O que sobra é o essencial, e o essencial é o que fica.',
+    boasPraticas: 'Um assunto por slide, em pouquíssimos pontos limpos. Se está cheio, divida em dois slides.',
+    restricoes: 'Nunca parágrafo, nunca card com duas linhas. Sereno é quase vazio de propósito, e isso é elegante.',
   },
   balanced: {
     label: 'Preciso',
-    objetivo:
-      'O equilíbrio profissional: o leitor entende a tese, vê a sustentação e sabe o que fazer com aquilo.',
+    objetivo: 'O equilíbrio profissional: o leitor pega os pontos e sabe o que fazer com eles.',
+    densidade:
+      'O meio-termo: 15 a 38 palavras por slide de conteúdo. Tópicos estruturados são a base; um card ou outro quando o ponto pede apoio; afirmações secas de respiro. Ainda enxuto, nunca cheio.',
     ritmo:
-      'Prosa estruturada, em três tempos: afirma, justifica, conclui. Frases de comprimento médio e regular. O body abre com a tese em uma frase, sustenta com uma ou duas, e fecha com a consequência prática.',
-    linguagem:
-      'Confiante e direta, sem gritar. Vocabulário técnico só quando ele é o termo certo, nunca como enfeite.',
-    boasPraticas:
-      'Cada slide sustenta UMA ideia em dois níveis: a tese e a prova. Quando existir um dado do usuário, é ele que sustenta.',
-    restricoes:
-      'Sem paredes de texto sem respiro interno, mas também sem slide de uma linha. O teto de 140 palavras existe; o piso de 60 também.',
+      'Frases diretas e estruturadas. Tópicos paralelos. Cards que afirmam e sustentam em uma linha só. Body raro, e quando existe é UMA frase.',
+    linguagem: 'Confiante e direta, sem gritar. Vocabulário técnico só quando é o termo certo.',
+    boasPraticas: 'Cada slide sustenta UM assunto em poucos pontos. Quando existir um dado do usuário, ele vira o destaque.',
+    restricoes: 'Sem paredes de texto. Um card nunca vira parágrafo. Prefira tópicos a cards.',
   },
   bold: {
     label: 'Presença',
     objetivo: 'Impacto e atitude. Frases que ficam na cabeça depois que o slide passa.',
+    densidade:
+      'Seco e forte: 8 a 26 palavras por slide de conteúdo. Muitos slides são uma AFIRMAÇÃO de manchete, quase só o título. Tópicos que soam como lemas. Card é exceção.',
     ritmo:
-      'Prosa de manchete. Frases curtas, cortadas, no presente do indicativo. Verbo forte na frente. O body é uma sequência de golpes curtos que constroem o argumento, não um parágrafo macio. Mesmo assim ele TEM parágrafo: 2 a 4 frases completas, de 60 a 140 palavras no slide.',
-    linguagem:
-      'Assertiva. Título soa como manchete de jornal, nunca como rótulo de pasta. Sujeito, verbo, objeto.',
-    boasPraticas:
-      'Alterne intensidade: um slide forte precisa de um vizinho mais calmo pra continuar forte. Frase curta só impacta perto de uma frase longa.',
-    restricoes:
-      'Impacto vem da IDEIA, não do exagero. Proibido superlativo vazio e promessa sem lastro. Frase curta não é desculpa pra slide raso: são frases curtas, várias delas.',
+      'Frase de manchete: curta, presente do indicativo, verbo forte na frente. Tópicos que soam como lemas. Body raríssimo.',
+    linguagem: 'Assertiva. Título soa como manchete, nunca como rótulo de pasta. Sujeito, verbo, objeto.',
+    boasPraticas: 'Alterne intensidade: um slide forte pede um vizinho mais calmo pra continuar forte.',
+    restricoes: 'Impacto vem da IDEIA, não do exagero nem do volume. Proibido superlativo vazio.',
   },
 };
 
@@ -159,8 +151,9 @@ export function styleGuidance(style: VisualStyle): string {
   const spec = STYLES[style];
   return `
 VOZ DA ESCRITA: ${spec.label}
-A voz muda o RITMO das frases. Ela NÃO muda a quantidade de texto: todo slide de conteúdo tem de 60 a 140 palavras, nas três vozes.
+A voz muda o RITMO das frases E o quanto de texto entra na tela. Todas as vozes são enxutas; esta define onde, dentro do enxuto, este deck cai.
 - Intenção: ${spec.objetivo}
+- Densidade desta voz: ${spec.densidade}
 - Ritmo das frases: ${spec.ritmo}
 - Linguagem: ${spec.linguagem}
 - Boas práticas: ${spec.boasPraticas}
@@ -174,7 +167,7 @@ function countBand(slideCount: number): string {
     return 'Um slide único funciona como cartaz: uma mensagem forte e autocontida, sem promessa de continuação.';
   }
   if (slideCount <= 4) {
-    return 'Poucos slides: escolha MENOS assuntos, não menos texto. Cada slide que existir continua denso (60 a 140 palavras). Corte assunto, nunca profundidade.';
+    return 'Poucos slides: escolha MENOS assuntos. Cada slide que existir continua em pontos-chave escaneáveis. Corte assunto, não os pontos.';
   }
   if (slideCount <= 7) {
     return 'Espaço pra um argumento com começo, meio e fim. Um ponto por slide, desenvolvido até o fim, com transições limpas.';
@@ -192,7 +185,7 @@ export function slideCountGuidance(slideCount: number): string {
   return `
 QUANTIDADE DE SLIDES: exatamente ${slideCount}. Este número é uma decisão do usuário, não uma sugestão. A apresentação final tem ${slideCount} slides, nem mais, nem menos.
 Como usar esse espaço: ${countBand(slideCount)}
-Distribua a profundidade com equilíbrio: nunca estique conteúdo pra preencher, nunca esprema dois assuntos num slide só.
+Cada slide carrega UM assunto em pontos-chave escaneáveis. Se um assunto tem conteúdo demais pra um slide de pontos-chave, ele vira DOIS slides, nunca um slide lotado.
 `.trim();
 }
 

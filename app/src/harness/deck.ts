@@ -73,11 +73,9 @@ export function buildTestDeck(): Slide[] {
 
   const media = slide('content', [
     B.label('Prova de campo'),
-    B.t2('O que a medição mostrou no piloto'),
-    B.body(
-      'Rodamos o piloto por seis semanas com dois times reais, sem avisar o resto da operação. O ganho não veio de onde a gente esperava: quase todo o tempo economizado saiu da etapa de conferência, não da digitação. Isso muda a ordem do roadmap, porque a conferência era o item que estava previsto pro final. Trazemos ela pra frente.',
-    ),
-    B.sub('Piloto conduzido entre março e abril, com acompanhamento diário.'),
+    B.t2('O que o piloto mostrou'),
+    B.body('Seis semanas, dois times reais. O ganho veio da conferência, não da digitação.'),
+    B.sub('Conduzido entre março e abril, com acompanhamento diário.'),
   ]);
   media.image = { src: photo, width: 1200, height: 900 };
 
@@ -88,90 +86,77 @@ export function buildTestDeck(): Slide[] {
       B.sub('Como a CITi reduz o tempo de atendimento sem aumentar o time.'),
     ]),
 
+    // AFIRMAÇÃO: o respiro. Body curto (1 frase) + destaque. O texto denso saiu.
     slide('content', [
       B.label('O problema'),
       B.t2('A fila não é o gargalo. É o sintoma.'),
-      B.bodyHl(
-        'Todo mundo olha pra fila porque ela é visível, mas a fila é o que sobra de três decisões tomadas antes dela. O pedido entra sem validação, a conferência acontece no fim e o retrabalho volta pro começo. Enquanto essas três coisas continuarem nessa ordem, contratar mais gente só ',
-        'aumenta a fila mais rápido',
-        '. O que a gente propõe mexe na ordem, não no tamanho do time.',
-      ),
-      B.high('Contratar sem reordenar o processo é comprar mais fila, mais caro.'),
+      B.body('Ela é o que sobra de três decisões tomadas antes dela.'),
+      B.high('Contratar sem reordenar o processo é comprar mais fila.'),
     ]),
 
+    // CARDS: título + uma frase de apoio. Nada de parágrafo dentro do card.
     slide('content', [
       B.label('A proposta'),
       B.t2('Três frentes, na ordem que importa'),
-      B.body(
-        'A ordem aqui não é estética: cada frente só funciona se a anterior já estiver de pé. Validar na entrada é o que torna a conferência barata; a conferência barata é o que torna a automação segura. Invertendo, a automação só acelera o erro.',
-      ),
       B.cards(
-        card(
-          'Validação na entrada',
-          'O pedido não entra se estiver incompleto. Um formulário que recusa na hora custa segundos; um pedido errado que atravessa a operação custa dias.',
-        ),
+        card('Validação na entrada', 'O pedido não entra se estiver incompleto.'),
         card('Conferência contínua', 'Sai do fim e vira etapa curta em cada passo.'),
-        card(
-          'Automação do repetitivo',
-          'Só depois que os dois acima estiverem rodando. Automatizar um processo errado é fazer o erro chegar mais rápido, e foi o que aconteceu na tentativa anterior do time interno.',
-        ),
+        card('Automação do repetitivo', 'Entra só depois que as duas primeiras rodam.'),
       ),
     ]),
 
+    // TÓPICOS: linhas curtas, escaneáveis.
     slide('content', [
       B.label('Como funciona'),
-      B.t2('O que muda na rotina de quem atende'),
-      B.body(
-        'Nada do que está abaixo exige treinamento novo. São mudanças de ordem e de gatilho, não de ferramenta. O time continua usando o mesmo sistema que já usa hoje.',
-      ),
+      B.t2('O que muda na rotina'),
+      B.body('Sem treinamento novo: muda a ordem, não a ferramenta.'),
       B.topics(
-        'O pedido chega já validado, sem campo em branco',
+        'O pedido chega já validado',
         'A conferência acontece durante, não depois',
-        'O retrabalho vira exceção rastreada, não rotina',
-        'O supervisor vê o gargalo antes de ele virar fila',
-        'A automação entra só onde o processo já está estável',
+        'O retrabalho vira exceção rastreada',
+        'O supervisor vê o gargalo antes da fila',
+        'A automação entra onde o processo é estável',
       ),
     ]),
 
-    slide('section', [B.label('Capítulo dois'), B.t1('O que a operação ganha com isso')]),
+    slide('section', [B.label('Capítulo dois'), B.t1('O que a operação ganha')]),
 
+    // CARDS de 2.
     slide('content', [
       B.label('Impacto'),
-      B.t2('Onde o tempo economizado aparece'),
-      B.body(
-        'O ganho não é distribuído por igual, e é importante dizer isso antes de prometer número. A maior parte da economia se concentra em duas etapas, e as outras seguem exatamente como estão hoje. Prometer ganho uniforme seria mais fácil de vender e mais difícil de entregar.',
-      ),
+      B.t2('Onde o tempo aparece'),
       B.cards(
-        card('Entrada do pedido', 'A validação corta o vaivém de correção, que hoje é a etapa mais cara em tempo de gente.'),
-        card('Conferência', 'Deixa de ser um bloco no fim e vira verificação curta, embutida em cada passo.'),
+        card('Entrada do pedido', 'A validação corta o vaivém de correção.'),
+        card('Conferência', 'Deixa de ser um bloco no fim do processo.'),
       ),
     ]),
 
+    // NÚMERO: métrica + contexto de uma linha.
     slide('content', [
-      B.label('Números'),
+      B.label('Investimento'),
       B.t2('R$ 29.900'),
-      B.t2('Investimento total do projeto'),
-      B.body(
-        'O valor cobre as três frentes, a implantação e oito semanas de acompanhamento com o time. Não há custo recorrente de licença: o que a gente entrega roda na infraestrutura que vocês já pagam. O pagamento acompanha as entregas, não o calendário.',
-      ),
-      B.sub('Pagamento em três parcelas, atreladas às entregas de cada frente.'),
+      B.t2('Projeto fechado, sem custo recorrente'),
+      B.sub('Em três parcelas, atreladas às entregas de cada frente.'),
     ]),
 
     media,
 
+    // TÓPICOS de benefício.
     slide('content', [
       B.label('A decisão'),
-      B.t2('Por que agora e não no próximo trimestre'),
-      B.body(
-        'O custo de esperar não é zero, e ele não é linear. Cada mês de fila é um mês de retrabalho acumulado, e o retrabalho tem juros: um pedido corrigido três vezes já passou por três pessoas diferentes. Começar agora significa que a validação está de pé antes do pico de fim de ano, que é exatamente quando a fila deixa de ser um incômodo e passa a ser perda de cliente.',
+      B.t2('Por que agora'),
+      B.body('Cada mês de espera cobra juros em retrabalho acumulado.'),
+      B.topics(
+        'A validação fica pronta antes do pico de fim de ano',
+        'O time aprende no ritmo baixo, não no pico',
+        'O retrabalho para de crescer a partir do mês um',
       ),
-      B.high('Esperar um trimestre não adia o custo. Ele cobra juros.'),
     ]),
 
     slide('closing', [
       B.t1('Vamos começar?'),
-      B.sub('Próximo passo: uma reunião de uma hora com o time de operação.'),
-      B.high('Se aprovarem esta semana, a validação entra em produção antes do pico.'),
+      B.sub('Próximo passo: uma reunião de uma hora com o time.'),
+      B.high('Aprovando esta semana, a validação entra antes do pico.'),
     ]),
   ];
 }

@@ -29,8 +29,8 @@ import {
 import { artById, fallbackArt } from '@/services/deckArt';
 import { chromeFor, DEFAULT_TONE, type SlideChrome } from '@/services/tone';
 import type { TemplateArt } from '@/services/templateArt.generated';
-import logoBranco from '@/assets/logo-citi30-branco.png';
-import logoPreto from '@/assets/logo-citi30-preto.png';
+import logoBranco from '@/assets/logos/logo-citi30-branco.png';
+import logoPreto from '@/assets/logos/logo-citi30-preto.png';
 import { MAX_CARDS, MAX_TOPICS, type Block, type BlockRect, type CardItem, type Slide, type TextBlock } from '@/types/slide';
 
 /**
@@ -94,7 +94,7 @@ const useChrome = () => useContext(CompositionContext).chrome;
 
 interface SlideCompositionProps {
   slide: Slide;
-  /** O tom do deck (0 = Névoa, 0.5 = Oceano, 1 = Floresta). */
+  /** O tom do deck (0 = Gelo, 0.5 = Azul, 1 = Verde). */
   tone?: number;
   /** A escolha do diretor de arte pra este slide. Sem ela, cai numa escolha estável pelo id. */
   art?: { artId: string; arrangementId: string };
@@ -206,6 +206,10 @@ export function SlideComposition({
             background: templateArt.light ? '#eef4f2' : '#040605',
             color: chrome.ink,
             fontFamily: 'var(--font-slide)',
+            // O DESTAQUE ACOMPANHA A BARRA DE COR. O verde deixou de ser fixo: os
+            // trechos marcados (--color-slide-hl) usam o mesmo acento do tom do deck,
+            // já resolvido pra arte clara/escura. Arrastar a barra repinta o destaque junto.
+            '--color-slide-hl': chrome.accent,
             // RITMO VERTICAL: um espaçamento base e todos os respiros são múltiplos
             // dele. Nada de gaps arbitrários espalhados pelo componente.
             '--rhythm-base': '0.9cqh',
@@ -550,7 +554,7 @@ function HeroLayout({ plan, c, variant }: { plan: ComposedSlide; c: Composition;
   return (
     <>
       <ContentFrame zone={c.content}>
-        <FitBox anchor={variant === 'cover' ? 'bottom' : 'center'} minScale={0.74}>
+        <FitBox anchor={variant === 'cover' ? 'bottom' : 'center'} minScale={0.84}>
           <Stack gap={2.4} center={center}>
             <Label block={plan.label} center={center} />
             {plan.headline && (
@@ -607,7 +611,7 @@ function SectionLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   const center = c.align === 'center';
   return (
     <ContentFrame zone={c.content}>
-      <FitBox anchor="center" minScale={0.74}>
+      <FitBox anchor="center" minScale={0.84}>
         <Stack gap={2.2} center={center}>
           <Label block={plan.label} center={center} />
           {plan.headline && (
@@ -764,7 +768,7 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
   const center = align === 'center';
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.72}>
+      <FitBox anchor="center" minScale={0.82}>
         <Stack gap={1.5} center={center}>
           <Label block={plan.label} center={center} />
           {plan.headline && (
@@ -860,7 +864,6 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
    * zona (o slide é 16:9, então fração não é proporção) resolve os dois casos.
    */
   const stacked = zoneAspect(zone) < STACK_BELOW_ASPECT;
-  const colWidth = stacked ? zone.width : zone.width / items.length;
 
   /**
    * A DENSIDADE DO VIDRO vem da OCUPAÇÃO MEDIDA daquela zona naquela arte.
@@ -885,7 +888,7 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
 
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.72}>
+      <FitBox anchor="center" minScale={0.82}>
         <div
           className="grid w-full"
           style={{
@@ -997,10 +1000,12 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
                     fontWeight: 400,
                     lineHeight: 1.5,
                     color: chrome.inkSoft,
-                    // Coluna de card é estreita: justificar aqui vira rio de espaço.
-                    textAlign: justifyIfWide(colWidth, 1.02),
+                    // Corpo de card é UMA frase curta numa coluna estreita: justificar
+                    // aqui abre rios de espaço na primeira linha (medido no print). Card
+                    // é sempre à esquerda.
+                    textAlign: 'left',
                   }}
-                  clamp={7}
+                  clamp={5}
                 />
               </div>
             ),
@@ -1368,7 +1373,7 @@ function Banner({ block, zone }: { block: TextBlock; zone: PlacedZone }) {
         className="mr-[1.4cqw] h-[55%] flex-none rounded-full"
         style={{ width: '0.22cqw', background: chrome.accent, boxShadow: chrome.accentGlow }}
       />
-      <FitBox anchor="center" minScale={0.78}>
+      <FitBox anchor="center" minScale={0.84}>
         <SlideText
           block={block}
           ariaLabel="Destaque"

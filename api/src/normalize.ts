@@ -60,6 +60,50 @@ function normalizeRichText(value: unknown): RichText {
   return out.filter((run) => run.text.length > 0);
 }
 
+/**
+ * O DESTAQUE, CORTADO NO SERVIDOR. Camada 2 da regra "seja cirúrgico".
+ *
+ * O prompt pede no máximo UM trecho marcado por slide, de 1 a 3 palavras. Mas modelo
+ * nenhum obedece 100%: às vezes ele pinta uma frase inteira de verde, ou marca três
+ * coisas no mesmo slide. Texto grande verde é exatamente o defeito que aparece na
+ * frente do cliente. Então aqui o servidor GARANTE: some o destaque longo (mais de 3
+ * palavras) e só o PRIMEIRO destaque curto do slide sobrevive, o resto é desmarcado.
+ */
+const HIGHLIGHT_MAX_WORDS = 3;
+
+function wordsOf(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Percorre todo texto rico do slide e mantém, no máximo, um único destaque curto. */
+function capHighlights(blocks: GeneratedBlock[]): void {
+  let used = false;
+  const visit = (rich: RichText) => {
+    for (const run of rich) {
+      if (!run.highlight) continue;
+      // Trecho longo nunca é destaque legítimo: some. Curto sobrevive só se for o
+      // primeiro do slide; do segundo em diante, desmarca.
+      if (used || wordsOf(run.text) > HIGHLIGHT_MAX_WORDS) {
+        delete run.highlight;
+      } else {
+        used = true;
+      }
+    }
+  };
+  for (const block of blocks) {
+    if (block.kind === 'cards') {
+      for (const card of block.items) {
+        visit(card.title);
+        visit(card.body);
+      }
+    } else if (block.kind === 'topics') {
+      for (const item of block.items) visit(item);
+    } else {
+      visit(block.content);
+    }
+  }
+}
+
 function normalizeAlign(value: unknown): GeneratedTextBlock['align'] {
   return typeof value === 'string' && ALIGNS.has(value)
     ? (value as Exclude<GeneratedTextBlock['align'], undefined>)
@@ -122,7 +166,9 @@ export function normalizeSlide(raw: unknown): GeneratedSlide | null {
     ? rawBlocks.map(normalizeBlock).filter((b): b is GeneratedBlock => b !== null)
     : [];
   if (blocks.length === 0) return null;
-  return { layout: layout as GeneratedSlide['layout'], blocks: dedupeLists(blocks) };
+  const kept = dedupeLists(blocks);
+  capHighlights(kept);
+  return { layout: layout as GeneratedSlide['layout'], blocks: kept };
 }
 
 /**
@@ -174,7 +220,9 @@ export function normalizeImproveResponse(raw: unknown): { blocks: GeneratedBlock
   const blocks = Array.isArray(rawBlocks)
     ? rawBlocks.map(normalizeBlock).filter((b): b is GeneratedBlock => b !== null)
     : [];
-  return { blocks: dedupeLists(blocks) };
+  const kept = dedupeLists(blocks);
+  capHighlights(kept);
+  return { blocks: kept };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -190,7 +238,7 @@ function wordsIn(rich: RichText): number {
     .filter(Boolean).length;
 }
 
-/** Quantas palavras este slide de fato entrega. SLIDE É DOCUMENTO, NÃO CARTAZ. */
+/** Quantas palavras este slide de fato entrega. MENOS É MAIS: o telão não é documento. */
 export function slideWordCount(slide: GeneratedSlide): number {
   let total = 0;
   for (const block of slide.blocks) {
@@ -206,15 +254,24 @@ export function slideWordCount(slide: GeneratedSlide): number {
 }
 
 /**
- * Slides de conteúdo rasos, pra o log.
+ * Slides de conteúdo FORA DA FAIXA, pra o log.
  *
- * NÃO conserta: inventar parágrafo pro slide do usuário seria inventar fato, e o
- * sistema não faz isso. Serve pra a gente ver, no log, quando o prompt está
- * deixando passar slide raso — que é defeito, não estilo.
+ * NÃO conserta: reescrever o slide do usuário seria mexer no conteúdo dele. Serve
+ * pra a gente enxergar, no log, os DOIS extremos: um slide literalmente sem texto
+ * (abaixo do piso) ou uma parede de texto (acima do teto). Slide enxuto com título
+ * forte e pouquíssimo apoio é saudável e NÃO cai aqui: menos é mais.
  */
-export function shallowContentSlides(slides: GeneratedSlide[], floor = 60): number[] {
-  return slides
-    .map((slide, index) => ({ slide, index }))
-    .filter(({ slide }) => slide.layout === 'content' && slideWordCount(slide) < floor)
-    .map(({ index }) => index + 1);
+const CONTENT_FLOOR = 4;
+const CONTENT_CEIL = 50;
+
+export function offBandContentSlides(slides: GeneratedSlide[]): { shallow: number[]; heavy: number[] } {
+  const shallow: number[] = [];
+  const heavy: number[] = [];
+  slides.forEach((slide, index) => {
+    if (slide.layout !== 'content') return;
+    const words = slideWordCount(slide);
+    if (words < CONTENT_FLOOR) shallow.push(index + 1);
+    else if (words > CONTENT_CEIL) heavy.push(index + 1);
+  });
+  return { shallow, heavy };
 }

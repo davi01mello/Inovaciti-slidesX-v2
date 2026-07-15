@@ -2,7 +2,7 @@
  * O EIXO DE COR. Uma apresentação inteira nasce de UM número.
  *
  *   0.0 ──────────── 0.5 ──────────── 1.0
- *   Névoa           Oceano          Floresta
+ *   Gelo            Azul            Verde
  *   branco gelo     azul CITi       verde CITi
  *   #E8F6F1         #2DAEDB         #2DDB60
  *
@@ -111,9 +111,9 @@ export interface ToneBand {
 
 /** Os três polos do eixo. A barra de cor desenha exatamente estes rótulos. */
 export const TONE_BANDS: ToneBand[] = [
-  { at: 0, label: 'Névoa', hex: '#E8F6F1' },
-  { at: 0.5, label: 'Oceano', hex: '#2DAEDB' },
-  { at: 1, label: 'Floresta', hex: '#2DDB60' },
+  { at: 0, label: 'Gelo', hex: '#E8F6F1' },
+  { at: 0.5, label: 'Azul', hex: '#2DAEDB' },
+  { at: 1, label: 'Verde', hex: '#2DDB60' },
 ];
 
 /** O tom padrão de um deck novo: o verde da casa. */
@@ -141,7 +141,7 @@ function accentLab(tone: number): Oklab {
   return ANCHORS[ANCHORS.length - 1]!.lab;
 }
 
-/** O acento vivo deste tom. Névoa → branco gelo · Oceano → azul · Floresta → verde. */
+/** O acento vivo deste tom. Gelo → branco gelo · Azul → azul · Verde → verde. */
 export function accentFor(tone: number): string {
   return oklabToHex(accentLab(tone));
 }
@@ -149,13 +149,13 @@ export function accentFor(tone: number): string {
 /**
  * O ACENTO PROFUNDO: mesmo matiz, luminância baixa.
  *
- * ARMADILHA que isto resolve: no extremo Névoa o acento é quase branco. Escrito
+ * ARMADILHA que isto resolve: no extremo Gelo o acento é quase branco. Escrito
  * sobre uma arte de fundo CLARO (a espiral branca), isso é texto invisível — e
  * "invisível" não é um bug que aparece num teste, é um bug que aparece na frente
  * do cliente. Sobre arte clara o slide usa este acento em vez do vivo.
  *
  * O piso de croma existe porque um branco gelo escurecido vira cinza morto: sem
- * ele, o acento profundo da Névoa não seria da CITi, seria de qualquer um.
+ * ele, o acento profundo do Gelo não seria da CITi, seria de qualquer um.
  */
 export function accentDeepFor(tone: number): string {
   const lab = accentLab(tone);

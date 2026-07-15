@@ -14,7 +14,7 @@ export interface Presentation {
    * apagada de vez (purge) automaticamente após o período de retenção. */
   deletedAt?: number;
   /**
-   * O EIXO DE COR do deck: 0 = Névoa, 0.5 = Oceano, 1 = Floresta.
+   * O EIXO DE COR do deck: 0 = Gelo, 0.5 = Azul, 1 = Verde.
    *
    * Um número só, e ele faz DUAS coisas: escolhe as artes (deckArt.ts monta o deck
    * com artes vizinhas no eixo) e pinta o cromo (tone.ts). Arrastar a barra no

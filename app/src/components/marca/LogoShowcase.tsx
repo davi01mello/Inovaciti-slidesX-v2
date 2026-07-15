@@ -14,12 +14,12 @@ import { Icon } from '@/components/ui/Icon';
 import { pushToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 
-import citiBranco from '@/assets/logo-citi-branco.png';
-import citiPreto from '@/assets/logo-citi-preto.png';
-import citiVerde from '@/assets/logo-citi-verde.png';
-import citi30Branco from '@/assets/logo-citi30-branco.png';
-import citi30Preto from '@/assets/logo-citi30-preto.png';
-import citi30Verde from '@/assets/logo-citi30-verde.png';
+import citiBranco from '@/assets/logos/logo-citi-branco.png';
+import citiPreto from '@/assets/logos/logo-citi-preto.png';
+import citiVerde from '@/assets/logos/logo-citi-verde.png';
+import citi30Branco from '@/assets/logos/logo-citi30-branco.png';
+import citi30Preto from '@/assets/logos/logo-citi30-preto.png';
+import citi30Verde from '@/assets/logos/logo-citi30-verde.png';
 
 type LogoVariant = 'tradicional' | 'aniversario';
 type LogoColor = 'branco' | 'preto' | 'verde';

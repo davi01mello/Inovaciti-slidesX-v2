@@ -94,8 +94,8 @@ const BAND_STEP = 0.1;
 /**
  * As artes elegíveis pra este tom, com a faixa ALARGADA até haver material de sobra.
  *
- * A coleção não é uniforme: 29 artes caem na Floresta, 8 no Oceano e UMA na
- * Névoa. Uma faixa fixa em volta de tone=0 acharia uma arte só, e o deck sairia
+ * A coleção não é uniforme: 29 artes caem no Verde, 8 no Azul e UMA no
+ * Gelo. Uma faixa fixa em volta de tone=0 acharia uma arte só, e o deck sairia
  * repetindo a mesma capa três vezes. Melhor um deck levemente fora do tom exato
  * que um deck repetido — então a faixa cresce até caber o deck com folga.
  */

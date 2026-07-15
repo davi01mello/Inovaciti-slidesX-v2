@@ -115,11 +115,19 @@ function measureText(el: HTMLElement, stageRect: DOMRect): ExportText | null {
   const letterRaw = computed.letterSpacing;
   const charSpacingPx = letterRaw && letterRaw !== 'normal' ? parseFloat(letterRaw) * scale : 0;
 
+  // O DESTAQUE segue a barra de cor (--color-slide-hl = acento do tom, setado no
+  // palco). Lê a cor COMPUTADA de um trecho marcado em vez do verde fixo, pra o PPTX
+  // sair com o mesmo acento que está na tela. Um trecho basta: todos herdam a mesma var.
+  const hlEl = el.querySelector<HTMLElement>('[data-hl="1"], [data-color="green"]');
+  const highlightHex = hlEl ? toHex(window.getComputedStyle(hlEl).color) : undefined;
+
   let runs: ExportTextRun[] = fromDom(el).map((run) => ({
     text: run.text,
     ...(run.bold ? { bold: true } : {}),
-    ...(run.highlight ? { highlight: true } : {}),
-    ...(run.color && run.color !== 'default' ? { colorHex: EXPORT_COLOR_HEX[run.color] } : {}),
+    ...(run.highlight ? { highlight: true, ...(highlightHex ? { colorHex: highlightHex } : {}) } : {}),
+    ...(run.color && run.color !== 'default'
+      ? { colorHex: run.color === 'green' ? (highlightHex ?? EXPORT_COLOR_HEX.green) : EXPORT_COLOR_HEX[run.color] }
+      : {}),
     ...(run.fontFamily ? { fontFace: FONT_FAMILY_OPTIONS[run.fontFamily].label } : {}),
     ...(run.size && run.size !== 'md' ? { fontSizePx: fontSizePx * FONT_SIZE_SCALE[run.size].em } : {}),
   }));

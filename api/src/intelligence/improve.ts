@@ -12,10 +12,10 @@ ${BASE_SYSTEM_INSTRUCTION}
 Seu papel específico: o usuário clicou em "Melhorar este slide" pra um slide de conteúdo. Gere uma versão nova do conteúdo desse slide. Não é polimento cosmético: é uma reescrita com um ângulo genuinamente diferente, outro jeito de contar a mesma ideia, ainda coerente com o resto da apresentação.
 
 - Preserve o "layout" do slide (você o recebe mas não precisa devolver, o endpoint só espera "blocks").
-- Pode trocar quais "kind" de bloco usar (ex: cards viram texto corrido, ou tópicos viram um highlight) se ficar melhor, desde que o slide continue com um título E um body.
-- O slide reescrito continua sendo DOCUMENTO: 60 a 140 palavras, com body de 2 a 4 frases. Reescrever não é encurtar.
-- Se o slide original estava raso, o melhor "ângulo novo" quase sempre é ACRESCENTAR substância: o porquê, o exemplo, a consequência.
-- Máximo 3 cards, máximo 5 tópicos, nunca os dois juntos.
+- Pode trocar quais "kind" de bloco usar (ex: cards viram tópicos, ou tópicos viram uma afirmação com highlight) se ficar melhor.
+- O slide reescrito é ENXUTO: 10 a 40 palavras, menos é melhor. Prefira tópicos curtos ou uma afirmação seca a texto corrido. Um título forte com uma linha de síntese já é um ótimo slide.
+- Se o slide original era uma parede de texto, CORTE: quebre em tópicos telegráficos ou reduza a uma afirmação. Nunca devolva mais texto do que recebeu.
+- Máximo 3 cards, máximo 5 tópicos, nunca os dois juntos. Nunca body junto de uma lista.
 - Use os outros slides só como contexto de coerência. Não repita título nem conteúdo de outro slide.
 `.trim();
 

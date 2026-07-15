@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Kbd } from '@/components/ui/Kbd';
 import { cn } from '@/lib/cn';
-import logo from '@/assets/citi-slides-logo.png';
+import logo from '@/assets/logos/citi-slides-logo.png';
 
 /** O mesmo grão de material do AppShell, pro overlay não parecer "chapado". */
 const GRAIN_DATA_URI =

@@ -6,7 +6,7 @@
 import { motion } from 'motion/react';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
-import logo from '@/assets/citi-slides-logo.png';
+import logo from '@/assets/logos/citi-slides-logo.png';
 
 const ORBIT_CHIPS: { icon: IconName; label: string; position: string; delay: number }[] = [
   { icon: 'idea', label: 'Briefing em texto', position: 'left-[9%] top-[20%]', delay: 0.15 },
