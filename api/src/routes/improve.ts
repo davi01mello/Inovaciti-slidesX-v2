@@ -37,7 +37,7 @@ improveRouter.post('/', async (req, res) => {
       prompt: buildImprovePrompt({ idea: body.idea, goal: body.goal, style: body.style, slide, otherSlides }),
       responseSchema: improveResponseSchema,
     });
-    const result = normalizeImproveResponse(raw);
+    const result = normalizeImproveResponse(raw, body.style);
     if (result.blocks.length === 0) {
       res.status(502).json({ error: 'O modelo não retornou um slide válido. Tenta de novo.' });
       return;

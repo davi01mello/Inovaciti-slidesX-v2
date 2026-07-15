@@ -402,18 +402,32 @@ function RevealText({ text }: { text: string }) {
   );
 }
 
-/** A orb acelera e "Pensando" varre luz — o estado de espera é a própria marca viva. */
+/**
+ * A orb acelera e "Pensando" varre luz — o estado de espera é a própria marca viva.
+ *
+ * O texto é o degradê recortado nas letras (background-clip: text), com uma faixa
+ * verde que corre de uma ponta à outra, como um radar passando no nome.
+ *
+ * ARMADILHA que já quebrou este efeito: um <span> INLINE fragmenta o fundo por linha,
+ * e a animação de background-position não varre. Tem que ser inline-block. E o clip
+ * precisa do prefixo -webkit-* explícito (mais o text-fill-color) pra funcionar em
+ * todos os motores, senão o texto some (transparente sem recorte) e parece "não fazer nada".
+ */
 function ThinkingRow() {
   return (
     <div className="flex animate-message-in items-center gap-3">
       <OrbAvatar thinking />
       <span
-        className="bg-clip-text text-[13px] font-medium text-transparent"
+        className="inline-block text-[13px] font-medium"
         style={{
           backgroundImage:
-            'linear-gradient(90deg, rgba(138,147,160,0.55) 0%, rgba(138,147,160,0.55) 35%, #7AF2A5 50%, rgba(138,147,160,0.55) 65%, rgba(138,147,160,0.55) 100%)',
-          backgroundSize: '200% 100%',
-          animation: 'thinking-sweep 1.6s linear infinite',
+            'linear-gradient(100deg, #7c8794 0%, #7c8794 38%, #57f7a8 50%, #7c8794 62%, #7c8794 100%)',
+          backgroundSize: '220% 100%',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          color: 'transparent',
+          animation: 'thinking-sweep 1.5s linear infinite',
         }}
       >
         Pensando…

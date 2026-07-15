@@ -58,29 +58,30 @@ export interface StyleOption {
   description: string;
 }
 
-/** O tom modula a voz e a densidade do texto dentro do objetivo escolhido. */
+/** A voz muda a QUANTIDADE e a forma do texto: cada uma gera um tipo de slide diferente. */
 export const STYLE_OPTIONS: StyleOption[] = [
   {
     value: 'minimal',
     label: 'Sereno',
-    description: 'Pouco texto, muito respiro. Cada palavra pesa mais.',
+    description: 'Quase só o título. O mínimo de texto na tela.',
   },
   {
     value: 'balanced',
     label: 'Preciso',
-    description: 'O equilíbrio profissional. Confiante sem gritar.',
+    description: 'Título e poucos tópicos. O único que faz listas.',
   },
   {
     value: 'bold',
     label: 'Presença',
-    description: 'Frases de impacto, atitude, manchetes no lugar de rótulos.',
+    description: 'Manchetes secas. Uma ideia de impacto por slide.',
   },
 ];
 
-/** Exemplos que ensinam o formato do campo de público sem obrigar a preencher. */
+/** Exemplos que ensinam o formato do campo de público sem obrigar a preencher.
+ * Públicos reais das apresentações da CITi, em Caixa Alta Inicial. */
 export const AUDIENCE_EXAMPLES: string[] = [
-  'Diretoria de uma varejista',
-  'Time técnico do cliente',
-  'Novos membros da CITi',
-  'Investidores anjo',
+  'Diretoria Executiva',
+  'Time Técnico Do Cliente',
+  'Novos Membros Da CITi',
+  'Cliente Corporativo',
 ];

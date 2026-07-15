@@ -39,18 +39,14 @@ DENSIDADE DO SLIDE: MENOS É MAIS. Este é o princípio que manda em todos os ou
 Um slide não é um documento. É o apoio visual do que a pessoa FALA. O texto na tela é
 mínimo e escaneável em UM olhar; o aprofundamento é a fala do apresentador, não a tela.
 
-- Slide de conteúdo fica na casa de 10 a 40 PALAVRAS no total, e quanto MENOS, melhor.
-  Passou de 45 já é texto demais para um telão. Um slide pode viver com muito pouco.
-- PROIBIDO PAREDE DE TEXTO. Nada de parágrafo, nada de duas frases empilhadas, nada de
-  card com duas linhas de explicação. Se precisa de tudo isso, o presenter FALA isso.
-- ESTRUTURA, QUASE NUNCA PROSA. A informação vive em tópicos (3 a 6 palavras cada) ou
-  cards (título + UMA linha curtíssima). Texto corrido (body) é RARO e é sempre UMA
-  frase curta; a maioria dos slides não tem body nenhum.
-- UM SÓ TÍTULO FORTE JÁ É UM SLIDE. É profissional e desejável ter slides que são só um
-  título de impacto, ou título + uma linha de síntese, sem lista e sem body. Não force
-  lista onde uma afirmação seca é mais forte. "Vazio" com intenção é elegante, não é bug.
-- Cada palavra luta pelo lugar dela. Corte adjetivo, corte a frase que repete o título,
-  corte a explicação que a fala cobre. O que sobra, e só ele, entra no slide.
+- UM TÍTULO FORTE JÁ É UM SLIDE, e é o CASO MAIS COMUM. A maioria dos slides de conteúdo
+  deve ser só um título de impacto, sem mais nada. Isso é profissional e elegante, não um bug.
+- A FORMA EXATA DE CADA SLIDE VEM DA VOZ (ver "ESTRUTURA OBRIGATÓRIA desta voz"): Sereno é só
+  título, Preciso pode ter UMA lista curta, Presença é a manchete. Respeite-a; o servidor a garante.
+- PROIBIDO PAREDE DE TEXTO. Nada de parágrafo, nada de duas frases empilhadas, nada de card
+  com duas linhas de explicação. Se precisa de tudo isso, quem apresenta FALA isso.
+- Cada palavra luta pelo lugar dela. Corte adjetivo, corte a frase que repete o título, corte
+  a explicação que a fala cobre. Na dúvida entre uma palavra a mais ou a menos, tire.
 `.trim();
 
 /**

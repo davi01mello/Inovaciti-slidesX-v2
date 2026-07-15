@@ -106,7 +106,7 @@ export function StepSlides({ idea, goal, value, onChange }: StepSlidesProps) {
       <StepHeader
         kicker="Extensão"
         title="Quantos slides essa história pede?"
-        subtitle="Não existe número certo no vácuo. Existe o número que o seu conteúdo precisa. Li o seu briefing e deixei uma sugestão pronta."
+        subtitle="Ajuste o número como quiser. A sugestão abaixo saiu do seu briefing."
       />
 
       {/* A recomendação, com o motivo. É o primeiro elemento porque é a resposta
