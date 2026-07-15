@@ -14,7 +14,7 @@
  * cortar é torcer.
  */
 import { MAX_CARDS, MAX_TOPICS } from './types.js';
-import type { GeneratedBlock, GeneratedCard, GeneratedSlide, RichRun, RichText } from './types.js';
+import type { GeneratedBlock, GeneratedCard, GeneratedSlide, GeneratedTextBlock, RichRun, RichText } from './types.js';
 
 const TEXT_KINDS = new Set([
   'title-1',
@@ -60,9 +60,9 @@ function normalizeRichText(value: unknown): RichText {
   return out.filter((run) => run.text.length > 0);
 }
 
-function normalizeAlign(value: unknown): GeneratedBlock['align'] {
+function normalizeAlign(value: unknown): GeneratedTextBlock['align'] {
   return typeof value === 'string' && ALIGNS.has(value)
-    ? (value as Exclude<GeneratedBlock['align'], undefined>)
+    ? (value as Exclude<GeneratedTextBlock['align'], undefined>)
     : undefined;
 }
 
