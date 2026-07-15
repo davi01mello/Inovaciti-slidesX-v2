@@ -16,7 +16,6 @@
  */
 import { GOAL_OPTIONS, AUDIENCE_EXAMPLES, STYLE_OPTIONS } from '@/data/creationOptions';
 import { StepHeader } from '@/components/creation/StepHeader';
-import { StylePreview } from '@/components/creation/StylePreview';
 import { ToneBar } from '@/components/creation/ToneBar';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/cn';
@@ -24,6 +23,47 @@ import type { PresentationGoal, VisualStyle } from '@/types/creation';
 
 /** Teto do campo de público. Espelha a validação da API (200 caracteres). */
 const AUDIENCE_MAX = 200;
+
+/**
+ * A "cara" de cada voz num selo minúsculo que NÃO quebra em tamanho pequeno: barras
+ * relativas dentro de uma caixa fixa, sem alturas que estouram. Mostra a densidade
+ * real de cada voz — Sereno quase vazio, Preciso com tópicos, Presença uma manchete.
+ */
+function VoicePreview({ style, active }: { style: VisualStyle; active: boolean }) {
+  const accent = active ? 'bg-brand' : 'bg-brand/55';
+  const line = active ? 'bg-white/80' : 'bg-white/45';
+  const faint = active ? 'bg-white/30' : 'bg-white/[0.18]';
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        'flex h-[42px] w-[62px] flex-none flex-col justify-center gap-[3px] rounded-md border px-2 transition-colors duration-200',
+        active ? 'border-brand/25 bg-[#0b130f]' : 'border-white/[0.05] bg-[#0a0b0d]',
+      )}
+    >
+      {style === 'minimal' && (
+        <>
+          <span className={cn('h-[2.5px] w-4 rounded-full', accent)} />
+          <span className={cn('h-[4px] w-[70%] rounded-full', line)} />
+        </>
+      )}
+      {style === 'balanced' && (
+        <>
+          <span className={cn('h-[2.5px] w-3.5 rounded-full', accent)} />
+          <span className={cn('h-[3.5px] w-[80%] rounded-full', line)} />
+          <span className={cn('h-[2.5px] w-[62%] rounded-full', faint)} />
+          <span className={cn('h-[2.5px] w-[72%] rounded-full', faint)} />
+        </>
+      )}
+      {style === 'bold' && (
+        <>
+          <span className={cn('h-[6px] w-[86%] rounded-[2px]', line)} />
+          <span className={cn('h-[6px] w-[54%] rounded-[2px]', accent)} />
+        </>
+      )}
+    </div>
+  );
+}
 
 interface StepDirectionProps {
   goal: PresentationGoal | null;
@@ -119,39 +159,52 @@ export function StepDirection({
         })}
       </div>
 
-      {/* Andar de baixo: três colunas simétricas. */}
+      {/* Andar de baixo: três colunas. Cada painel distribui seu conteúdo do topo ao
+          rodapé (rodapé ancorado com mt-auto), então nenhuma coluna fica com um vazio
+          morto embaixo quando a grade iguala as alturas. */}
       <div className="mt-4 grid items-stretch gap-3 lg:grid-cols-3">
-        {/* Público */}
-        <section className={PANEL}>
+        {/* Público: campo + sugestões em lista vertical, que preenchem a coluna por
+            igual (justify-between) — nada de vazio morto embaixo. Rima com a lista de Voz. */}
+        <section className={cn(PANEL, 'flex flex-col')}>
           <ColumnLabel hint="Opcional">Público</ColumnLabel>
           <input
             type="text"
             value={audience}
             maxLength={AUDIENCE_MAX}
             onChange={(event) => onAudienceChange(event.target.value)}
-            placeholder="Ex.: diretoria de uma varejista"
+            placeholder="Ex.: Diretoria De Marketing"
             aria-label="Público da apresentação"
             className="w-full rounded-control border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-[13.5px] text-ink outline-none transition-colors duration-200 placeholder:text-ink-muted/70 focus:border-brand/40"
           />
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {AUDIENCE_EXAMPLES.slice(0, 3).map((example) => (
-              <button
-                key={example}
-                type="button"
-                onClick={() => onAudienceChange(example)}
-                className="rounded-full border border-white/[0.07] bg-white/[0.02] px-2.5 py-1 text-[11px] text-ink-muted transition-colors duration-150 hover:border-brand/30 hover:text-ink-secondary"
-              >
-                {example}
-              </button>
-            ))}
+          <div className="mt-3 flex flex-1 flex-col justify-between gap-1.5">
+            {AUDIENCE_EXAMPLES.map((example) => {
+              const active = audience.trim() === example;
+              return (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => onAudienceChange(example)}
+                  className={cn(
+                    'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-[12.5px] transition-all duration-150',
+                    active
+                      ? 'border-brand/40 bg-brand/[0.07] text-ink'
+                      : 'border-white/[0.05] bg-white/[0.02] text-ink-muted hover:border-white/[0.12] hover:bg-white/[0.03] hover:text-ink-secondary',
+                  )}
+                >
+                  <span className={cn('h-1.5 w-1.5 flex-none rounded-full', active ? 'bg-brand' : 'bg-white/25')} />
+                  {example}
+                </button>
+              );
+            })}
           </div>
+          <p className="pt-3 text-[11.5px] text-ink-muted">Em branco, a IA deduz o público.</p>
         </section>
 
-        {/* Voz: quanto texto e com que ritmo. Lista vertical, cada opção respira e
-            mostra uma miniatura real do resultado ao lado do que ela faz. */}
-        <section className={PANEL}>
-          <ColumnLabel hint="Quanto texto e ritmo">Voz</ColumnLabel>
-          <div role="radiogroup" aria-label="Voz da escrita" className="flex flex-col gap-2">
+        {/* Voz: quanto texto cada voz gera. Lista vertical, cada opção respira e mostra
+            um selo fiel da densidade que ela produz (Sereno vazio, Preciso lista, Presença manchete). */}
+        <section className={cn(PANEL, 'flex flex-col')}>
+          <ColumnLabel hint="Quanto texto">Voz</ColumnLabel>
+          <div role="radiogroup" aria-label="Voz da escrita" className="flex flex-1 flex-col justify-between gap-2">
             {STYLE_OPTIONS.map((option) => {
               const selected = style === option.value;
               return (
@@ -162,19 +215,16 @@ export function StepDirection({
                   aria-checked={selected}
                   onClick={() => onStyleChange(option.value)}
                   className={cn(
-                    'group flex items-center gap-3 rounded-xl border p-2 text-left transition-all duration-200',
+                    'group flex flex-1 items-center gap-3 rounded-xl border p-2.5 text-left transition-all duration-200',
                     selected
                       ? 'border-brand/45 bg-brand/[0.07]'
                       : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]',
                   )}
                 >
-                  <StylePreview
-                    style={option.value}
-                    className="w-[64px] flex-none transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
+                  <VoicePreview style={option.value} active={selected} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[13px] font-semibold text-ink">{option.label}</span>
+                      <span className="text-[13.5px] font-semibold text-ink">{option.label}</span>
                       {selected && <Icon name="check" size={12} strokeWidth={2.6} className="ml-auto text-brand" />}
                     </div>
                     <p className="mt-0.5 text-[11.5px] leading-[1.35] text-ink-muted">{option.description}</p>
@@ -185,11 +235,11 @@ export function StepDirection({
           </div>
         </section>
 
-        {/* Cor: a estrela. A barra de tom com as três capas reais ao vivo. */}
-        <section className={PANEL}>
+        {/* Cor: a estrela. A barra de tom com o leitor-herói e as três capas ao vivo. */}
+        <section className={cn(PANEL, 'flex flex-col')}>
           <ColumnLabel hint="Repinta o deck">Cor</ColumnLabel>
           <ToneBar value={tone} onChange={onToneChange} />
-          <p className="mt-3 text-[11.5px] leading-[1.4] text-ink-muted">
+          <p className="mt-auto pt-4 text-[11.5px] leading-[1.4] text-ink-muted">
             Arraste e veja sua apresentação mudar.
           </p>
         </section>

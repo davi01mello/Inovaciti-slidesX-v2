@@ -299,13 +299,15 @@
   }
 }
 
-/* Texto "Pensando" com varredura de luz (usar com bg-clip-text + gradiente 200%). */
-@keyframes thinking-sweep {
+/* "Pensando…" — a luz verde varre o nome como um radar. Um degradê que se repete a
+ * cada 120px (uma faixa verde por período), deslocado exatamente um período: o loop
+ * é contínuo e sem emenda. Usar com background-clip: text. */
+@keyframes thinking-radar {
   from {
-    background-position: 200% 0;
+    background-position: 0 0;
   }
   to {
-    background-position: -200% 0;
+    background-position: 120px 0;
   }
 }
 
@@ -465,6 +467,16 @@ textarea:focus-visible,
  * reportado como bug. Nada mais no app recebe essa isenção. */
 [data-ambient='true'] {
   animation-duration: 60s !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* Exceção: o radar verde do "Pensando…". É animação de COR pura (nenhum movimento
+ * posicional, zero risco vestibular) e é O feedback de que a IA está trabalhando —
+ * congelada, some e vira o bug reportado. A especificidade extra ganha da regra
+ * `:root[data-reduce-motion='true'] *` acima, que senão a mataria. */
+[data-thinking-sweep],
+:root[data-reduce-motion='true'] [data-thinking-sweep] {
+  animation-duration: 1.3s !important;
   animation-iteration-count: infinite !important;
 }
 

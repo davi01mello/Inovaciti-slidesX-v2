@@ -14,7 +14,17 @@
  * cortar é torcer.
  */
 import { MAX_CARDS, MAX_TOPICS } from './types.js';
-import type { GeneratedBlock, GeneratedCard, GeneratedSlide, GeneratedTextBlock, RichRun, RichText } from './types.js';
+import type {
+  GeneratedBlock,
+  GeneratedCard,
+  GeneratedCardsBlock,
+  GeneratedSlide,
+  GeneratedTextBlock,
+  GeneratedTopicsBlock,
+  RichRun,
+  RichText,
+  VisualStyle,
+} from './types.js';
 
 const TEXT_KINDS = new Set([
   'title-1',
@@ -186,6 +196,171 @@ function dedupeLists(blocks: GeneratedBlock[]): GeneratedBlock[] {
   return blocks.filter((b) => (b.kind === 'cards' || b.kind === 'topics' ? b === keep : true));
 }
 
+/* -------------------------------------------------------------------------- */
+/* A VOZ MODELA A ESTRUTURA DO SLIDE, não só a redação.                         */
+/*                                                                             */
+/* Trocar a Voz não mudava nada e todo slide vinha com texto demais porque a    */
+/* diferença entre as vozes morava só em faixas de palavras (8-24 vs 15-38) que */
+/* o modelo ignora, sem nada proibindo estruturalmente um bloco pesado. Aqui a  */
+/* identidade de cada voz vira uma GRAMÁTICA DE BLOCOS do slide de CONTEÚDO, e o */
+/* servidor GARANTE (o prompt só pede; modelo não obedece 100%):                */
+/*                                                                             */
+/*   Sereno   (minimal)  só título + subtítulo curto opcional. Nunca lista,     */
+/*                       nunca body, nunca destaque. Muitos slides só o título. */
+/*   Preciso  (balanced) a ÚNICA voz que enumera: título + UMA lista (tópicos   */
+/*                       OU cards) OU um body curto, + subtítulo curto opcional. */
+/*   Presença (bold)     manchete: título + no máximo UM acento (destaque OU    */
+/*                       rótulo), nunca lista, nunca body.                       */
+/*                                                                             */
+/* Só age em slides "content": capa/separador/encerramento mantêm a receita     */
+/* deles (a Voz só afina a redação). Estilo desconhecido cai nos limites globais.*/
+/* Nunca corta no meio da frase: descarta blocos/itens inteiros por prioridade, */
+/* e o título nunca cai. Se o slide vier sem título, um é sintetizado do melhor  */
+/* conteúdo, pra nunca esvaziar o slide.                                         */
+/* -------------------------------------------------------------------------- */
+
+// Tetos de palavras por voz (enxutos de propósito; um pouco de folga pra não
+// apagar um subtítulo legítimo por causa de uma palavra a mais).
+const SERENO_CEIL = 13;
+const PRESENCA_CEIL = 13;
+const PRECISO_CEIL = 28;
+const PRECISO_TOPICS = 3;
+const PRECISO_CARDS = 2;
+
+const CONTENT_TITLE_KINDS = new Set(['title-1', 'title-2', 'title-3']);
+
+/** Palavras de um bloco qualquer (texto, cards ou tópicos). */
+function blockWords(block: GeneratedBlock): number {
+  if (block.kind === 'cards') return block.items.reduce((n, c) => n + wordsIn(c.title) + wordsIn(c.body), 0);
+  if (block.kind === 'topics') return block.items.reduce((n, t) => n + wordsIn(t), 0);
+  return wordsIn(block.content);
+}
+
+function totalWords(blocks: GeneratedBlock[]): number {
+  return blocks.reduce((n, b) => n + blockWords(b), 0);
+}
+
+/** A melhor fonte de texto pra virar título quando o slide de conteúdo veio sem um. */
+function borrowTitle(blocks: GeneratedBlock[]): RichText | null {
+  for (const b of blocks) {
+    if (b.kind === 'topics') {
+      if (b.items[0]) return b.items[0];
+    } else if (b.kind === 'cards') {
+      if (b.items[0]) return b.items[0].title;
+    } else if (b.content.length > 0) {
+      return b.content;
+    }
+  }
+  return null;
+}
+
+/** Garante um title-2 âncora no slide de conteúdo: converte title-1/3, ou sintetiza. */
+function ensureContentTitle(blocks: GeneratedBlock[]): GeneratedBlock[] {
+  const idx = blocks.findIndex(
+    (b) => b.kind !== 'cards' && b.kind !== 'topics' && CONTENT_TITLE_KINDS.has(b.kind),
+  );
+  if (idx >= 0) {
+    const tb = blocks[idx] as GeneratedTextBlock;
+    if (tb.kind === 'title-2') return blocks;
+    const copy = blocks.slice();
+    copy[idx] = { ...tb, kind: 'title-2' };
+    return copy;
+  }
+  const borrowed = borrowTitle(blocks);
+  if (!borrowed) return blocks;
+  return [{ kind: 'title-2', content: borrowed }, ...blocks];
+}
+
+function splitTitle(blocks: GeneratedBlock[]): { title: GeneratedBlock | null; rest: GeneratedBlock[] } {
+  const idx = blocks.findIndex((b) => b.kind === 'title-2');
+  if (idx < 0) return { title: null, rest: blocks };
+  return { title: blocks[idx]!, rest: blocks.filter((_, i) => i !== idx) };
+}
+
+/** Sereno: título + no máximo um subtítulo curto. Nada mais. */
+function enforceSereno(blocks: GeneratedBlock[]): GeneratedBlock[] {
+  const { title, rest } = splitTitle(blocks);
+  if (!title) return blocks;
+  const subtitle = rest.find((b) => b.kind === 'subtitle') ?? null;
+  let out: GeneratedBlock[] = subtitle ? [title, subtitle] : [title];
+  if (out.length > 1 && totalWords(out) > SERENO_CEIL) out = [title];
+  return out;
+}
+
+/** Presença: título manchete + no máximo UM acento (destaque OU rótulo curto). */
+function enforcePresenca(blocks: GeneratedBlock[]): GeneratedBlock[] {
+  const { title, rest } = splitTitle(blocks);
+  if (!title) return blocks;
+  const accent =
+    rest.find((b) => (b.kind === 'highlight' || b.kind === 'section-label') && blockWords(b) <= 3) ?? null;
+  let out: GeneratedBlock[] = accent ? [title, accent] : [title];
+  if (out.length > 1 && totalWords(out) > PRESENCA_CEIL) out = [title];
+  return out;
+}
+
+/** Preciso: a única voz que enumera. Título + UMA lista OU body, + subtítulo opcional. */
+function enforcePreciso(blocks: GeneratedBlock[]): GeneratedBlock[] {
+  const { title, rest } = splitTitle(blocks);
+  if (!title) return blocks;
+  const subtitle = rest.find((b) => b.kind === 'subtitle') ?? null;
+  const cards = rest.find((b): b is GeneratedCardsBlock => b.kind === 'cards') ?? null;
+  const topics = rest.find((b): b is GeneratedTopicsBlock => b.kind === 'topics') ?? null;
+  const body = rest.find((b) => b.kind === 'body') ?? null;
+
+  // Uma lista só (cards têm preferência, como no dedupeLists), com teto de itens.
+  let list: GeneratedBlock | null = null;
+  if (cards) list = { kind: 'cards', items: cards.items.slice(0, PRECISO_CARDS) };
+  else if (topics) list = { kind: 'topics', items: topics.items.slice(0, PRECISO_TOPICS) };
+
+  const out: GeneratedBlock[] = [title];
+  if (subtitle) out.push(subtitle);
+  if (list) out.push(list);
+  else if (body) out.push(body); // body só quando não há lista
+
+  // Teto de palavras: remove por prioridade (subtítulo, item da lista, body), título nunca.
+  while (totalWords(out) > PRECISO_CEIL && out.length > 1) {
+    const subIdx = out.findIndex((b) => b.kind === 'subtitle');
+    if (subIdx >= 0) {
+      out.splice(subIdx, 1);
+      continue;
+    }
+    const listIdx = out.findIndex((b) => b.kind === 'topics' || b.kind === 'cards');
+    if (listIdx >= 0) {
+      const lb = out[listIdx]!;
+      if (lb.kind === 'topics' && lb.items.length > 1) {
+        out[listIdx] = { kind: 'topics', items: lb.items.slice(0, -1) };
+        continue;
+      }
+      if (lb.kind === 'cards' && lb.items.length > 1) {
+        out[listIdx] = { kind: 'cards', items: lb.items.slice(0, -1) };
+        continue;
+      }
+    }
+    const bodyIdx = out.findIndex((b) => b.kind === 'body');
+    if (bodyIdx >= 0) {
+      out.splice(bodyIdx, 1);
+      continue;
+    }
+    break; // sobrou o mínimo (título + um item)
+  }
+  return out;
+}
+
+/**
+ * Aplica a gramática de blocos da voz a UM slide. Só age em slides de conteúdo;
+ * capa/separador/encerramento passam intactos.
+ */
+export function enforceVoice(slide: GeneratedSlide, style: VisualStyle): GeneratedSlide {
+  if (slide.layout !== 'content') return slide;
+  const withTitle = ensureContentTitle(slide.blocks);
+  let blocks: GeneratedBlock[];
+  if (style === 'minimal') blocks = enforceSereno(withTitle);
+  else if (style === 'balanced') blocks = enforcePreciso(withTitle);
+  else blocks = enforcePresenca(withTitle);
+  if (blocks.length === 0) return slide; // segurança: nunca esvazia
+  return { ...slide, blocks };
+}
+
 /** Título vindo do modelo: sanitizado, limitado a 60 caracteres, primeira letra maiúscula. */
 function normalizeTitle(raw: unknown): string {
   if (typeof raw !== 'string') return '';
@@ -194,7 +369,10 @@ function normalizeTitle(raw: unknown): string {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
-export function normalizeGenerateResponse(raw: unknown): {
+export function normalizeGenerateResponse(
+  raw: unknown,
+  style?: VisualStyle,
+): {
   title: string;
   slides: GeneratedSlide[];
   chat: string[];
@@ -202,9 +380,12 @@ export function normalizeGenerateResponse(raw: unknown): {
   const rawSlides = (raw as Record<string, unknown> | undefined)?.['slides'];
   const rawChat = (raw as Record<string, unknown> | undefined)?.['chat'];
   const title = normalizeTitle((raw as Record<string, unknown> | undefined)?.['title']);
-  const slides = Array.isArray(rawSlides)
+  const parsed = Array.isArray(rawSlides)
     ? rawSlides.map(normalizeSlide).filter((s): s is GeneratedSlide => s !== null)
     : [];
+  // A Voz modela a estrutura de cada slide de conteúdo (ver enforceVoice). Sem
+  // style informado, cai só nos limites globais já aplicados no normalizeSlide.
+  const slides = style ? parsed.map((s) => enforceVoice(s, style)) : parsed;
   const chat = Array.isArray(rawChat)
     ? rawChat
         .filter((c): c is string => typeof c === 'string')
@@ -215,13 +396,18 @@ export function normalizeGenerateResponse(raw: unknown): {
   return { title, slides, chat };
 }
 
-export function normalizeImproveResponse(raw: unknown): { blocks: GeneratedBlock[] } {
+export function normalizeImproveResponse(raw: unknown, style?: VisualStyle): { blocks: GeneratedBlock[] } {
   const rawBlocks = (raw as Record<string, unknown> | undefined)?.['blocks'];
   const blocks = Array.isArray(rawBlocks)
     ? rawBlocks.map(normalizeBlock).filter((b): b is GeneratedBlock => b !== null)
     : [];
   const kept = dedupeLists(blocks);
   capHighlights(kept);
+  // "Melhorar slide" só roda em slide de conteúdo, então a mesma gramática de voz
+  // vale aqui: sem isto, editar um slide voltava com a densidade da voz ignorada.
+  if (style && kept.length > 0) {
+    return { blocks: enforceVoice({ layout: 'content', blocks: kept }, style).blocks };
+  }
   return { blocks: kept };
 }
 
@@ -261,8 +447,8 @@ export function slideWordCount(slide: GeneratedSlide): number {
  * (abaixo do piso) ou uma parede de texto (acima do teto). Slide enxuto com título
  * forte e pouquíssimo apoio é saudável e NÃO cai aqui: menos é mais.
  */
-const CONTENT_FLOOR = 4;
-const CONTENT_CEIL = 50;
+const CONTENT_FLOOR = 3;
+const CONTENT_CEIL = 34;
 
 export function offBandContentSlides(slides: GeneratedSlide[]): { shallow: number[]; heavy: number[] } {
   const shallow: number[] = [];

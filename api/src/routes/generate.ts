@@ -59,7 +59,7 @@ generateRouter.post('/', async (req, res) => {
       prompt: buildGeneratorPrompt({ plan, ...briefing }),
       responseSchema: generateResponseSchema,
     });
-    const result = normalizeGenerateResponse(raw);
+    const result = normalizeGenerateResponse(raw, body.style);
     if (result.slides.length === 0) {
       res.status(502).json({ error: 'O modelo não retornou slides válidos. Tenta de novo.' });
       return;
