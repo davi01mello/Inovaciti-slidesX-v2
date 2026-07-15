@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { createId } from '@/lib/id';
 import { loadJson, saveJson } from '@/lib/storage';
+import { pushToast } from '@/lib/toast';
 import { cloneBlock, makeFloatingTextBlock, makeTextBlock, type FloatingTextKind } from '@/lib/blocks';
 import { clampRect } from '@/lib/rect';
 import { applyGeneratedBlocksToSlide } from '@/lib/generatedSlide';
@@ -31,6 +32,14 @@ const STORAGE_KEY = 'citi-slides:presentations:v3';
 
 /** Itens na Lixeira são apagados de vez depois disso (a UI da Lixeira mostra a contagem). */
 export const TRASH_RETENTION_DAYS = 30;
+
+/**
+ * localStorage é por navegador/máquina — não tem limpeza de servidor. Sem um teto,
+ * a lista ativa cresce pra sempre até estourar a cota do navegador. Passou disso,
+ * a mais antiga cai pra Lixeira (não é apagada na hora: ainda dá pra restaurar ou
+ * exportar pro Canva dentro do TRASH_RETENTION_DAYS).
+ */
+export const ACTIVE_PRESENTATIONS_LIMIT = 20;
 
 interface PresentationsState {
   presentations: Presentation[];
@@ -167,6 +176,33 @@ function updatePresentation(id: string, patch: (p: Presentation) => Presentation
     presentations: state.presentations.map((p) => (p.id === id ? { ...patch(p), updatedAt: now } : p)),
   };
   emit();
+}
+
+/**
+ * Mantém só as ACTIVE_PRESENTATIONS_LIMIT mais recentes (por updatedAt, mesmo
+ * critério do sort "Recentes" da biblioteca) fora da Lixeira. O excedente cai pra
+ * Lixeira — não some na hora, e a pessoa é avisada pra exportar pro Canva antes do
+ * prazo de retenção acabar. Roda depois de qualquer ação que possa fazer a lista
+ * ativa crescer (criar, duplicar, restaurar da lixeira).
+ */
+function enforceActiveLimit(): void {
+  const active = state.presentations.filter((p) => !p.deletedAt).sort((a, b) => b.updatedAt - a.updatedAt);
+  if (active.length <= ACTIVE_PRESENTATIONS_LIMIT) return;
+
+  const overflow = active.slice(ACTIVE_PRESENTATIONS_LIMIT);
+  const overflowIds = new Set(overflow.map((p) => p.id));
+  const now = Date.now();
+  state = {
+    ...state,
+    presentations: state.presentations.map((p) => (overflowIds.has(p.id) ? { ...p, deletedAt: now } : p)),
+  };
+  emit();
+
+  pushToast(
+    overflow.length === 1
+      ? '1 apresentação mais antiga foi pra Lixeira (limite de 20 ativas). Exporte pro Canva antes que ela suma de vez.'
+      : `${overflow.length} apresentações mais antigas foram pra Lixeira (limite de 20 ativas). Exporte pro Canva antes que sumam de vez.`,
+  );
 }
 
 function updateSlideInPresentation(pres: Presentation, slideId: string, patch: (s: Slide) => Slide): Presentation {
@@ -498,6 +534,7 @@ export const presentationsStore = {
     };
     state = { ...state, presentations: [presentation, ...state.presentations] };
     emit();
+    enforceActiveLimit();
 
     void runGeneration(id);
 
@@ -814,6 +851,7 @@ export const presentationsStore = {
     };
     state = { ...state, presentations: [copy, ...state.presentations] };
     emit();
+    enforceActiveLimit();
     return copy.id;
   },
 
@@ -823,6 +861,7 @@ export const presentationsStore = {
 
   restoreFromTrash(id) {
     updatePresentation(id, (p) => ({ ...p, deletedAt: undefined }));
+    enforceActiveLimit();
   },
 
   purge(id) {

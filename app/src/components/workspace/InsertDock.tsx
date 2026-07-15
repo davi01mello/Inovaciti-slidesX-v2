@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent 
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ELEMENTS, ELEMENT_COLORS, elementColorLabel, elementShapeLabel, hasElements } from '@/services/elementsManifest';
+import { ICONS, ICON_CATEGORIES, iconCategoryLabel, iconNameLabel, hasIcons } from '@/services/iconsManifest';
 import { addSessionUpload, listSessionUploads, type SessionUpload } from '@/services/sessionUploads';
 import { writeInsertPayload } from '@/services/insertDnd';
 import { generateAiImage } from '@/services/imageGenClient';
@@ -26,9 +27,9 @@ interface InsertDockProps {
   onInsertImage: (image: LoadedImage) => void;
 }
 
-type DockTab = 'text' | 'elements' | 'images';
+type DockTab = 'text' | 'elements' | 'icons' | 'images';
 
-const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', elements: 'Elementos', images: 'Imagens' };
+const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', elements: 'Elementos', icons: 'Ícones', images: 'Imagens' };
 
 export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: InsertDockProps) {
   const [tab, setTab] = useState<DockTab | null>(null);
@@ -52,6 +53,7 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
   }, [tab]);
 
   const showElements = hasElements();
+  const showIcons = hasIcons();
 
   return (
     // No FLUXO do layout (não flutuando por cima): abrir um painel empurra o
@@ -66,6 +68,14 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
               label="Elementos"
               active={tab === 'elements'}
               onClick={() => setTab((t) => (t === 'elements' ? null : 'elements'))}
+            />
+          )}
+          {showIcons && (
+            <RailButton
+              icon="grid"
+              label="Ícones"
+              active={tab === 'icons'}
+              onClick={() => setTab((t) => (t === 'icons' ? null : 'icons'))}
             />
           )}
           <RailButton
@@ -95,6 +105,7 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
               {tab === 'text' && <TextTab onInsert={onInsertText} />}
               {tab === 'elements' && <ElementsTab onInsert={onInsertElement} />}
+              {tab === 'icons' && <IconsTab onInsert={onInsertElement} />}
               {tab === 'images' && <ImagesTab onInsert={onInsertImage} />}
             </div>
           </div>
@@ -202,6 +213,65 @@ function ElementsTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
               draggable={false}
               className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
             />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ícones — pictogramas da marca (pilares, valores, áreas...), filtrável por
+   categoria. Traço branco + verde: lê bem no painel escuro E nos templates
+   (que são escuros por padrão) — por isso o traço não é preto no arquivo.    */
+/* -------------------------------------------------------------------------- */
+
+function IconsTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const visible = useMemo(
+    () => (categoryFilter ? ICONS.filter((i) => i.category === categoryFilter) : ICONS),
+    [categoryFilter],
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-1">
+        <ColorChip active={categoryFilter === null} onClick={() => setCategoryFilter(null)} label="Todas" />
+        {ICON_CATEGORIES.map((category) => (
+          <ColorChip
+            key={category}
+            active={categoryFilter === category}
+            onClick={() => setCategoryFilter(category)}
+            label={iconCategoryLabel(category)}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {visible.map((asset) => (
+          <button
+            key={asset.key}
+            type="button"
+            draggable
+            onDragStart={(event: DragEvent) => writeInsertPayload(event.dataTransfer, { type: 'element', assetKey: asset.key })}
+            onClick={() => onInsert(asset.key)}
+            aria-label={`${iconNameLabel(asset.name)} · ${iconCategoryLabel(asset.category)}`}
+            className="group relative flex aspect-square cursor-grab items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-1.5 transition-all duration-150 hover:border-brand/40 hover:bg-brand/[0.07] active:cursor-grabbing"
+          >
+            <img
+              src={asset.src}
+              alt=""
+              draggable={false}
+              className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
+            />
+            {/* Nome do ícone: nasce escondido, aparece no hover. O nome do arquivo é a
+                única pista do que o pictograma significa — sem isso a pessoa insere às
+                cegas. Posicionado ACIMA (não abaixo) porque a grade tem várias linhas e
+                um tooltip embaixo ficaria coberto pela linha seguinte. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-7 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0b0d10] px-2 py-1 text-[10px] font-medium text-ink opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+              {iconNameLabel(asset.name)}
+            </span>
           </button>
         ))}
       </div>

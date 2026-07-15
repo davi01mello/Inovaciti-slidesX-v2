@@ -11,6 +11,9 @@ export const INSERT_DND_MIME = 'application/x-citi-insert';
 
 export type InsertPayload =
   | { type: 'text'; kind: FloatingTextKind }
+  // 'element' carrega blobs (elementsManifest, "cor/forma") E ícones
+  // (iconsManifest, "categoria/nome") — o drop só sabe assetKey, a resolução
+  // pra src acontece depois (ver DecorationsLayer), então não precisa dividir o tipo.
   | { type: 'element'; assetKey: string }
   | { type: 'image'; uploadId: string };
 

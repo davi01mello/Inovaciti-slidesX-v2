@@ -6,6 +6,7 @@
 import { Card } from '@/components/ui/Card';
 import { LogoShowcase } from '@/components/marca/LogoShowcase';
 import { ElementsShowcase } from '@/components/marca/ElementsShowcase';
+import { IconsShowcase } from '@/components/marca/IconsShowcase';
 import { pushToast } from '@/lib/toast';
 import heroBlob from '@/assets/marca-banner.jpg';
 
@@ -134,6 +135,9 @@ export function MarcaPage() {
 
       {/* Elementos 3D: as bolhas da marca, por cor. */}
       <ElementsShowcase />
+
+      {/* Ícones: os pictogramas da marca, por categoria. */}
+      <IconsShowcase />
 
       {/* Tipografia dos slides. */}
       <Card className="p-6 px-7">

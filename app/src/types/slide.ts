@@ -116,8 +116,9 @@ export interface SlideImage {
 
 /**
  * Imagem solta sobre o slide (camada livre, estilo Canva). Não confundir com
- * `Slide.image`, que é a foto de CONTEÚDO do arquétipo media. Duas origens:
- * - elemento da marca: `assetKey` aponta pro manifesto (ex: "azul/coracao");
+ * `Slide.image`, que é a foto de CONTEÚDO do arquétipo media. Três origens:
+ * - elemento (blob) da marca: `assetKey` aponta pro elementsManifest (ex: "azul/coracao");
+ * - ícone (pictograma) da marca: `assetKey` aponta pro iconsManifest (ex: "valores/jogo-limpo");
  * - upload do usuário: `assetKey` é "upload" e `src` carrega o data URL reduzido.
  */
 export interface Decoration {

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { TransformBox } from '@/components/present/TransformBox';
 import { useLayerSelection } from '@/components/present/useLayerSelection';
 import { elementByKey } from '@/services/elementsManifest';
+import { iconByKey } from '@/services/iconsManifest';
 import type { BlockRect, Decoration } from '@/types/slide';
 
 /**
@@ -31,7 +32,9 @@ export function DecorationsLayer({ decorations, editable, onMove, onDelete }: De
     // capturam o ponteiro — os textos do template abaixo continuam clicáveis.
     <div className="pointer-events-none absolute inset-0">
       {decorations.map((decoration) => {
-        const src = decoration.src ?? elementByKey(decoration.assetKey)?.src;
+        // Duas famílias visuais no mesmo assetKey namespace: blob ("cor/forma") e
+        // ícone ("categoria/nome") não colidem, então tenta as duas sem prefixo.
+        const src = decoration.src ?? elementByKey(decoration.assetKey)?.src ?? iconByKey(decoration.assetKey)?.src;
         if (!src) return null;
         return (
           <TransformBox

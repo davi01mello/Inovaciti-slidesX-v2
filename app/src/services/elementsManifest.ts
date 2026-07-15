@@ -24,6 +24,7 @@ const COLOR_LABELS: Record<string, string> = {
   azul: 'Azul',
   preto: 'Preto',
   roxo: 'Roxo',
+  rosa: 'Rosa',
   verde: 'Verde',
   'gradiente-azul-verde': 'Degradê Azul-Verde',
   'gradiente-roxo-azul-verde': 'Degradê Roxo-Azul-Verde',
