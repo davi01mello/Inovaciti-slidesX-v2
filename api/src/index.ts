@@ -15,6 +15,7 @@ import {
   imageLimits,
   improveLimits,
   notionLimits,
+  transcribeLimits,
 } from './middleware/rateLimits.js';
 import { requestId } from './middleware/requestId.js';
 import { requireAuth } from './middleware/requireAuth.js';
@@ -27,6 +28,7 @@ import { generateRouter } from './routes/generate.js';
 import { imagesRouter } from './routes/images.js';
 import { improveRouter } from './routes/improve.js';
 import { notionRouter } from './routes/notion.js';
+import { transcribeRouter } from './routes/transcribe.js';
 
 assertProductionConfig((msg) => logger.warn(msg));
 
@@ -106,6 +108,9 @@ app.use('/api/images', imageGenLimits, imagesRouter);
 
 // Importar briefing do Notion: só leitura, teto mais folgado que as rotas de IA.
 app.use('/api/notion', notionLimits, notionRouter);
+
+// Ditado por voz: transcreve o áudio gravado no navegador (Whisper).
+app.use('/api/transcribe', transcribeLimits, transcribeRouter);
 
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.', request_id: req.requestId });

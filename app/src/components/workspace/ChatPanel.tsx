@@ -10,10 +10,12 @@ import {
 } from 'react';
 import { CitiOrb } from '@/components/ui/CitiOrb';
 import { Icon } from '@/components/ui/Icon';
+import { MicButton } from '@/components/ui/MicButton';
 import { Spinner } from '@/components/ui/Spinner';
 import { presentationsStore } from '@/stores/presentationsStore';
 import { AiClientError, sendChatMessage } from '@/services/aiClient';
 import { fileToChatAttachment, pickImageFiles, type ChatImageAttachment } from '@/lib/imageFile';
+import { appendDictated } from '@/lib/appendDictated';
 import { pushToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 import type { ChatMessage } from '@/types/chat';
@@ -265,16 +267,22 @@ export function ChatPanel({ presentationId, messages, idea, goal, style, slides,
               className="hidden"
               onChange={handleFilePick}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={attachments.length >= MAX_ATTACHMENTS}
-              title="Anexar imagem (ou arraste/cole aqui)"
-              aria-label="Anexar imagem"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-white/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              <Icon name="attach" size={15} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={attachments.length >= MAX_ATTACHMENTS}
+                title="Anexar imagem (ou arraste/cole aqui)"
+                aria-label="Anexar imagem"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors duration-150 hover:bg-white/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <Icon name="attach" size={15} />
+              </button>
+              <MicButton
+                className="h-8 w-8"
+                onTranscribed={(text) => setInput((prev) => appendDictated(prev, text))}
+              />
+            </div>
             <button
               type="button"
               onClick={() => void submit()}

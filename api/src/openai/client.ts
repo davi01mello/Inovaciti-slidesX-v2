@@ -83,3 +83,77 @@ export async function generateImage(prompt: string): Promise<GeneratedImage> {
   const [width, height] = IMAGE_SIZE.split('x').map(Number) as [number, number];
   return { base64: b64, mimeType: 'image/png', width, height };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Ditado por voz (Whisper) -- transcreve o áudio gravado no navegador          */
+/* -------------------------------------------------------------------------- */
+
+export class TranscribeError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = 'TranscribeError';
+  }
+}
+
+const TRANSCRIPTIONS_URL = 'https://api.openai.com/v1/audio/transcriptions';
+
+// Só pra dar um nome de arquivo com extensão certa no multipart -- a OpenAI usa
+// a extensão (não o Content-Type) pra decidir o decoder. webm é o que o
+// MediaRecorder do Chrome/Firefox manda por padrão; os outros cobrem Safari e afins.
+const EXTENSION_BY_MIME: Record<string, string> = {
+  'audio/webm': 'webm',
+  'audio/ogg': 'ogg',
+  'audio/mp4': 'mp4',
+  'audio/mpeg': 'mp3',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/m4a': 'm4a',
+  'audio/x-m4a': 'm4a',
+};
+
+interface TranscriptionApiResponse {
+  text?: string;
+  error?: { message?: string };
+}
+
+/** Transcreve um áudio curto (ditado) pra texto em português. */
+export async function transcribeAudio(audioBase64: string, mimeType: string): Promise<string> {
+  if (!config.openaiApiKey) {
+    throw new TranscribeError('Ditado por voz não configurado no servidor (falta OPENAI_API_KEY em api/.env).', 'not_configured');
+  }
+
+  const extension = EXTENSION_BY_MIME[mimeType] ?? 'webm';
+  const buffer = Buffer.from(audioBase64, 'base64');
+  if (buffer.length === 0) {
+    throw new TranscribeError('Áudio vazio -- grave de novo.', 'empty');
+  }
+
+  const form = new FormData();
+  form.append('file', new Blob([buffer], { type: mimeType }), `ditado.${extension}`);
+  form.append('model', 'whisper-1');
+  // Só um empurrão de idioma -- o Whisper detecta sozinho, mas fixar 'pt' evita
+  // que um trecho curto e ambíguo caia em inglês por engano.
+  form.append('language', 'pt');
+
+  const res = await fetch(TRANSCRIPTIONS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${config.openaiApiKey}` },
+    body: form,
+  });
+
+  const data = (await res.json().catch(() => null)) as TranscriptionApiResponse | null;
+
+  if (!res.ok) {
+    logger.error({ status: res.status, detail: data?.error?.message }, 'falha ao transcrever áudio na OpenAI');
+    throw new TranscribeError(data?.error?.message || `Falha ao transcrever áudio (${res.status}).`, 'upstream');
+  }
+
+  const text = data?.text?.trim();
+  if (!text) {
+    throw new TranscribeError('Não consegui entender esse áudio. Tenta falar de novo, mais perto do microfone.', 'empty');
+  }
+  return text;
+}

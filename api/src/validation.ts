@@ -113,6 +113,18 @@ export const generateImageBodySchema = z.object({
     .max(600, 'prompt de imagem com no máximo 600 caracteres'),
 });
 
+// Ditado por voz: o front grava no navegador (MediaRecorder) e manda o áudio inteiro
+// em base64, mesmo formato JSON das outras rotas -- nada de multipart aqui. Teto de
+// ~9M chars de base64 cobre confortavelmente uns 4-5 minutos de fala comprimida
+// (bem mais que qualquer ditado de verdade), sem abrir brecha pra upload gigante.
+export const transcribeBodySchema = z.object({
+  audioBase64: z.string({ required_error: 'audioBase64 é obrigatório' }).min(1, 'áudio vazio').max(9_000_000, 'áudio grande demais (grave um trecho mais curto)'),
+  mimeType: z
+    .string({ required_error: 'mimeType é obrigatório' })
+    .max(100)
+    .default('audio/webm'),
+});
+
 export const notionWriteBackBodySchema = z.object({
   url: z
     .string({ required_error: 'url é obrigatória' })

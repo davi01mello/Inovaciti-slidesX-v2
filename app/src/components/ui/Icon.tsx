@@ -41,7 +41,8 @@ export type IconName =
   | 'arrow-up'
   | 'x'
   | 'undo'
-  | 'redo';
+  | 'redo'
+  | 'mic';
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -307,6 +308,28 @@ function FileImageIcon({ size = 16, ...rest }: Omit<IconProps, 'name'>) {
   );
 }
 
+/** Cápsula + suporte: o glifo de microfone padrão (ditado por voz). */
+function MicIcon({ size = 16, ...rest }: Omit<IconProps, 'name'>) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...rest}
+    >
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11v1a7 7 0 0 0 14 0v-1" />
+      <path d="M12 19v3M9 22h6" />
+    </svg>
+  );
+}
+
 /** Central icon registry — every glyph used across the app lives here so
  * visual fidelity to the source design stays in one place. */
 export function Icon({ name, size, ...rest }: IconProps) {
@@ -333,6 +356,8 @@ export function Icon({ name, size, ...rest }: IconProps) {
       return <PlusIcon size={size} {...rest} />;
     case 'file-image':
       return <FileImageIcon size={size} {...rest} />;
+    case 'mic':
+      return <MicIcon size={size} {...rest} />;
     default:
       return <StrokeIcon name={name} size={size} {...rest} />;
   }

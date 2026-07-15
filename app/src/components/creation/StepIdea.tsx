@@ -4,6 +4,8 @@ import { StepHeader } from '@/components/creation/StepHeader';
 import { NotionImportButton } from '@/components/creation/NotionImportButton';
 import { TEMPLATES } from '@/data/templates';
 import { Icon } from '@/components/ui/Icon';
+import { MicButton } from '@/components/ui/MicButton';
+import { appendDictated } from '@/lib/appendDictated';
 import { cn } from '@/lib/cn';
 
 interface StepIdeaProps {
@@ -55,7 +57,14 @@ export function StepIdea({ value, onChange, onNotionPageId }: StepIdeaProps) {
         subtitle="Descreva do jeito que fizer sentido pra você. Se preferir jogar a ideia livre, ótimo. Se quiser descrever slide por slide, melhor ainda."
       />
 
-      <div className="mt-7 flex justify-end">
+      <div className="mt-7 flex items-center justify-end gap-2">
+        <MicButton
+          variant="pill"
+          onTranscribed={(text) => {
+            onChange(appendDictated(value, text));
+            ref.current?.focus();
+          }}
+        />
         <NotionImportButton
           onImport={(text, pageId) => {
             onChange(text);

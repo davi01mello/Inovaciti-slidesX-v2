@@ -83,6 +83,10 @@ export const config = {
     imageGenSessionPerHour: readInt('RATE_IMAGE_GEN_SESSION', 6),
     notionIpPerHour: readInt('RATE_NOTION_IP', 40),
     notionSessionPerHour: readInt('RATE_NOTION_SESSION', 20),
+    // Ditado por voz (transcrição): mais barato que gerar imagem, mas ainda é
+    // chamada paga à OpenAI -- teto parecido com o do chat.
+    transcribeIpPerHour: readInt('RATE_TRANSCRIBE_IP', 60),
+    transcribeSessionPerHour: readInt('RATE_TRANSCRIBE_SESSION', 30),
   },
 } as const;
 

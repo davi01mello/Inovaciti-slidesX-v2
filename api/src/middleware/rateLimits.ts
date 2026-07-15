@@ -66,3 +66,5 @@ export const authLimits = dual(config.rate.authIpPerHour, config.rate.authSessio
 export const imageGenLimits = dual(config.rate.imageGenIpPerHour, config.rate.imageGenSessionPerHour);
 // Leitura do Notion: barata (só requests HTTP normais), teto mais folgado.
 export const notionLimits = dual(config.rate.notionIpPerHour, config.rate.notionSessionPerHour);
+// Ditado por voz: paga à OpenAI, mas barata perto de imagem -- teto no nível do chat.
+export const transcribeLimits = dual(config.rate.transcribeIpPerHour, config.rate.transcribeSessionPerHour);
