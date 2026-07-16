@@ -36,10 +36,14 @@ const SHAPE_LABELS: Record<string, string> = {
   c: 'C',
   concha: 'Concha',
   coracao: 'Coração',
+  crescente: 'Crescente',
+  emaranhado: 'Emaranhado',
   espiral: 'Espiral',
   fenda: 'Fenda',
+  helice: 'Hélice',
   parafuso: 'Parafuso',
   patinho: 'Patinho',
+  redemoinho: 'Redemoinho',
 };
 
 function titleCase(slug: string): string {
