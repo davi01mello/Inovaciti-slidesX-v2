@@ -18,7 +18,9 @@ Em runtime, cada arquétipo propõe vários arranjos possíveis e o motor pontua
 um contra a grade daquela arte (ver app/src/services/artZones.ts). O texto nunca
 cai em cima da escultura, e a mesma arte muda de arranjo conforme o arquétipo.
 
-Arte nova entra sozinha: joga o PNG em brand/templates-src/<Familia>/ e roda:
+Arte nova entra sozinha: joga o PNG (fundo estático) OU o MP4 (fundo com
+movimento -- vira WebP animado, medido pelo frame do meio) em
+brand/templates-src/<Familia>/ e roda:
 
     python3 brand/tools/build_templates.py
 
@@ -31,7 +33,9 @@ from __future__ import annotations
 
 import math
 import re
+import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -63,6 +67,26 @@ FAMILIES = {
 ART_W, ART_H = 1600, 900
 WEBP_QUALITY = 80
 GRID_COLS, GRID_ROWS = 16, 9
+
+# ---------------------------------------------------------------------------
+# Vídeo -> WebP animado (fundos com movimento, ex: os blobs da marca)
+# ---------------------------------------------------------------------------
+#
+# Mesmo tratamento de sempre (cover_crop + measure), só que a "arte" que sai no
+# catálogo é um WebP ANIMADO em vez de estático. Pro app isto é invisível: o
+# campo `src` continua uma string apontando pra um .webp, e todo navegador
+# moderno já anima um WebP animado dentro de uma <img> normal — zero mudança
+# no renderizador (ver components/present/SlideComposition.tsx).
+#
+# A GRADE, o matiz, a luminância etc. são medidos num único FRAME REPRESENTATIVO
+# (o do meio do clipe), pelo mesmo motivo que uma arte estática usa um frame
+# só: o motor de zonas precisa de UMA leitura estável, não de 80.
+VIDEO_EXTS = {".mp4"}
+VIDEO_FPS = 8
+VIDEO_QUALITY = 72
+# Nível 3: o ponto de equilíbrio medido. Nível 0 sai maior; nível 6 (o mais
+# compacto) pode levar minutos num clipe gradiente como estes blobs de vidro.
+VIDEO_COMPRESSION_LEVEL = 3
 
 # ---------------------------------------------------------------------------
 # Eixo de cor (SYNC_WITH: app/src/services/tone.ts)
@@ -286,6 +310,80 @@ def slugify(stem: str) -> str:
     return "-".join(p.lower() for p in parts)
 
 
+def video_duration(path: Path) -> float:
+    """Duração do clipe em segundos, via ffprobe."""
+    out = subprocess.run(
+        [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            str(path),
+        ],
+        capture_output=True, text=True, check=True,
+    )
+    return float(out.stdout.strip())
+
+
+def video_representative_frame(path: Path) -> Image.Image:
+    """
+    O FRAME QUE REPRESENTA O CLIPE inteiro pro medidor de cor e de grade.
+
+    Pega o frame do MEIO (não o primeiro): num loop que nasce de um estado
+    neutro e "infla" até a pose cheia, o primeiro frame costuma ser o menos
+    representativo do que a arte realmente parece na tela.
+    """
+    duration = video_duration(path)
+    with tempfile.TemporaryDirectory() as tmp:
+        out_path = Path(tmp) / "frame.png"
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-v", "error",
+                "-ss", str(duration / 2.0),
+                "-i", str(path),
+                "-vframes", "1",
+                str(out_path),
+            ],
+            check=True,
+        )
+        return Image.open(out_path).convert("RGB")
+
+
+def encode_animated_webp(path: Path, out: Path) -> None:
+    """
+    Vídeo -> WebP animado, em duas passadas.
+
+    Uma única chamada ffmpeg fazendo decode + escala + encode WebP junto é
+    lenta demais pro conteúdo gradiente destas artes (o encoder WebP é o
+    gargalo, não a decodificação). Separar em duas passadas -- primeiro os
+    frames como PNG, depois o encode WebP a partir deles -- é várias vezes
+    mais rápido pro mesmo resultado.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        pattern = Path(tmp) / "f_%03d.png"
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-v", "error",
+                "-i", str(path),
+                "-vf", f"scale={ART_W}:{ART_H}:flags=lanczos,fps={VIDEO_FPS}",
+                str(pattern),
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-v", "error",
+                "-framerate", str(VIDEO_FPS),
+                "-i", str(pattern),
+                "-loop", "0",
+                "-q:v", str(VIDEO_QUALITY),
+                "-compression_level", str(VIDEO_COMPRESSION_LEVEL),
+                "-an",
+                str(out),
+            ],
+            check=True,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Saída
 # ---------------------------------------------------------------------------
@@ -343,7 +441,8 @@ def emit_ts(records: list[ArtRecord]) -> str:
  * CATÁLOGO DE ARTES DA MARCA — GERADO. NÃO EDITE À MÃO.
  *
  * Fonte: brand/templates-src/  ·  Gerador: brand/tools/build_templates.py
- * Pra adicionar uma arte: jogue o PNG em brand/templates-src/<Familia>/ e rode
+ * Pra adicionar uma arte: jogue o PNG (ou MP4, pra fundo com movimento) em
+ * brand/templates-src/<Familia>/ e rode
  *
  *     python3 brand/tools/build_templates.py
  *
@@ -437,6 +536,21 @@ def tone_band(tone: float) -> str:
 # ---------------------------------------------------------------------------
 
 
+def sorted_sources(src: Path) -> list[Path]:
+    """PNGs (fundos estáticos) e MP4s (fundos com movimento), juntos e em ordem."""
+    paths = list(src.glob("*.png")) + [p for p in src.glob("*") if p.suffix.lower() in VIDEO_EXTS]
+    return sorted(paths, key=lambda p: p.name)
+
+
+def measured_still(path: Path) -> Image.Image:
+    """A imagem 1600x900 já cortada, pronta pro medidor -- de um PNG ou do frame do meio de um vídeo."""
+    if path.suffix.lower() in VIDEO_EXTS:
+        img = video_representative_frame(path)
+    else:
+        img = Image.open(path).convert("RGB")
+    return cover_crop(img).resize((ART_W, ART_H), Image.LANCZOS)
+
+
 def collect() -> list[ArtRecord]:
     records: list[ArtRecord] = []
     for folder, family in FAMILIES.items():
@@ -444,9 +558,8 @@ def collect() -> list[ArtRecord]:
         if not src.is_dir():
             print(f"  aviso: {src} não existe, pulando")
             continue
-        for path in sorted(src.glob("*.png")):
-            img = Image.open(path).convert("RGB")
-            art = cover_crop(img).resize((ART_W, ART_H), Image.LANCZOS)
+        for path in sorted_sources(src):
+            art = measured_still(path)
             records.append(
                 ArtRecord(id=slugify(path.stem), family=family, file=path.name, m=measure(art))
             )
@@ -469,15 +582,18 @@ def build(report_only: bool) -> int:
         if not report_only:
             out_dir.mkdir(parents=True, exist_ok=True)
 
-        for path in sorted(src.glob("*.png")):
-            img = Image.open(path).convert("RGB")
-            art = cover_crop(img).resize((ART_W, ART_H), Image.LANCZOS)
+        for path in sorted_sources(src):
+            is_video = path.suffix.lower() in VIDEO_EXTS
+            art = measured_still(path)
             art_id = slugify(path.stem)
             m = measure(art)
 
             if not report_only:
                 out = out_dir / f"{art_id}.webp"
-                art.save(out, "WEBP", quality=WEBP_QUALITY, method=6)
+                if is_video:
+                    encode_animated_webp(path, out)
+                else:
+                    art.save(out, "WEBP", quality=WEBP_QUALITY, method=6)
                 total_bytes += out.stat().st_size
 
             records.append(ArtRecord(id=art_id, family=family, file=path.name, m=m))
@@ -485,6 +601,7 @@ def build(report_only: bool) -> int:
                 f"  {art_id:<20} {family:<8} tone {m.tone:.2f} ({tone_band(m.tone):<8}) "
                 f"matiz {m.hue:5.1f}°  lum {m.luminance:.2f}  croma {m.vividness:.2f}"
                 f"{'  [CLARA]' if m.light else ''}"
+                f"{'  [ANIMADA]' if is_video else ''}"
             )
 
     if not records:

@@ -10,7 +10,7 @@ zonas usa essa grade pra escolher, em runtime, onde o texto cabe naquela arte
 O desenho ao lado de cada arte É a grade medida: os blocos escuros são o vazio
 onde o texto cabe, os claros são a escultura.
 
-**38 artes.**
+**40 artes.**
 
 | id | família | tone | matiz | lum | croma | clara |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -43,11 +43,13 @@ onde o texto cabe, os claros são a escultura.
 | `capa-27` | capa | 0.81 | 174° | 0.04 | 0.05 | – |
 | `capa-28` | capa | 0.96 | 163° | 0.09 | 0.10 | – |
 | `canva-both-01` | canvas | 0.75 | 178° | 0.03 | 0.03 | – |
+| `canva-both-02` | canvas | 0.64 | 186° | 0.07 | 0.07 | – |
 | `canva-down-01` | canvas | 0.82 | 173° | 0.02 | 0.02 | – |
 | `canva-down-02` | canvas | 0.91 | 167° | 0.05 | 0.05 | – |
 | `canva-left-01` | canvas | 0.89 | 168° | 0.04 | 0.04 | – |
 | `canva-left-02` | canvas | 0.80 | 175° | 0.05 | 0.06 | – |
 | `canva-left-03` | canvas | 0.83 | 172° | 0.06 | 0.07 | – |
+| `canva-left-04` | canvas | 0.64 | 187° | 0.13 | 0.09 | – |
 | `canva-right-01` | canvas | 0.84 | 172° | 0.06 | 0.06 | – |
 | `espiral-branco-01` | espiral | 0.00 | 174° | 0.82 | 0.24 | sim |
 | `espiral-preto-01` | espiral | 0.89 | 168° | 0.08 | 0.09 | – |
@@ -519,6 +521,22 @@ fundoCanvaBoth01.png · família **canvas** · tone **0.75** (Floresta) · matiz
 @@++@@::                        
 ```
 
+### `canva-both-02`
+
+fundoCanvaBoth02.mp4 · família **canvas** · tone **0.64** (Oceano) · matiz 186° · luminância 0.07
+
+```
+                        %%%%++%%
+                        @@==##%%
+                      **%%==@@--
+                      @@@@##@@##
+++  ==**++            ..##@@**%%
+@@@@**::@@                ..@@**
+****--..**                      
+::%%####==                      
+++==@@@@                        
+```
+
 ### `canva-down-01`
 
 fundoCanvaDown01.png · família **canvas** · tone **0.82** (Floresta) · matiz 173° · luminância 0.02
@@ -597,6 +615,22 @@ fundoCanvaLeft03.png · família **canvas** · tone **0.83** (Floresta) · matiz
 ++::####**--..                  
 --==--##**--..                  
   ....--++==..                  
+```
+
+### `canva-left-04`
+
+fundoCanvaLeft04.mp4 · família **canvas** · tone **0.64** (Oceano) · matiz 187° · luminância 0.13
+
+```
+  ..::##++..                    
+....%%::--%%..                  
+##****++--%%##..                
+##==++**--..++%%..              
+%%%%==%%++::::%%..              
+**--**@@@@--..####              
+####++****--::::==              
+..--++----++==%%..              
+..::**::++%%....                
 ```
 
 ### `canva-right-01`

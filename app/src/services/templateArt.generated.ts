@@ -3,7 +3,8 @@
  * CATÁLOGO DE ARTES DA MARCA — GERADO. NÃO EDITE À MÃO.
  *
  * Fonte: brand/templates-src/  ·  Gerador: brand/tools/build_templates.py
- * Pra adicionar uma arte: jogue o PNG em brand/templates-src/<Familia>/ e rode
+ * Pra adicionar uma arte: jogue o PNG (ou MP4, pra fundo com movimento) em
+ * brand/templates-src/<Familia>/ e rode
  *
  *     python3 brand/tools/build_templates.py
  *
@@ -40,11 +41,13 @@ import art_capa_26 from '@/assets/templates/capa/capa-26.webp';
 import art_capa_27 from '@/assets/templates/capa/capa-27.webp';
 import art_capa_28 from '@/assets/templates/capa/capa-28.webp';
 import art_canva_both_01 from '@/assets/templates/canvas/canva-both-01.webp';
+import art_canva_both_02 from '@/assets/templates/canvas/canva-both-02.webp';
 import art_canva_down_01 from '@/assets/templates/canvas/canva-down-01.webp';
 import art_canva_down_02 from '@/assets/templates/canvas/canva-down-02.webp';
 import art_canva_left_01 from '@/assets/templates/canvas/canva-left-01.webp';
 import art_canva_left_02 from '@/assets/templates/canvas/canva-left-02.webp';
 import art_canva_left_03 from '@/assets/templates/canvas/canva-left-03.webp';
+import art_canva_left_04 from '@/assets/templates/canvas/canva-left-04.webp';
 import art_canva_right_01 from '@/assets/templates/canvas/canva-right-01.webp';
 import art_espiral_branco_01 from '@/assets/templates/espiral/espiral-branco-01.webp';
 import art_espiral_preto_01 from '@/assets/templates/espiral/espiral-preto-01.webp';
@@ -742,6 +745,29 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     ],
   },
   {
+    id: 'canva-both-02',
+    family: 'canvas',
+    src: art_canva_both_02,
+    hue: 186.5,
+    luminance: 0.073,
+    vividness: 0.074,
+    tone: 0.641,
+    light: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  3, 83, 86, 55, 81,
+       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  2,  6, 99, 46, 79, 86,
+       0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  3, 69, 80, 46, 99, 38,
+       1,  2,  2,  2,  1,  0,  0,  0,  0,  1,  4, 96, 95, 74, 99, 70,
+      55,  8, 42, 66, 53,  1,  0,  0,  0,  1,  3, 13, 77, 99, 66, 84,
+      99, 92, 68, 28, 98,  4,  0,  0,  0,  0,  1,  4,  7, 17, 94, 68,
+      67, 66, 38, 10, 68,  3,  0,  0,  0,  0,  0,  1,  2,  3,  3,  2,
+      28, 89, 77, 70, 45,  2,  0,  0,  0,  0,  0,  0,  1,  1,  1,  0,
+      52, 46, 99, 93,  5,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    ],
+  },
+  {
     id: 'canva-down-01',
     family: 'canvas',
     src: art_canva_down_01,
@@ -854,6 +880,29 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
       50, 25, 73, 76, 63, 36, 13,  5,  3,  2,  1,  1,  1,  1,  1,  0,
       39, 40, 34, 73, 60, 34, 15,  6,  3,  2,  1,  1,  1,  1,  1,  0,
        6, 10, 18, 39, 55, 44, 17,  5,  3,  2,  1,  1,  1,  1,  0,  0,
+    ],
+  },
+  {
+    id: 'canva-left-04',
+    family: 'canvas',
+    src: art_canva_left_04,
+    hue: 186.9,
+    luminance: 0.127,
+    vividness: 0.089,
+    tone: 0.636,
+    light: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       9, 10, 24, 75, 58, 17,  7,  6,  3,  2,  2,  2,  2,  1,  1,  0,
+      11, 13, 85, 28, 39, 87, 12,  8,  4,  3,  2,  2,  2,  2,  1,  0,
+      70, 67, 61, 54, 30, 85, 73, 11,  6,  3,  3,  2,  2,  2,  1,  1,
+      77, 43, 53, 61, 38, 19, 53, 80, 10,  5,  3,  2,  2,  2,  1,  1,
+      80, 82, 49, 88, 58, 24, 28, 87, 14,  7,  4,  3,  2,  1,  2,  1,
+      61, 39, 68, 99, 91, 36, 18, 74, 75,  8,  4,  3,  2,  1,  2,  1,
+      76, 75, 57, 64, 62, 35, 24, 23, 45,  7,  4,  3,  2,  2,  1,  1,
+      15, 36, 55, 35, 31, 51, 46, 87, 13,  4,  3,  3,  2,  2,  1,  1,
+      10, 20, 66, 29, 52, 83, 15, 11,  7,  5,  2,  2,  2,  1,  1,  0,
     ],
   },
   {
