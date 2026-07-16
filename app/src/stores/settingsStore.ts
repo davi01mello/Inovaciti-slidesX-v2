@@ -3,6 +3,7 @@
  * - reduceMotion: espelha prefers-reduced-motion via data attribute no <html> (ver index.css).
  * - defaultGoal / defaultStyle: pré-seleção do passo Direção do wizard.
  * - confirmBeforeTrash: pular ou não o diálogo de confirmação ao mandar pra Lixeira.
+ * - soundEffects: liga/desliga os sons do sistema (ver lib/sound.ts).
  * Nada aqui é decorativo — cada chave tem um efeito real em algum lugar do app.
  */
 import { useSyncExternalStore } from 'react';
@@ -18,6 +19,7 @@ export interface AppSettings {
   defaultGoal: PresentationGoal | null;
   defaultStyle: VisualStyle | null;
   confirmBeforeTrash: boolean;
+  soundEffects: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -25,6 +27,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultGoal: null,
   defaultStyle: null,
   confirmBeforeTrash: true,
+  soundEffects: true,
 };
 
 let state: AppSettings = { ...DEFAULT_SETTINGS, ...(loadJson<Partial<AppSettings>>(STORAGE_KEY) ?? {}) };

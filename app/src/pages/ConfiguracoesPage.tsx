@@ -65,6 +65,17 @@ export function ConfiguracoesPage() {
               label="Confirmar antes de mover pra Lixeira"
             />
           </SettingRow>
+
+          <SettingRow
+            title="Sons do sistema"
+            description="Um aviso sonoro curto quando a apresentação fica pronta, ao copiar ou baixar da Marca, e ao esvaziar a Lixeira."
+          >
+            <Toggle
+              on={settings.soundEffects}
+              onChange={(next) => settingsStore.update({ soundEffects: next })}
+              label="Sons do sistema"
+            />
+          </SettingRow>
         </SettingsSection>
 
         <SettingsSection

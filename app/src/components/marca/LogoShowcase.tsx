@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { pushToast } from '@/lib/toast';
+import { playSound } from '@/lib/sound';
 import { cn } from '@/lib/cn';
 
 import citiBranco from '@/assets/logos/logo-citi-branco.png';
@@ -53,6 +54,7 @@ async function copyLogo(src: string) {
     if (!png) throw new Error('encode failed');
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
     pushToast('Logo copiado. Cole onde quiser.');
+    playSound('assetSaved');
   } catch {
     pushToast('Não consegui copiar aqui. Use o botão de baixar.');
   }
@@ -65,6 +67,7 @@ function downloadLogo(src: string, name: string) {
   document.body.appendChild(link);
   link.click();
   link.remove();
+  playSound('assetSaved');
 }
 
 export function LogoShowcase() {

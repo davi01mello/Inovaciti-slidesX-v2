@@ -2,6 +2,7 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { createId } from '@/lib/id';
 import { loadJson, saveJson } from '@/lib/storage';
 import { pushToast } from '@/lib/toast';
+import { playSound } from '@/lib/sound';
 import { cloneBlock, makeFloatingTextBlock, makeTextBlock, type FloatingTextKind } from '@/lib/blocks';
 import { clampRect } from '@/lib/rect';
 import { applyGeneratedBlocksToSlide } from '@/lib/generatedSlide';
@@ -403,6 +404,7 @@ async function runGeneration(id: string): Promise<void> {
       return assets?.logo ? { ...withPhotos, slides: attachLogo(withPhotos, assets.logo) } : withPhotos;
     });
     pendingAssets.delete(id);
+    playSound('presentationReady');
 
     const bubbles = [...result.chatMessages];
     const placed = (assets?.photos.length ?? 0) - unplaced;

@@ -10,6 +10,7 @@ import { TrashRow } from '@/components/lixeira/TrashRow';
 import { TrashEmptyState } from '@/components/lixeira/TrashEmptyState';
 import { presentationsStore, useTrashedPresentations, TRASH_RETENTION_DAYS } from '@/stores/presentationsStore';
 import { pushToast } from '@/lib/toast';
+import { playSound } from '@/lib/sound';
 import type { Presentation } from '@/types/presentation';
 
 export function LixeiraPage() {
@@ -88,6 +89,7 @@ export function LixeiraPage() {
           presentationsStore.emptyTrash();
           setConfirmEmpty(false);
           pushToast('Lixeira esvaziada.');
+          playSound('trashEmptied');
         }}
         onCancel={() => setConfirmEmpty(false)}
       />

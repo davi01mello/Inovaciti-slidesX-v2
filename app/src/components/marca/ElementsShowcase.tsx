@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { pushToast } from '@/lib/toast';
+import { playSound } from '@/lib/sound';
 import { cn } from '@/lib/cn';
 import { ELEMENTS, ELEMENT_COLORS, elementColorLabel, elementShapeLabel, hasElements } from '@/services/elementsManifest';
 
@@ -35,6 +36,7 @@ async function copyElement(src: string) {
     if (!png) throw new Error('encode failed');
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
     pushToast('Elemento copiado. Cole onde quiser.');
+    playSound('assetSaved');
   } catch {
     pushToast('Não consegui copiar aqui. Use o botão de baixar.');
   }
@@ -47,6 +49,7 @@ function downloadElement(src: string, name: string) {
   document.body.appendChild(link);
   link.click();
   link.remove();
+  playSound('assetSaved');
 }
 
 export function ElementsShowcase() {
