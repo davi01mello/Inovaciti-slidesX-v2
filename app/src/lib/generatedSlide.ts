@@ -1,6 +1,14 @@
 import { createId } from '@/lib/id';
 import type { GeneratedBlock, GeneratedSlide } from '@/types/generated';
-import { MAX_CARDS, MAX_TOPICS, type Block, type Slide } from '@/types/slide';
+import {
+  MAX_CARDS,
+  MAX_COMPARE_POINTS,
+  MAX_STATS,
+  MAX_STEPS,
+  MAX_TOPICS,
+  type Block,
+  type Slide,
+} from '@/types/slide';
 
 /**
  * Converte a saída do agente (só conteúdo) em blocos reais.
@@ -10,9 +18,9 @@ import { MAX_CARDS, MAX_TOPICS, type Block, type Slide } from '@/types/slide';
  * composição por template IGNORAVA todos eles. Eram 150 linhas mantendo uma
  * decisão que ninguém lia. Quem posiciona é o motor de zonas, medindo a arte.
  *
- * O corte de cards/tópicos aparece aqui DE NOVO (o servidor já cortou) porque o
- * front também recebe conteúdo de outros caminhos: import do Notion, "melhorar
- * slide", decks antigos vindos do localStorage. A regra vale pra todos.
+ * O corte das listas aparece aqui DE NOVO (o servidor já cortou) porque o front
+ * também recebe conteúdo de outros caminhos: import do Notion, "melhorar slide",
+ * decks antigos vindos do localStorage. A regra vale pra todos.
  */
 function toRealBlocks(generated: GeneratedBlock[]): Block[] {
   return generated.map((block): Block => {
@@ -34,6 +42,38 @@ function toRealBlocks(generated: GeneratedBlock[]): Block[] {
         kind: 'topics',
         align: 'left',
         items: block.items.slice(0, MAX_TOPICS),
+      };
+    }
+    if (block.kind === 'stats') {
+      return {
+        id: createId(),
+        kind: 'stats',
+        align: 'left',
+        items: block.items.slice(0, MAX_STATS).map((stat) => ({
+          id: createId(),
+          value: stat.value,
+          label: stat.label,
+        })),
+      };
+    }
+    if (block.kind === 'steps') {
+      return {
+        id: createId(),
+        kind: 'steps',
+        align: 'left',
+        items: block.items.slice(0, MAX_STEPS),
+      };
+    }
+    if (block.kind === 'compare') {
+      return {
+        id: createId(),
+        kind: 'compare',
+        align: 'left',
+        sides: block.sides.slice(0, 2).map((side) => ({
+          id: createId(),
+          label: side.label,
+          points: side.points.slice(0, MAX_COMPARE_POINTS),
+        })),
       };
     }
     return {
@@ -68,6 +108,15 @@ export function toGeneratedSlide(slide: Slide): GeneratedSlide {
       }
       if (b.kind === 'topics') {
         return { kind: 'topics', items: b.items };
+      }
+      if (b.kind === 'stats') {
+        return { kind: 'stats', items: b.items.map((i) => ({ value: i.value, label: i.label })) };
+      }
+      if (b.kind === 'steps') {
+        return { kind: 'steps', items: b.items };
+      }
+      if (b.kind === 'compare') {
+        return { kind: 'compare', sides: b.sides.map((s) => ({ label: s.label, points: s.points })) };
       }
       return { kind: b.kind, align: b.align, content: b.content };
     }),

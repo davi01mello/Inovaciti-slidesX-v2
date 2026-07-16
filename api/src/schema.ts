@@ -41,6 +41,24 @@ const cardSchema = {
   required: ['title', 'body'],
 };
 
+const statSchema = {
+  type: 'object',
+  properties: {
+    value: richTextSchema,
+    label: richTextSchema,
+  },
+  required: ['value', 'label'],
+};
+
+const compareSideSchema = {
+  type: 'object',
+  properties: {
+    label: richTextSchema,
+    points: { type: 'array', items: richTextSchema },
+  },
+  required: ['label', 'points'],
+};
+
 const blockKindEnum = [
   'title-1',
   'title-2',
@@ -51,6 +69,9 @@ const blockKindEnum = [
   'section-label',
   'cards',
   'topics',
+  'stats',
+  'steps',
+  'compare',
 ];
 
 export const blockSchema = {
@@ -60,10 +81,16 @@ export const blockSchema = {
     align: { type: 'string', enum: ['left', 'center', 'right', 'justify'] },
     /** Blocos de texto. */
     content: richTextSchema,
-    /** kind = "cards": no máximo 3, cada um com título curto E corpo de 2 a 3 frases. */
+    /** kind = "cards": no máximo 3, cada um com título curto E corpo de UMA frase. */
     cards: { type: 'array', items: cardSchema },
-    /** kind = "topics": no máximo 5, cada um uma linha de 6 a 14 palavras. */
+    /** kind = "topics": no máximo 5, cada um uma linha de 3 a 10 palavras. */
     topics: { type: 'array', items: richTextSchema },
+    /** kind = "stats": 1 a 4 métricas {value curto com dígito, label de 1 a 6 palavras}. */
+    stats: { type: 'array', items: statSchema },
+    /** kind = "steps": 3 a 5 etapas em sequência, uma linha cada. */
+    steps: { type: 'array', items: richTextSchema },
+    /** kind = "compare": exatamente 2 lados {label, points de 1 a 3 itens}. */
+    sides: { type: 'array', items: compareSideSchema },
   },
   required: ['kind'],
 };

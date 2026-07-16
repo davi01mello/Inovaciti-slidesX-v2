@@ -1,7 +1,7 @@
 import { createId } from '@/lib/id';
 import { fromPlain } from '@/lib/richText';
 import type { RichText } from '@/lib/richText';
-import type { Block, CardItem, Slide, SlideLayout } from '@/types/slide';
+import type { Block, CardItem, CompareSide, Slide, SlideLayout, StatItem } from '@/types/slide';
 
 /**
  * O DECK DE PROVA.
@@ -26,6 +26,8 @@ function hl(before: string, mark: string, after: string): RichText {
 }
 
 const card = (title: string, body: string): CardItem => ({ id: createId(), title: t(title), body: t(body) });
+const stat = (value: string, label: string): StatItem => ({ id: createId(), value: t(value), label: t(label) });
+const side = (label: string, ...points: string[]): CompareSide => ({ id: createId(), label: t(label), points: points.map(t) });
 
 function slide(layout: SlideLayout, blocks: Block[]): Slide {
   return { id: createId(), layout, blocks };
@@ -41,6 +43,9 @@ const B = {
   high: (s: string): Block => ({ id: createId(), kind: 'highlight', align: 'left', content: t(s) }),
   cards: (...items: CardItem[]): Block => ({ id: createId(), kind: 'cards', align: 'left', items }),
   topics: (...items: string[]): Block => ({ id: createId(), kind: 'topics', align: 'left', items: items.map(t) }),
+  stats: (...items: StatItem[]): Block => ({ id: createId(), kind: 'stats', align: 'left', items }),
+  steps: (...items: string[]): Block => ({ id: createId(), kind: 'steps', align: 'left', items: items.map(t) }),
+  compare: (a: CompareSide, b: CompareSide): Block => ({ id: createId(), kind: 'compare', align: 'left', sides: [a, b] }),
 };
 
 /** Uma foto de teste: gradiente + grade, gerada em runtime (nada de asset externo). */
@@ -119,24 +124,61 @@ export function buildTestDeck(): Slide[] {
       ),
     ]),
 
-    slide('section', [B.label('Capítulo dois'), B.t1('O que a operação ganha')]),
-
-    // CARDS de 2.
+    // JORNADA: etapas numeradas com conector (formato novo, arquétipo timeline).
     slide('content', [
-      B.label('Impacto'),
-      B.t2('Onde o tempo aparece'),
-      B.cards(
-        card('Entrada do pedido', 'A validação corta o vaivém de correção.'),
-        card('Conferência', 'Deixa de ser um bloco no fim do processo.'),
+      B.label('Método'),
+      B.t2('Como o projeto anda'),
+      B.steps(
+        'Diagnóstico do fluxo atual',
+        'Validação desenhada com o time',
+        'Piloto em duas frentes',
+        'Medição e ajuste fino',
       ),
     ]),
 
-    // NÚMERO: métrica + contexto de uma linha.
+    slide('section', [B.label('Capítulo dois'), B.t1('O que a operação ganha')]),
+
+    // COMPARAÇÃO: dois painéis frente a frente (formato novo, arquétipo compare).
+    slide('content', [
+      B.label('Antes e depois'),
+      B.t2('A mesma equipe, outro processo'),
+      B.compare(
+        side('Hoje', 'Pedido entra incompleto', 'Conferência só no fim', 'Retrabalho invisível'),
+        side('Com a CITi', 'Validação na entrada', 'Conferência em cada etapa', 'Gargalo visível antes da fila'),
+      ),
+    ]),
+
+    // INDICADORES: painel de métricas (formato novo, arquétipo kpis).
+    slide('content', [
+      B.label('Resultados do piloto'),
+      B.t2('O que os números mostraram'),
+      B.stats(
+        stat('42%', 'menos tempo de fila'),
+        stat('3x', 'menos retrabalho'),
+        stat('6 sem', 'do início à medição'),
+      ),
+    ]),
+
+    // NÚMERO (novo): stats de 1 item vira o número gigante do investimento.
+    slide('content', [
+      B.label('Investimento'),
+      B.t2('Projeto fechado, sem custo recorrente'),
+      B.stats(stat('R$ 29.900', 'em três parcelas por entrega')),
+    ]),
+
+    // NÚMERO (LEGADO): dois títulos com métrica curta — decks antigos continuam de pé.
     slide('content', [
       B.label('Investimento'),
       B.t2('R$ 29.900'),
       B.t2('Projeto fechado, sem custo recorrente'),
       B.sub('Em três parcelas, atreladas às entregas de cada frente.'),
+    ]),
+
+    // CITAÇÃO: manchete + frase de impacto, sem prosa nem lista (arquétipo quote).
+    slide('content', [
+      B.label('A tese'),
+      B.t2('Processo antes de ferramenta'),
+      B.high('Quem automatiza a desordem só produz desordem mais rápido.'),
     ]),
 
     media,

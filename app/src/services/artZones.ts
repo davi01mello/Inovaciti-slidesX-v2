@@ -33,11 +33,15 @@ export type Archetype =
   | 'cover'
   | 'section'
   | 'statement'
+  | 'quote'
   | 'cards'
   | 'topics'
   | 'split'
   | 'media'
   | 'bignumber'
+  | 'kpis'
+  | 'compare'
+  | 'timeline'
   | 'closing';
 
 /** Um layout inteiro do slide, não um retângulo solto. */
@@ -90,10 +94,16 @@ const SURFACES: Record<Archetype, SlotSurfaces> = {
   cover: { content: 'text' },
   section: { content: 'text' },
   statement: { content: 'text' },
+  quote: { content: 'text' },
   bignumber: { content: 'text' },
   // Tópico é lista LEVE (número + filete + linha), sem caixa nenhuma: texto pelado.
   topics: { header: 'text', content: 'text' },
+  // KPIs e timeline são texto pelado também: número/etapa + rótulo, sem caixa.
+  kpis: { header: 'text', content: 'text' },
+  timeline: { header: 'text', content: 'text' },
   cards: { header: 'text', content: 'glass' },
+  // Os dois painéis da comparação são caixas de vidro, como os cards.
+  compare: { header: 'text', content: 'glass' },
   split: { content: 'text', aside: 'glass' },
   media: { content: 'text', aside: 'opaque' },
   closing: { content: 'text', banner: 'glass' },
@@ -662,11 +672,129 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
     },
   ],
 
+  /* Citação/impacto: a manchete e a frase de síntese vivendo sozinhas, grandes. */
+  quote: [
+    { id: 'quote-left', content: { x: M, y: 0.26, width: 0.56, height: 0.52 }, align: 'left' },
+    { id: 'quote-right', content: { x: 0.40, y: 0.26, width: RIGHT - 0.40, height: 0.52 }, align: 'left' },
+    { id: 'quote-center', content: { x: 0.16, y: 0.26, width: 0.68, height: 0.52 }, align: 'center' },
+    { id: 'quote-low', content: { x: M, y: 0.46, width: 0.60, height: 0.42 }, align: 'left' },
+  ],
+
   /* Número em destaque: o número é a peça, o resto é legenda. */
   bignumber: [
     { id: 'bignumber-left', content: { x: M, y: 0.26, width: 0.50, height: 0.54 }, align: 'left' },
     { id: 'bignumber-right', content: { x: 0.44, y: 0.26, width: RIGHT - 0.44, height: 0.54 }, align: 'left' },
     { id: 'bignumber-center', content: { x: 0.18, y: 0.26, width: 0.64, height: 0.54 }, align: 'center' },
+  ],
+
+  /*
+   * KPIs: painel de 2 a 4 métricas. Texto pelado (número em destaque + rótulo),
+   * então dá pra fugir bastante: banda larga embaixo, ou coluna ao lado do título.
+   */
+  kpis: [
+    {
+      id: 'kpis-band',
+      header: { x: M, y: 0.19, width: 0.60, height: 0.24 },
+      content: { x: M, y: 0.50, width: 1 - 2 * M, height: 0.34 },
+      align: 'left',
+    },
+    {
+      id: 'kpis-band-center',
+      header: { x: 0.17, y: 0.19, width: 0.66, height: 0.24 },
+      content: { x: 0.085, y: 0.50, width: 1 - 2 * 0.085, height: 0.34 },
+      align: 'center',
+    },
+    // Título numa coluna, métricas empilhadas na outra: o desenho de dashboard.
+    {
+      id: 'kpis-aside',
+      header: { x: M, y: 0.22, width: 0.34, height: 0.52 },
+      content: { x: 0.47, y: 0.21, width: RIGHT - 0.47, height: 0.60 },
+      align: 'left',
+    },
+    {
+      id: 'kpis-aside-flip',
+      header: { x: 0.60, y: 0.22, width: RIGHT - 0.60, height: 0.52 },
+      content: { x: M, y: 0.21, width: 0.48, height: 0.60 },
+      align: 'left',
+    },
+    // Encolhida no lado limpo, quando a escultura toma uma metade.
+    {
+      id: 'kpis-hug-left',
+      header: { x: M, y: 0.19, width: 0.52, height: 0.24 },
+      content: { x: M, y: 0.50, width: 0.70, height: 0.34 },
+      align: 'left',
+    },
+  ],
+
+  /*
+   * Comparação: dois painéis de vidro frente a frente. Como os cards, a fileira
+   * quer largura — as variantes "hug" a 72% deslizam pro lado limpo da arte.
+   */
+  compare: [
+    {
+      id: 'compare-band',
+      header: { x: M, y: 0.19, width: 0.58, height: 0.23 },
+      content: { x: M, y: 0.47, width: 1 - 2 * M, height: 0.40 },
+      align: 'left',
+    },
+    {
+      id: 'compare-band-center',
+      header: { x: 0.17, y: 0.19, width: 0.66, height: 0.23 },
+      content: { x: 0.085, y: 0.47, width: 1 - 2 * 0.085, height: 0.40 },
+      align: 'center',
+    },
+    {
+      id: 'compare-hug-left',
+      header: { x: M, y: 0.19, width: 0.52, height: 0.23 },
+      content: { x: M, y: 0.46, width: 0.72, height: 0.40 },
+      align: 'left',
+    },
+    {
+      id: 'compare-hug-right',
+      header: { x: 0.30, y: 0.19, width: RIGHT - 0.30, height: 0.23 },
+      content: { x: RIGHT - 0.72, y: 0.46, width: 0.72, height: 0.40 },
+      align: 'left',
+    },
+  ],
+
+  /*
+   * Timeline: etapas em sequência. Banda horizontal quando a largura permite
+   * (o desenho clássico de roadmap), coluna vertical quando a arte pede lado.
+   * Quem decide fileira vs pilha é a PROPORÇÃO da zona (ver zoneAspect no render).
+   */
+  timeline: [
+    {
+      id: 'timeline-band',
+      header: { x: M, y: 0.19, width: 0.60, height: 0.23 },
+      content: { x: M, y: 0.50, width: 1 - 2 * M, height: 0.34 },
+      align: 'left',
+    },
+    {
+      id: 'timeline-band-center',
+      header: { x: 0.17, y: 0.19, width: 0.66, height: 0.23 },
+      content: { x: 0.085, y: 0.50, width: 1 - 2 * 0.085, height: 0.34 },
+      align: 'center',
+    },
+    // Título em cima, etapas em coluna vertical no lado limpo.
+    {
+      id: 'timeline-column-left',
+      header: { x: M, y: 0.19, width: 0.55, height: 0.22 },
+      content: { x: M, y: 0.46, width: 0.50, height: 0.42 },
+      align: 'left',
+    },
+    {
+      id: 'timeline-column-right',
+      header: { x: 0.44, y: 0.19, width: RIGHT - 0.44, height: 0.22 },
+      content: { x: 0.47, y: 0.46, width: RIGHT - 0.47, height: 0.42 },
+      align: 'left',
+    },
+    // Título numa coluna, jornada vertical na outra: o desenho de metodologia.
+    {
+      id: 'timeline-aside',
+      header: { x: M, y: 0.22, width: 0.33, height: 0.56 },
+      content: { x: 0.46, y: 0.21, width: RIGHT - 0.46, height: 0.62 },
+      align: 'left',
+    },
   ],
 
   /* Encerramento: capa de novo, mas calma. A faixa carrega o próximo passo. */

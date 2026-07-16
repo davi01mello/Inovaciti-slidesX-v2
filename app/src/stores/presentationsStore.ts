@@ -17,12 +17,17 @@ import type { Presentation, PresentationStatus } from '@/types/presentation';
 import {
   isListBlock,
   MAX_CARDS,
+  MAX_COMPARE_POINTS,
+  MAX_STATS,
+  MAX_STEPS,
   MAX_TOPICS,
   type Block,
   type BlockRect,
+  type CompareSide,
   type Decoration,
   type Slide,
   type SlideLayout,
+  type StatItem,
   type TopicsBlock,
 } from '@/types/slide';
 
@@ -891,6 +896,24 @@ function mergeBlockPatch(block: Block, patch: Partial<Block>): Block {
   if (block.kind === 'topics') {
     const p = patch as { items?: (typeof block)['items'] };
     return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_TOPICS) } : {}) };
+  }
+  if (block.kind === 'steps') {
+    const p = patch as { items?: (typeof block)['items'] };
+    return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_STEPS) } : {}) };
+  }
+  if (block.kind === 'stats') {
+    const p = patch as { items?: StatItem[] };
+    return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_STATS) } : {}) };
+  }
+  if (block.kind === 'compare') {
+    const p = patch as { sides?: CompareSide[] };
+    return {
+      ...block,
+      ...alignPatch,
+      ...(p.sides
+        ? { sides: p.sides.slice(0, 2).map((s) => ({ ...s, points: s.points.slice(0, MAX_COMPARE_POINTS) })) }
+        : {}),
+    };
   }
 
   const p = patch as { content?: (typeof block)['content']; rect?: BlockRect };

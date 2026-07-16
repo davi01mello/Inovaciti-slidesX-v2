@@ -66,12 +66,36 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
       })),
     };
   }
-  if (block.kind === 'topics') {
+  if (block.kind === 'topics' || block.kind === 'steps') {
     return {
       id: createId(),
-      kind: 'topics',
+      kind: block.kind,
       align: block.align,
       items: block.items.map(cloneRich),
+    };
+  }
+  if (block.kind === 'stats') {
+    return {
+      id: createId(),
+      kind: 'stats',
+      align: block.align,
+      items: block.items.map((item) => ({
+        id: createId(),
+        value: cloneRich(item.value),
+        label: cloneRich(item.label),
+      })),
+    };
+  }
+  if (block.kind === 'compare') {
+    return {
+      id: createId(),
+      kind: 'compare',
+      align: block.align,
+      sides: block.sides.map((side) => ({
+        id: createId(),
+        label: cloneRich(side.label),
+        points: side.points.map(cloneRich),
+      })),
     };
   }
   const rect = rectOverride ?? block.rect;

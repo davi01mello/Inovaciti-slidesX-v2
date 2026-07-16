@@ -28,7 +28,42 @@ export interface GeneratedTopicsBlock {
   items: RichText[];
 }
 
-export type GeneratedBlock = GeneratedTextBlock | GeneratedCardsBlock | GeneratedTopicsBlock;
+/** Uma métrica: valor curto com dígito ("R$ 48 mil", "3x") + rótulo de 1 a 6 palavras. */
+export interface GeneratedStatItem {
+  value: RichText;
+  label: RichText;
+}
+
+/** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
+export interface GeneratedStatsBlock {
+  kind: 'stats';
+  items: GeneratedStatItem[];
+}
+
+/** Etapas em sequência (timeline numerada). 3 a 5 itens de uma linha. */
+export interface GeneratedStepsBlock {
+  kind: 'steps';
+  items: RichText[];
+}
+
+export interface GeneratedCompareSide {
+  label: RichText;
+  points: RichText[];
+}
+
+/** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */
+export interface GeneratedCompareBlock {
+  kind: 'compare';
+  sides: GeneratedCompareSide[];
+}
+
+export type GeneratedBlock =
+  | GeneratedTextBlock
+  | GeneratedCardsBlock
+  | GeneratedTopicsBlock
+  | GeneratedStatsBlock
+  | GeneratedStepsBlock
+  | GeneratedCompareBlock;
 
 export interface GeneratedSlide {
   layout: SlideLayout;

@@ -26,12 +26,27 @@ const richRunSchema = z.object({
 
 const richTextSchema = z.array(richRunSchema).max(50, 'texto com trechos demais');
 
+const statItemSchema = z.object({
+  value: richTextSchema,
+  label: richTextSchema,
+});
+
+const compareSideSchema = z.object({
+  label: richTextSchema,
+  points: z.array(richTextSchema).max(8, 'lado da comparação com pontos demais (máximo 8)'),
+});
+
+// `items` cobre topics/steps (linhas) e, via passthrough, cards/stats/compare chegam nos
+// campos próprios com os tetos declarados abaixo. O normalize corta pros tetos de verdade.
 const blockSchema = z
   .object({
     kind: z.string().max(32),
     align: z.string().max(16).optional(),
     content: richTextSchema.optional(),
-    items: z.array(richTextSchema).max(12, 'lista com itens demais (máximo 12)').optional(),
+    items: z.array(z.unknown()).max(12, 'lista com itens demais (máximo 12)').optional(),
+    stats: z.array(statItemSchema).max(12, 'métricas demais (máximo 12)').optional(),
+    steps: z.array(richTextSchema).max(12, 'etapas demais (máximo 12)').optional(),
+    sides: z.array(compareSideSchema).max(4, 'comparação com lados demais (máximo 4)').optional(),
   })
   .passthrough();
 

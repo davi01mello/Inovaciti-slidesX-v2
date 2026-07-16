@@ -31,7 +31,20 @@ import { chromeFor, DEFAULT_TONE, type SlideChrome } from '@/services/tone';
 import type { TemplateArt } from '@/services/templateArt.generated';
 import logoBranco from '@/assets/logos/logo-citi30-branco.png';
 import logoPreto from '@/assets/logos/logo-citi30-preto.png';
-import { MAX_CARDS, MAX_TOPICS, type Block, type BlockRect, type CardItem, type Slide, type TextBlock } from '@/types/slide';
+import {
+  isTextBlock,
+  MAX_CARDS,
+  MAX_COMPARE_POINTS,
+  MAX_STATS,
+  MAX_STEPS,
+  MAX_TOPICS,
+  type Block,
+  type BlockRect,
+  type CardItem,
+  type Slide,
+  type StatItem,
+  type TextBlock,
+} from '@/types/slide';
 
 /**
  * A COMPOSIÇÃO DO SLIDE.
@@ -67,8 +80,15 @@ interface CompositionContextValue {
   commitContent: (blockId: string, content: RichText) => void;
   commitTopic: (blockId: string, index: number, content: RichText) => void;
   commitCard: (blockId: string, index: number, field: 'title' | 'body', content: RichText) => void;
+  commitStat: (blockId: string, index: number, field: 'value' | 'label', content: RichText) => void;
+  commitStep: (blockId: string, index: number, content: RichText) => void;
+  commitCompareLabel: (blockId: string, sideIndex: number, content: RichText) => void;
+  commitComparePoint: (blockId: string, sideIndex: number, pointIndex: number, content: RichText) => void;
   addTopic: (blockId: string) => void;
   addCard: (blockId: string) => void;
+  addStat: (blockId: string) => void;
+  addStep: (blockId: string) => void;
+  addComparePoint: (blockId: string, sideIndex: number) => void;
   contentZoneOverride?: BlockRect;
   contentZoneEditable: boolean;
   commitContentZone: (rect: BlockRect) => void;
@@ -83,8 +103,15 @@ const CompositionContext = createContext<CompositionContextValue>({
   commitContent: () => {},
   commitTopic: () => {},
   commitCard: () => {},
+  commitStat: () => {},
+  commitStep: () => {},
+  commitCompareLabel: () => {},
+  commitComparePoint: () => {},
   addTopic: () => {},
   addCard: () => {},
+  addStat: () => {},
+  addStep: () => {},
+  addComparePoint: () => {},
   contentZoneEditable: false,
   commitContentZone: () => {},
   resetContentZone: () => {},
@@ -143,7 +170,7 @@ export function SlideComposition({
   const chrome = useMemo(() => chromeFor(tone, templateArt.light), [tone, templateArt.light]);
 
   const floatingBlocks = useMemo(
-    () => slide.blocks.filter((b): b is TextBlock => b.kind !== 'cards' && b.kind !== 'topics' && !!b.floating),
+    () => slide.blocks.filter((b): b is TextBlock => isTextBlock(b) && !!b.floating),
     [slide.blocks],
   );
 
@@ -166,6 +193,38 @@ export function SlideComposition({
         const items = block.items.map((item, i) => (i === index ? { ...item, [field]: content } : item));
         onBlockChange?.(blockId, { items } as Partial<Block>);
       },
+      commitStat: (blockId, index, field, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'stats') return;
+        const items = block.items.map((item, i) => (i === index ? { ...item, [field]: content } : item));
+        onBlockChange?.(blockId, { items } as Partial<Block>);
+      },
+      commitStep: (blockId, index, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'steps') return;
+        const items = [...block.items];
+        if (isEmpty(content) && items.length > 1) items.splice(index, 1);
+        else items[index] = content;
+        onBlockChange?.(blockId, { items } as Partial<Block>);
+      },
+      commitCompareLabel: (blockId, sideIndex, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'compare') return;
+        const sides = block.sides.map((side, i) => (i === sideIndex ? { ...side, label: content } : side));
+        onBlockChange?.(blockId, { sides } as Partial<Block>);
+      },
+      commitComparePoint: (blockId, sideIndex, pointIndex, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'compare') return;
+        const sides = block.sides.map((side, i) => {
+          if (i !== sideIndex) return side;
+          const points = [...side.points];
+          if (isEmpty(content) && points.length > 1) points.splice(pointIndex, 1);
+          else points[pointIndex] = content;
+          return { ...side, points };
+        });
+        onBlockChange?.(blockId, { sides } as Partial<Block>);
+      },
       addTopic: (blockId) => {
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'topics' || block.items.length >= MAX_TOPICS) return;
@@ -176,6 +235,27 @@ export function SlideComposition({
         if (!block || block.kind !== 'cards' || block.items.length >= MAX_CARDS) return;
         const item: CardItem = { id: createId(), title: fromPlain('Novo card'), body: fromPlain('') };
         onBlockChange?.(blockId, { items: [...block.items, item] } as Partial<Block>);
+      },
+      addStat: (blockId) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'stats' || block.items.length >= MAX_STATS) return;
+        const item: StatItem = { id: createId(), value: fromPlain('0'), label: fromPlain('Nova métrica') };
+        onBlockChange?.(blockId, { items: [...block.items, item] } as Partial<Block>);
+      },
+      addStep: (blockId) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'steps' || block.items.length >= MAX_STEPS) return;
+        onBlockChange?.(blockId, { items: [...block.items, fromPlain('Nova etapa')] } as Partial<Block>);
+      },
+      addComparePoint: (blockId, sideIndex) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'compare') return;
+        const sides = block.sides.map((side, i) =>
+          i === sideIndex && side.points.length < MAX_COMPARE_POINTS
+            ? { ...side, points: [...side.points, fromPlain('Novo ponto')] }
+            : side,
+        );
+        onBlockChange?.(blockId, { sides } as Partial<Block>);
       },
       contentZoneOverride: slide.contentZoneOverride,
       contentZoneEditable: editable && !!onContentZoneMove,
@@ -231,9 +311,13 @@ export function SlideComposition({
         {A === 'closing' && <HeroLayout plan={plan} c={composition} variant="closing" />}
         {A === 'section' && <SectionLayout plan={plan} c={composition} />}
         {A === 'statement' && <StatementLayout plan={plan} c={composition} />}
+        {A === 'quote' && <QuoteLayout plan={plan} c={composition} />}
         {A === 'bignumber' && <BigNumberLayout plan={plan} c={composition} />}
+        {A === 'kpis' && <KpisLayout plan={plan} c={composition} />}
         {A === 'cards' && <CardsLayout plan={plan} c={composition} />}
         {A === 'topics' && <TopicsLayout plan={plan} c={composition} />}
+        {A === 'compare' && <CompareLayout plan={plan} c={composition} />}
+        {A === 'timeline' && <TimelineLayout plan={plan} c={composition} />}
         {A === 'split' && <SplitLayout plan={plan} c={composition} />}
         {A === 'media' && <MediaLayout plan={plan} c={composition} slide={slide} />}
 
@@ -684,31 +768,139 @@ function StatementLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   );
 }
 
-/** Número em destaque: o número é a peça, o resto é legenda. */
-function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
+/** Citação/impacto: a manchete e a frase de síntese vivendo sozinhas, grandes. */
+function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   const chrome = useChrome();
   const center = c.align === 'center';
+
+  return (
+    <ContentFrame zone={c.content}>
+      <FitBox anchor="center" minScale={0.84}>
+        <Stack gap={2.2} center={center}>
+          <Label block={plan.label} center={center} />
+          {plan.headline && (
+            <SlideText
+              block={plan.headline}
+              ariaLabel="Título"
+              spec={{
+                size: 3.4,
+                weight: 800,
+                lineHeight: 1.08,
+                letterSpacing: '-0.028em',
+                wrap: 'balance',
+                align: center ? 'center' : 'left',
+                clamp: 3,
+              }}
+            />
+          )}
+          {plan.highlight && (
+            <div
+              className="w-full"
+              style={
+                center
+                  ? undefined
+                  : { borderLeft: `0.24em solid ${chrome.accent}`, paddingLeft: '1.2em' }
+              }
+            >
+              {center && <Rule center width="2.8em" />}
+              <SlideText
+                block={plan.highlight}
+                ariaLabel="Frase de impacto"
+                spec={{
+                  prose: true,
+                  size: 1.6,
+                  weight: 600,
+                  lineHeight: 1.4,
+                  color: chrome.inkSoft,
+                  wrap: 'balance',
+                  align: center ? 'center' : 'left',
+                  clamp: 3,
+                }}
+              />
+            </div>
+          )}
+          {plan.extra.map((b) => (
+            <SlideText
+              key={b.id}
+              block={b}
+              ariaLabel="Texto"
+              spec={{ size: 1.15, lineHeight: 1.55, color: chrome.inkFaint, align: center ? 'center' : 'left' }}
+            />
+          ))}
+        </Stack>
+      </FitBox>
+    </ContentFrame>
+  );
+}
+
+/**
+ * Número em destaque: o número é a peça, o resto é legenda.
+ *
+ * Dois caminhos pro número: o bloco `stats` com 1 item (o caminho novo, que a
+ * geração usa no formato "numero") e o LEGADO de decks antigos (um title-3 curto
+ * com dígito detectado como métrica). Os dois desenham igual.
+ */
+function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
+  const ctx = useContext(CompositionContext);
+  const chrome = useChrome();
+  const center = c.align === 'center';
+  const stats = plan.stats;
+  const stat = stats?.items[0] ?? null;
 
   return (
     <ContentFrame zone={c.content}>
       <FitBox anchor="center">
         <Stack gap={1.8} center={center}>
           <Label block={plan.label} center={center} />
-          {plan.metric && (
-            <SlideText
-              block={plan.metric}
-              ariaLabel="Número em destaque"
-              spec={{
-                size: 6.6,
-                weight: 800,
-                lineHeight: 1,
-                letterSpacing: '-0.04em',
-                color: chrome.accent,
-                align: center ? 'center' : 'left',
-                clamp: 1,
-              }}
-              style={{ textShadow: chrome.accentTextGlow }}
-            />
+          {stats && stat ? (
+            <div className={cn('flex w-full flex-col', center && 'items-center text-center')} style={{ gap: '0.45em' }}>
+              <InlineField
+                value={stat.value}
+                onCommit={(next) => ctx.commitStat(stats.id, 0, 'value', next)}
+                ariaLabel="Número em destaque"
+                balance
+                clamp={1}
+                style={{
+                  fontSize: '6.4em',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  letterSpacing: '-0.04em',
+                  color: chrome.accent,
+                  textShadow: chrome.accentTextGlow,
+                  textAlign: center ? 'center' : 'left',
+                }}
+              />
+              <InlineField
+                value={stat.label}
+                onCommit={(next) => ctx.commitStat(stats.id, 0, 'label', next)}
+                ariaLabel="Rótulo do número"
+                clamp={1}
+                style={{
+                  fontSize: '1.3em',
+                  fontWeight: 500,
+                  lineHeight: 1.4,
+                  color: chrome.inkSoft,
+                  textAlign: center ? 'center' : 'left',
+                }}
+              />
+            </div>
+          ) : (
+            plan.metric && (
+              <SlideText
+                block={plan.metric}
+                ariaLabel="Número em destaque"
+                spec={{
+                  size: 6.6,
+                  weight: 800,
+                  lineHeight: 1,
+                  letterSpacing: '-0.04em',
+                  color: chrome.accent,
+                  align: center ? 'center' : 'left',
+                  clamp: 1,
+                }}
+                style={{ textShadow: chrome.accentTextGlow }}
+              />
+            )
           )}
           {plan.headline && (
             <SlideText
@@ -1083,6 +1275,63 @@ function CardsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   );
 }
 
+/**
+ * Campo editável genérico dos blocos estruturados novos (stats, steps, compare).
+ * Mesmo contrato do CardField: RichEditable no modo edição; no modo leitura, texto
+ * medido pelo export (data-export-text) e vigiado pelo ajuste (data-fit-guard).
+ */
+function InlineField({
+  value,
+  onCommit,
+  ariaLabel,
+  style,
+  clamp,
+  balance = false,
+}: {
+  value: RichText;
+  onCommit: (next: RichText) => void;
+  ariaLabel: string;
+  style: CSSProperties;
+  clamp: number;
+  balance?: boolean;
+}) {
+  const ctx = useContext(CompositionContext);
+
+  if (ctx.editable) {
+    return (
+      <div className="min-h-0 overflow-hidden" style={style}>
+        <RichEditable
+          value={value}
+          onCommit={onCommit}
+          placeholder={ariaLabel}
+          multiline
+          ariaLabel={ariaLabel}
+          style={{ textWrap: balance ? 'balance' : 'pretty' } as CSSProperties}
+        />
+      </div>
+    );
+  }
+
+  if (isEmpty(value)) return <div style={style} />;
+
+  return (
+    <div className="min-h-0" style={style}>
+      <div
+        data-export-text=""
+        data-fit-guard=""
+        style={{
+          textWrap: balance ? 'balance' : 'pretty',
+          overflowWrap: 'anywhere',
+          hyphens: balance ? 'manual' : 'auto',
+          ...clampLines(clamp),
+        } as CSSProperties}
+      >
+        {renderRich(value)}
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------------ */
 /* TÓPICOS                                                                   */
 /* ------------------------------------------------------------------------ */
@@ -1194,6 +1443,297 @@ function TopicsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
     <>
       <Header plan={plan} zone={c.header} align={c.align} />
       <TopicsList plan={plan} zone={c.content} />
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* KPIs — painel de métricas, texto pelado                                    */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * KPIs: 2 a 4 métricas, cada uma valor grande na cor de destaque + rótulo curto.
+ * SEM caixa: como os tópicos, é texto pelado com um filete de apoio — a arte
+ * continua viva atrás. Fileira em banda larga, pilha em coluna (a PROPORÇÃO da
+ * zona decide, mesmo critério dos cards).
+ */
+function StatsPanel({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+  const ctx = useContext(CompositionContext);
+  const chrome = useChrome();
+  const stats = plan.stats;
+  if (!stats || stats.items.length === 0) return null;
+
+  const items = stats.items.slice(0, MAX_STATS);
+  const stacked = zoneAspect(zone) < STACK_BELOW_ASPECT;
+
+  return (
+    <ZoneBox zone={zone}>
+      <FitBox anchor="center" minScale={0.82}>
+        <div
+          className="grid w-full"
+          style={{
+            gridTemplateColumns: stacked ? '1fr' : `repeat(${items.length}, minmax(0, 1fr))`,
+            gap: stacked ? '1.1em' : '1.6em',
+          }}
+        >
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              className="flex min-w-0 flex-col"
+              style={{ rowGap: '0.35em', borderLeft: `0.16em solid ${chrome.accent}`, paddingLeft: '0.85em' }}
+            >
+              <InlineField
+                value={item.value}
+                onCommit={(next) => ctx.commitStat(stats.id, i, 'value', next)}
+                ariaLabel={`Valor da métrica ${i + 1}`}
+                balance
+                clamp={1}
+                style={{
+                  fontSize: '2.6em',
+                  fontWeight: 800,
+                  lineHeight: 1.05,
+                  letterSpacing: '-0.03em',
+                  color: chrome.accent,
+                  textShadow: chrome.accentTextGlow,
+                }}
+              />
+              <InlineField
+                value={item.label}
+                onCommit={(next) => ctx.commitStat(stats.id, i, 'label', next)}
+                ariaLabel={`Rótulo da métrica ${i + 1}`}
+                clamp={2}
+                style={{ fontSize: '1.02em', fontWeight: 500, lineHeight: 1.35, color: chrome.inkSoft }}
+              />
+            </div>
+          ))}
+        </div>
+      </FitBox>
+      {ctx.editable && items.length < MAX_STATS && (
+        <AddButton onClick={() => ctx.addStat(stats.id)} label="+ Nova métrica" />
+      )}
+    </ZoneBox>
+  );
+}
+
+function KpisLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
+  if (!c.header) return null;
+  return (
+    <>
+      <Header plan={plan} zone={c.header} align={c.align} />
+      <StatsPanel plan={plan} zone={c.content} />
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* COMPARAÇÃO — dois painéis de vidro frente a frente                         */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Comparação: dois painéis de vidro (o mesmo vidro dos cards, com a densidade
+ * medida da arte) lado a lado. O SEGUNDO lado é o lado da proposta: o rótulo e o
+ * filete dele saem na cor de destaque, um "depois" que vence o "antes" sem gritar.
+ */
+function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+  const ctx = useContext(CompositionContext);
+  const chrome = useChrome();
+  const compare = plan.compare;
+  if (!compare || compare.sides.length < 2) return null;
+
+  const glass = glassOpacityFor(zone.cost);
+  const shell: CSSProperties = {
+    border: `1px solid ${chrome.cardBorder}`,
+    background: chrome.cardBg(glass),
+    backdropFilter: 'blur(1.2cqw)',
+    boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+  };
+  // Dois painéis pedem largura; numa coluna estreita eles empilham.
+  const stacked = zoneAspect(zone) < 1.6;
+
+  return (
+    <ZoneBox zone={zone}>
+      <FitBox anchor="center" minScale={0.82}>
+        <div
+          className="grid w-full"
+          style={{ gridTemplateColumns: stacked ? '1fr' : '1fr 1fr', gap: stacked ? '0.9em' : '1.4em' }}
+        >
+          {compare.sides.slice(0, 2).map((side, si) => (
+            <div
+              key={side.id}
+              className="flex min-h-0 flex-col overflow-hidden rounded-[1.4em]"
+              style={{ ...shell, padding: '1.3em 1.35em', rowGap: '0.75em' }}
+            >
+              <InlineField
+                value={side.label}
+                onCommit={(next) => ctx.commitCompareLabel(compare.id, si, next)}
+                ariaLabel={`Rótulo do lado ${si + 1}`}
+                balance
+                clamp={1}
+                style={{
+                  fontSize: '1.05em',
+                  fontWeight: 700,
+                  lineHeight: 1.3,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: si === 1 ? chrome.accent : chrome.inkSoft,
+                  textShadow: si === 1 ? chrome.accentTextGlow : undefined,
+                }}
+              />
+              <span
+                aria-hidden="true"
+                className="rounded-full"
+                style={{ width: '2em', height: '0.14em', background: chrome.accent, opacity: si === 1 ? 0.9 : 0.4 }}
+              />
+              <div className="flex min-h-0 flex-col" style={{ rowGap: '0.55em' }}>
+                {side.points.map((point, pi) => (
+                  <InlineField
+                    key={`${side.id}-${pi}`}
+                    value={point}
+                    onCommit={(next) => ctx.commitComparePoint(compare.id, si, pi, next)}
+                    ariaLabel={`Ponto ${pi + 1} do lado ${si + 1}`}
+                    clamp={2}
+                    style={{ fontSize: '1.06em', lineHeight: 1.45, color: chrome.ink }}
+                  />
+                ))}
+              </div>
+              {ctx.editable && side.points.length < MAX_COMPARE_POINTS && (
+                <button
+                  type="button"
+                  onClick={() => ctx.addComparePoint(compare.id, si)}
+                  className="self-start rounded-md border border-dashed border-white/[0.16] px-2 py-0.5 font-medium text-white/50 transition-colors duration-150 hover:border-brand/40 hover:text-brand"
+                  style={{ fontSize: '0.72em' }}
+                >
+                  + Ponto
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </FitBox>
+    </ZoneBox>
+  );
+}
+
+function CompareLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
+  if (!c.header) return null;
+  return (
+    <>
+      <Header plan={plan} zone={c.header} align={c.align} />
+      <ComparePanels plan={plan} zone={c.content} />
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* TIMELINE — etapas numeradas com conector                                   */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Timeline: etapas em sequência, cada uma com número na cor de destaque e um
+ * conector que liga à próxima. Texto pelado, sem caixa. Numa banda larga as
+ * etapas correm na horizontal (o desenho clássico de roadmap); numa coluna,
+ * descem na vertical com o trilho à esquerda. A proporção da zona decide.
+ */
+function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+  const ctx = useContext(CompositionContext);
+  const chrome = useChrome();
+  const steps = plan.steps;
+  if (!steps || steps.items.length === 0) return null;
+
+  const items = steps.items.slice(0, MAX_STEPS);
+  const horizontal = zoneAspect(zone) >= STACK_BELOW_ASPECT;
+
+  if (horizontal) {
+    return (
+      <ZoneBox zone={zone}>
+        <FitBox anchor="center" minScale={0.82}>
+          <div
+            className="grid w-full"
+            style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`, columnGap: '1.2em' }}
+          >
+            {items.map((item, i) => (
+              <div key={`${steps.id}-${i}`} className="flex min-w-0 flex-col" style={{ rowGap: '0.7em' }}>
+                <div className="flex w-full items-center" style={{ gap: '0.7em' }}>
+                  <span
+                    className="font-extrabold tabular-nums"
+                    style={{ fontSize: '1.4em', lineHeight: 1, color: chrome.accent, textShadow: chrome.accentTextGlow }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  {i < items.length - 1 && (
+                    <span
+                      aria-hidden="true"
+                      className="min-w-0 flex-1 rounded-full"
+                      style={{ height: '0.13em', background: chrome.accent, opacity: 0.35 }}
+                    />
+                  )}
+                </div>
+                <InlineField
+                  value={item}
+                  onCommit={(next) => ctx.commitStep(steps.id, i, next)}
+                  ariaLabel={`Etapa ${i + 1}`}
+                  clamp={3}
+                  style={{ fontSize: '1.12em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
+                />
+              </div>
+            ))}
+          </div>
+        </FitBox>
+        {ctx.editable && items.length < MAX_STEPS && (
+          <AddButton onClick={() => ctx.addStep(steps.id)} label="+ Nova etapa" />
+        )}
+      </ZoneBox>
+    );
+  }
+
+  return (
+    <ZoneBox zone={zone}>
+      <FitBox anchor="center" minScale={0.82}>
+        <ol
+          className="grid w-full list-none p-0"
+          style={{ gridTemplateColumns: 'auto 1fr', columnGap: '1em', rowGap: 'calc(1.6 * var(--rhythm))', margin: 0 }}
+        >
+          {items.map((item, i) => (
+            <li key={`${steps.id}-${i}`} className="contents">
+              <div className="flex flex-col items-center" style={{ rowGap: '0.35em' }}>
+                <span
+                  className="font-extrabold tabular-nums"
+                  style={{ fontSize: '1.3em', lineHeight: 1.2, color: chrome.accent, textShadow: chrome.accentTextGlow }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                {i < items.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="w-[0.13em] flex-1 rounded-full"
+                    style={{ background: chrome.accent, opacity: 0.3, minHeight: '0.8em' }}
+                  />
+                )}
+              </div>
+              <InlineField
+                value={item}
+                onCommit={(next) => ctx.commitStep(steps.id, i, next)}
+                ariaLabel={`Etapa ${i + 1}`}
+                clamp={2}
+                style={{ fontSize: '1.2em', fontWeight: 500, lineHeight: 1.42, color: chrome.ink }}
+              />
+            </li>
+          ))}
+        </ol>
+      </FitBox>
+      {ctx.editable && items.length < MAX_STEPS && (
+        <AddButton onClick={() => ctx.addStep(steps.id)} label="+ Nova etapa" />
+      )}
+    </ZoneBox>
+  );
+}
+
+function TimelineLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
+  if (!c.header) return null;
+  return (
+    <>
+      <Header plan={plan} zone={c.header} align={c.align} />
+      <TimelineSteps plan={plan} zone={c.content} />
     </>
   );
 }

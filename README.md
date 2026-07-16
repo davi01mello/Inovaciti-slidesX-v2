@@ -11,12 +11,16 @@ identidade CITi (dark premium, verde, escultura 3D, tipografia bold).
    **cor**), extensão (quantos slides, com o sistema recomendando o número lido do
    próprio briefing) e anexos, e fecha numa revisão. Nenhuma página rola até o botão.
 2. **Storyboard em duas etapas**: primeiro um Agente Estrategista (Gemini) recebe o
-   briefing completo e produz um plano interno (arco narrativo, papel e mensagem de
-   cada slide) que nunca aparece pro usuário; depois a IA geradora escreve o conteúdo
-   textual estruturado seguindo o plano. O texto é **pontos-chave escaneáveis** (cards
-   e tópicos), nunca parede de texto nem cartaz vazio. Posição, cor e tipografia são
-   código determinístico, nunca decisão da IA. Todos os prompts vivem em
-   `api/src/intelligence/`.
+   briefing completo e produz um plano interno (arco narrativo, papel, mensagem e
+   **formato** de cada slide) que nunca aparece pro usuário; depois a IA geradora
+   escreve o conteúdo seguindo o plano. Cada slide de conteúdo é um **formato de um
+   catálogo** (afirmação, apoio, citação, tópicos, cards, split, número, indicadores,
+   comparação, jornada) escolhido pelo que o slide apresenta — proposta tem slide de
+   investimento, relatório abre com o resultado — com variedade obrigatória (vizinhos
+   nunca repetem formato) e densidade garantida pelo servidor: nenhum bloco passa de
+   25 palavras, nenhum slide sai oco (`api/src/normalize.ts`). Posição, cor e
+   tipografia são código determinístico, nunca decisão da IA. Todos os prompts vivem
+   em `api/src/intelligence/`.
 3. **Revisão**: workspace WYSIWYG — o palco é o próprio template, clicou no texto, edita
    no lugar. A barra de cor no palco repinta o deck inteiro em tempo real.
 4. **Composição: meça a arte, não a anote.** Cada slide é montado sobre uma arte real da

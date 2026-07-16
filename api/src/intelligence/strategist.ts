@@ -17,7 +17,7 @@
  */
 import type { DraftAssetMeta, PresentationGoal, VisualStyle } from '../types.js';
 import { audienceLine, goalGuidance, slideCountGuidance, styleGuidance } from './templates.js';
-import { WRITING_PRINCIPLES } from './writing.js';
+import { FORMAT_CATALOG, WRITING_PRINCIPLES } from './writing.js';
 
 export const STRATEGIST_SYSTEM_INSTRUCTION = `
 Você é um consultor sênior de apresentações executivas, especialista em narrativa. Seu único trabalho: transformar o briefing bruto de um usuário no melhor PLANO possível pra uma IA que escreverá o conteúdo dos slides.
@@ -32,6 +32,11 @@ COMO RACIOCINAR (internamente, antes de escrever qualquer linha):
 - Escolha a estrutura narrativa que serve a ESTE contexto. Nunca aplique um esqueleto fixo: a estrutura nasce do objetivo, do público, do tema e da quantidade de slides.
 - Controle a curva de interesse: a apresentação cresce, não começa no auge pra depois murchar. Os argumentos mais fortes entram depois do terreno preparado.
 - Garanta continuidade: cada slide prepara o seguinte. Sem salto de assunto, sem repetição de argumento.
+- Pense no QUE cada slide apresenta e escolha o formato que carrega AQUILO: uma apresentação
+  institucional não tem slide de investimento; uma proposta comercial TEM, e o valor merece a
+  página dele. O formato certo pro conteúdo certo é o que faz o deck parecer feito à mão.
+
+${FORMAT_CATALOG}
 
 O PLANO QUE VOCÊ PRODUZ contém, nesta ordem:
 
@@ -41,21 +46,25 @@ O PLANO QUE VOCÊ PRODUZ contém, nesta ordem:
        "Slide N (papel): mensagem central em uma frase; FORMATO: <formato>"
    Papéis possíveis: abrir, contextualizar, criar tensão, apresentar a proposta, aprofundar, provar,
    responder objeção, dar respiro, convergir pra decisão, fechar.
-   O FORMATO de cada slide de conteúdo é DITADO PELA VOZ (ver a ESTRUTURA da voz no briefing abaixo),
-   não é livre. Nomeie o formato dentro do que a voz permite:
-       Sereno   -> AFIRMAÇÃO (só o título, ou título + uma linha de síntese). É o único formato; a variedade vem das ideias.
-       Preciso  -> TÓPICOS, CARDS, BODY ou NÚMERO (título + UMA lista curta OU uma frase). Alterne entre eles.
-       Presença -> MANCHETE (uma afirmação seca; no máximo um acento curto de 1 a 3 palavras). É o único formato.
-   Além destes, os estruturais: CAPA, SEPARADOR, ENCERRAMENTO (iguais em qualquer voz; ela só afina a redação).
+   O FORMATO de cada slide de conteúdo vem do CATÁLOGO DE FORMATOS (acima) e nasce do que o slide
+   apresenta: valor/preço/meta -> numero; painel de resultados -> indicadores; antes/depois ou
+   A vs B -> comparacao; método/cronograma -> jornada; pilares -> cards; agenda/entregas -> topicos;
+   explicação curta -> apoio; tese/provocação -> citacao; respiro -> afirmacao.
+   Além destes, os estruturais: CAPA, SEPARADOR, ENCERRAMENTO.
 
    Regras que o seu plano precisa respeitar, porque a geradora obedece o plano e o servidor garante:
-   - Respeite a ESTRUTURA da voz ativa em TODO slide de conteúdo. Nunca planeje uma lista pra Sereno ou Presença: elas não listam.
-   - MENOS TEXTO É SEMPRE MELHOR. Muitos slides de conteúdo devem ser só um título forte.
-   - Em Preciso, alterne o formato de apoio entre slides vizinhos e não repita a mesma contagem de itens.
+   - VARIEDADE OBRIGATÓRIA: vizinhos nunca repetem formato; até 12 slides nenhum formato aparece
+     mais de 2 vezes; com 5 ou mais slides de conteúdo, use pelo menos 4 formatos diferentes.
+   - O formato serve o conteúdo, nunca o contrário: não esvazie nem infle um slide pra variar.
+   - A VOZ (no briefing abaixo) inclina a escolha e o ritmo das frases, nunca quebra a gramática.
+   - numero e indicadores SÓ com números reais do briefing. Nunca invente valor, percentual ou prazo.
+   - Considere O QUE a apresentação é: proposta tem slide de investimento; relatório abre com o
+     resultado; treinamento tem jornada. (Ver os formatos típicos do objetivo, no briefing.)
 
-3. PONTOS POR SLIDE: pra cada slide de conteúdo, liste os POUQUÍSSIMOS pontos que ele carrega —
-   em Sereno e Presença, UM ponto (a ideia do slide); em Preciso, no MÁXIMO 3. Se você não consegue
-   nomear o ponto, o slide não deveria existir; se são muitos pontos, ele vira dois slides.
+3. PONTOS POR SLIDE: pra cada slide de conteúdo, liste os pontos que ele carrega, dentro da faixa
+   do formato (afirmacao/citacao/numero: UM ponto; topicos/jornada: um por item, 3 a 5; cards: um
+   por card; comparacao: 1 a 3 por lado; indicadores: um por métrica). Se você não consegue nomear
+   o ponto, o slide não deveria existir; se são pontos demais pro formato, ele vira dois slides.
 
 4. CUIDADOS: 2 a 4 avisos específicos deste briefing (o que não repetir, que dado não inventar, que armadilha evitar).
 
@@ -63,9 +72,8 @@ REGRAS DA SUA SAÍDA:
 - Responda APENAS com o texto do plano. Sem preâmbulo, sem "aqui está", sem comentário sobre o seu processo, sem markdown, sem cerca de código.
 - O plano cobre EXATAMENTE a quantidade de slides pedida, uma linha por slide, numeradas de 1 até o total.
 - Cada slide do plano tem UM objetivo. Nenhum slide existe pra preencher espaço.
-- Cada slide de conteúdo é ENXUTO ao extremo, nunca um parágrafo, e obedece a ESTRUTURA da voz. MENOS TEXTO
-  É SEMPRE MELHOR: um título forte já basta, e muitos slides são só isso. O que não cabe no slide vira a fala
-  do apresentador, não mais texto na tela.
+- Cada slide de conteúdo fica DENTRO da faixa do formato dele: nem parede de texto, nem slide oco.
+  O que não cabe no formato vira a fala do apresentador, ou outro slide.
 - Seja denso e enxuto: o plano inteiro cabe confortavelmente numa tela.
 
 ${WRITING_PRINCIPLES}
@@ -96,7 +104,7 @@ export function buildStrategistPrompt(briefing: StrategistBriefing): string {
           // texto). Se o plano não reservar esse slide, a foto cai num slide que não
           // foi escrito pra ela e o texto fica olhando pro outro lado.
           photos > 0
-            ? `${photos} ${photos === 1 ? 'anexo é foto e vai OCUPAR um slide' : 'anexos são fotos e vão OCUPAR ' + photos + ' slides'} de miolo, com a imagem emoldurada ao lado do texto. Reserve ${photos === 1 ? 'esse slide' : 'esses slides'} no plano, em formato APROFUNDAMENTO (texto puro, sem lista), e diga qual argumento a imagem sustenta.`
+            ? `${photos} ${photos === 1 ? 'anexo é foto e vai OCUPAR um slide' : 'anexos são fotos e vão OCUPAR ' + photos + ' slides'} de miolo, com a imagem emoldurada ao lado do texto. Reserve ${photos === 1 ? 'esse slide' : 'esses slides'} no plano, em FORMATO: apoio (título + body curto, sem lista), e diga qual argumento a imagem sustenta.`
             : '',
         ]
           .filter(Boolean)

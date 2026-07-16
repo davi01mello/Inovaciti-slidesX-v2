@@ -1,17 +1,32 @@
 import { toPlain } from '@/lib/richText';
 import type { Archetype } from '@/services/artZones';
-import { isListBlock, type Block, type CardsBlock, type Slide, type TextBlock, type TopicsBlock } from '@/types/slide';
+import {
+  isListBlock,
+  type Block,
+  type CardsBlock,
+  type CompareBlock,
+  type Slide,
+  type StatsBlock,
+  type StepsBlock,
+  type TextBlock,
+  type TopicsBlock,
+} from '@/types/slide';
 
 /**
  * QUAL PAPEL ESTE SLIDE CUMPRE.
  *
- * A parte pura do motor: lê o conteúdo do slide e decide qual dos 9 arquétipos
+ * A parte pura do motor: lê o conteúdo do slide e decide qual dos 13 arquétipos
  * ele é, e qual bloco ocupa qual papel semântico dentro dele. Não sabe nada de
  * pixel, de arte ou de cor — isso é do artZones/deckArt.
  *
+ * O arquétipo é INFERIDO dos blocos, nunca declarado e persistido: assim a edição
+ * manual do usuário (apagar a lista, virar afirmação) muda o desenho na hora, sem
+ * deixar um rótulo velho pra trás.
+ *
  * A ordem das perguntas importa, e ela é a hierarquia editorial do produto:
  * primeiro o papel estrutural que o autor pediu (capa, separador, fecho), depois
- * a FOTO (que é conteúdo e manda no slide inteiro), depois a forma do conteúdo.
+ * a FOTO (que é conteúdo e manda no slide inteiro), depois os blocos que definem
+ * formato (compare, stats, steps), depois a forma do conteúdo.
  */
 
 export interface ComposedSlide {
@@ -20,17 +35,23 @@ export interface ComposedSlide {
   label: TextBlock | null;
   /** O título principal. */
   headline: TextBlock | null;
-  /** Valor curto com número, no arquétipo bignumber. */
+  /** Valor curto com número (LEGADO: decks antigos com title-3 métrico). */
   metric: TextBlock | null;
-  /** O PARÁGRAFO. É o coração de todo slide de conteúdo. */
+  /** O texto de apoio em prosa, curto. */
   body: TextBlock | null;
   /** Uma linha que completa o título. */
   subtitle: TextBlock | null;
   /** Frase de síntese, com destaque visual. */
   highlight: TextBlock | null;
-  /** A lista, quando existir. Cards e tópicos NUNCA coexistem. */
+  /** A lista, quando existir. Nunca dois tipos de lista no mesmo slide. */
   cards: CardsBlock | null;
   topics: TopicsBlock | null;
+  /** Métricas: 1 item vira número gigante (bignumber), 2 a 4 viram painel (kpis). */
+  stats: StatsBlock | null;
+  /** Etapas em sequência: timeline numerada. */
+  steps: StepsBlock | null;
+  /** Dois lados frente a frente. */
+  compare: CompareBlock | null;
   /** Textos extras que o usuário inseriu à mão e não cabem em nenhum papel acima. */
   extra: TextBlock[];
 }
@@ -52,10 +73,9 @@ function firstOf(blocks: Block[], kind: TextBlock['kind']): TextBlock | null {
 /**
  * O arquétipo do slide.
  *
- * `split` merece uma nota: ele existe pra quando o slide tem MUITO texto corrido E
+ * `split` merece uma nota: ele existe pra quando o slide tem contexto em prosa E
  * uma lista. Empilhar os dois verticalmente esmaga os dois; lado a lado, cada um
- * respira. É o formato que o deck antigo não tinha e que aparecia como "slide
- * lotado" nas reclamações.
+ * respira. O formato `split` do catálogo (body + lista) cai aqui.
  */
 function pickArchetype(slide: Slide, plan: Omit<ComposedSlide, 'archetype'>): Archetype {
   switch (slide.layout) {
@@ -72,27 +92,31 @@ function pickArchetype(slide: Slide, plan: Omit<ComposedSlide, 'archetype'>): Ar
   // A foto é CONTEÚDO e manda no slide: ela ocupa uma coluna inteira.
   if (slide.image) return 'media';
 
-  const bodyWords = plan.body ? toPlain(plan.body.content).trim().split(/\s+/).filter(Boolean).length : 0;
+  // Blocos que definem formato sozinhos.
+  if (plan.compare) return 'compare';
+  if (plan.stats) return plan.stats.items.length === 1 ? 'bignumber' : 'kpis';
+  if (plan.steps) return 'timeline';
+
   const hasList = !!plan.cards || !!plan.topics;
 
   /**
    * O `split` só existe se o APOIO couber numa coluna.
    *
-   * Isto eu só entendi olhando o print: TRÊS cards, cada um com um corpo de 20 a 45
-   * palavras, numa coluna de meia tela viram três tiras de 280px. O texto hifeniza
-   * em toda linha ("Conferên-cia", "es-tiver") e o terceiro card trunca. Não existe
-   * ajuste de fonte que salve isso: a coluna é estreita demais pro conteúdo, ponto.
-   *
-   * Três cards com corpo querem a LARGURA INTEIRA, e o arquétipo `cards` dá isso (o
-   * parágrafo vai pro header, junto do título). O `split` fica pros apoios que
-   * genuinamente cabem numa coluna: tópicos (uma linha cada) ou dois cards.
+   * TRÊS cards com corpo numa coluna de meia tela viram três tiras espremidas com
+   * hifenização em toda linha. Três cards querem a LARGURA INTEIRA, e o arquétipo
+   * `cards` dá isso (o texto de apoio vai pro header, junto do título). O `split`
+   * fica pros apoios que genuinamente cabem numa coluna: tópicos (uma linha cada)
+   * ou dois cards.
    */
   const asideFitsColumn = !!plan.topics || (plan.cards?.items.length ?? 0) <= 2;
 
-  if (hasList && bodyWords >= 34 && asideFitsColumn) return 'split';
+  // Formato `split` do catálogo: contexto em prosa + lista, lado a lado.
+  if (hasList && plan.body && asideFitsColumn) return 'split';
   if (plan.cards) return 'cards';
   if (plan.topics) return 'topics';
-  if (plan.metric) return 'bignumber';
+  if (plan.metric) return 'bignumber'; // legado: decks antigos com dois títulos
+  // Formato `citacao`: manchete + frase de síntese, sem prosa nem lista.
+  if (plan.highlight && !plan.body) return 'quote';
   return 'statement';
 }
 
@@ -107,6 +131,9 @@ export function composeSlide(slide: Slide): ComposedSlide {
 
   const cards = (blocks.find((b) => b.kind === 'cards') as CardsBlock | undefined) ?? null;
   const topics = cards ? null : ((blocks.find((b) => b.kind === 'topics') as TopicsBlock | undefined) ?? null);
+  const stats = (blocks.find((b) => b.kind === 'stats') as StatsBlock | undefined) ?? null;
+  const steps = (blocks.find((b) => b.kind === 'steps') as StepsBlock | undefined) ?? null;
+  const compare = (blocks.find((b) => b.kind === 'compare') as CompareBlock | undefined) ?? null;
 
   const label = firstOf(blocks, 'section-label');
   const highlight = firstOf(blocks, 'highlight');
@@ -115,21 +142,23 @@ export function composeSlide(slide: Slide): ComposedSlide {
 
   const titles = blocks.filter(isTitleKind);
 
-  // Métrica só quando ela NÃO é o único título: um preço sozinho é o título do
-  // slide, não um número em destaque órfão de manchete.
+  // Métrica LEGADA só quando ela NÃO é o único título: um preço sozinho é o título
+  // do slide, não um número em destaque órfão de manchete. Decks novos usam stats.
   let metric: TextBlock | null = null;
   let headline: TextBlock | null = null;
-  if (slide.layout === 'content' && !cards && !topics && titles.length > 1) {
+  if (slide.layout === 'content' && !cards && !topics && !stats && titles.length > 1) {
     metric = titles.find(isShortMetric) ?? null;
   }
   headline = titles.find((t) => t !== metric) ?? null;
 
   const claimed = new Set<Block>(
-    [label, highlight, body, subtitle, headline, metric, cards, topics].filter(Boolean) as Block[],
+    [label, highlight, body, subtitle, headline, metric, cards, topics, stats, steps, compare].filter(
+      Boolean,
+    ) as Block[],
   );
   const extra = blocks.filter((b): b is TextBlock => !isListBlock(b) && !claimed.has(b));
 
-  const plan = { label, headline, metric, body, subtitle, highlight, cards, topics, extra };
+  const plan = { label, headline, metric, body, subtitle, highlight, cards, topics, stats, steps, compare, extra };
   return { archetype: pickArchetype(slide, plan), ...plan };
 }
 

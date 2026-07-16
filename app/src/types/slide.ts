@@ -38,6 +38,9 @@ export type TextBlockKind =
  */
 export const MAX_CARDS = 3;
 export const MAX_TOPICS = 5;
+export const MAX_STATS = 4;
+export const MAX_STEPS = 5;
+export const MAX_COMPARE_POINTS = 3;
 
 /** Retângulo normalizado em relação ao slide (0..1 nos dois eixos). */
 export interface BlockRect {
@@ -86,14 +89,58 @@ export interface TopicsBlock {
   items: RichText[];
 }
 
-export type Block = TextBlock | CardsBlock | TopicsBlock;
-
-/** Lista (cards ou tópicos). Os dois nunca coexistem no mesmo slide. */
-export function isListBlock(block: Block): block is CardsBlock | TopicsBlock {
-  return block.kind === 'cards' || block.kind === 'topics';
+/** Uma métrica: valor curto com dígito ("R$ 48 mil", "3x") + rótulo de 1 a 6 palavras. */
+export interface StatItem {
+  id: string;
+  value: RichText;
+  label: RichText;
 }
 
-/** Texto simples (tudo que não é lista). */
+/** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
+export interface StatsBlock {
+  id: string;
+  kind: 'stats';
+  align: BlockAlign;
+  /** No máximo MAX_STATS. */
+  items: StatItem[];
+}
+
+/** Etapas em sequência (timeline numerada). Cada item é UMA linha. */
+export interface StepsBlock {
+  id: string;
+  kind: 'steps';
+  align: BlockAlign;
+  /** No máximo MAX_STEPS. */
+  items: RichText[];
+}
+
+export interface CompareSide {
+  id: string;
+  label: RichText;
+  /** No máximo MAX_COMPARE_POINTS por lado. */
+  points: RichText[];
+}
+
+/** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */
+export interface CompareBlock {
+  id: string;
+  kind: 'compare';
+  align: BlockAlign;
+  sides: CompareSide[];
+}
+
+export type Block = TextBlock | CardsBlock | TopicsBlock | StatsBlock | StepsBlock | CompareBlock;
+
+const LIST_KINDS = new Set(['cards', 'topics', 'stats', 'steps', 'compare']);
+
+/** Bloco estruturado (tudo que carrega itens em vez de um texto só). */
+export function isListBlock(
+  block: Block,
+): block is CardsBlock | TopicsBlock | StatsBlock | StepsBlock | CompareBlock {
+  return LIST_KINDS.has(block.kind);
+}
+
+/** Texto simples (tudo que não é bloco estruturado). */
 export function isTextBlock(block: Block): block is TextBlock {
   return !isListBlock(block);
 }

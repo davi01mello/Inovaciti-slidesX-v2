@@ -48,9 +48,14 @@ const FAMILY_FIT: Record<Archetype, Record<ArtFamily, number>> = {
   closing: { capa: 0.95, espiral: 0.6, canvas: 0.25 },
   section: { espiral: 1, capa: 0.72, canvas: 0.35 },
   statement: { capa: 0.85, espiral: 0.75, canvas: 0.6 },
+  // Citação é um statement de impacto: UM bloco de texto grande, arte dramática serve.
+  quote: { capa: 0.85, espiral: 0.8, canvas: 0.6 },
   bignumber: { canvas: 0.9, capa: 0.7, espiral: 0.7 },
+  kpis: { canvas: 1, espiral: 0.5, capa: 0.35 },
   cards: { canvas: 1, espiral: 0.45, capa: 0.3 },
   topics: { canvas: 1, espiral: 0.5, capa: 0.35 },
+  compare: { canvas: 1, espiral: 0.45, capa: 0.3 },
+  timeline: { canvas: 1, espiral: 0.5, capa: 0.35 },
   split: { canvas: 1, espiral: 0.45, capa: 0.3 },
   media: { canvas: 1, espiral: 0.4, capa: 0.3 },
 };
@@ -63,7 +68,7 @@ const FAMILY_FIT: Record<Archetype, Record<ArtFamily, number>> = {
  * compete com o conteúdo e NENHUM véu resolve: velar a arte inteira até o texto
  * aparecer é o mesmo que não ter arte. Melhor bloquear.
  */
-const LIGHT_ART_ALLOWED = new Set<Archetype>(['cover', 'section', 'statement', 'closing']);
+const LIGHT_ART_ALLOWED = new Set<Archetype>(['cover', 'section', 'statement', 'quote', 'closing']);
 
 /* -------------------------------------------------------------------------- */
 /* Determinismo                                                                */

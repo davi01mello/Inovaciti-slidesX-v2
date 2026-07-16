@@ -24,14 +24,21 @@ VOCABULÁRIO DE SLIDES:
     title-2        título padrão de slide de conteúdo
     title-3        subseção (uso raro)
     subtitle       uma linha que completa um título
-    body           UMA frase curta de apoio, RARO. Coadjuvante, nunca a estrela. A maioria dos slides não tem.
-    highlight      uma frase curta de síntese, com destaque visual
-    cards          até 3 itens {title, body curtíssimo} — um ponto com um pingo de apoio
-    topics         até 5 itens de uma linha telegráfica — lista leve, SEM caixa
+    body           um texto curto de apoio: 12 a 25 palavras, uma ou duas frases
+    highlight      frase de síntese com destaque visual: 6 a 14 palavras
+    cards          2 a 3 itens {title, body curtíssimo} — um ponto com um pingo de apoio
+    topics         3 a 5 itens de uma linha telegráfica — lista leve, SEM caixa
+    stats          1 a 4 métricas {value, label}. Com 1 item o número sai GIGANTE na cor
+                   de destaque; com 2 a 4, painel de indicadores. Só números reais.
+    steps          3 a 5 etapas em sequência — vira timeline numerada com conectores
+    compare        exatamente 2 lados {label, points} frente a frente
 
-MENOS TEXTO É SEMPRE MELHOR. A espinha do deck são TÓPICOS curtos e AFIRMAÇÕES secas.
-Cards são o tempero, texto corrido é raríssimo. Um slide que é só um título forte é um
-ótimo slide. Na dúvida entre dizer mais ou dizer menos, diga MENOS: o resto é a fala.
+FORMAS EXATAS NO JSON (copie o SHAPE, escreva sobre o tema real do usuário):
+  {"kind":"topics","topics":[[{"text":"..."}],[{"text":"..."}]]}
+  {"kind":"cards","cards":[{"title":[{"text":"..."}],"body":[{"text":"..."}]}]}
+  {"kind":"stats","stats":[{"value":[{"text":"R$ 48 mil"}],"label":[{"text":"investimento total"}]}]}
+  {"kind":"steps","steps":[[{"text":"Diagnóstico do fluxo"}],[{"text":"Prototipação com o time"}],[{"text":"Entrega e medição"}]]}
+  {"kind":"compare","sides":[{"label":[{"text":"Hoje"}],"points":[[{"text":"..."}]]},{"label":[{"text":"Com o CITi"}],"points":[[{"text":"..."}]]}]}
 
 ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):
 - 1 slide: um único "cover" autocontido: section-label, title-1 forte e um subtitle que carregue a mensagem inteira.
@@ -40,21 +47,20 @@ ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):
 - Capa (cover): um section-label de contexto (2 a 3 palavras), um title-1 com ângulo forte e específico ao tema (jamais genérico tipo "Apresentação institucional") e UM subtitle de uma linha completando o título. Sem body, sem listas.
 - Separador (section): só a partir de 8 slides. De 8 a 13, no máximo 1 ou 2. Em decks longos, um a cada 5 a 8 slides de conteúdo. Tem section-label e title-1, e nada mais. É um respiro.
 - Encerramento (closing): title-1 curto e caloroso, um subtitle com o próximo passo concreto, e um highlight com a frase que você quer que fique. Nada de listas.
-- Slide de CONTEÚDO (content): title-2 + no MÁXIMO um formato de apoio. Pode ser só o título com um subtitle. NUNCA parede de texto.
+- Slide de CONTEÚDO (content): é UM formato do CATÁLOGO DE FORMATOS (acima), com exatamente
+  os blocos da gramática daquele formato, dentro da faixa de palavras dele.
 
-A FORMA DO SLIDE DE CONTEÚDO É DITADA PELA VOZ, não é livre. A VOZ da escrita (ver, no fim
-do prompt, "ESTRUTURA OBRIGATÓRIA desta voz") diz exatamente quais blocos cada slide de
-conteúdo pode ter. Em resumo:
-  Sereno   -> só title-2 (+ subtitle curto opcional). NUNCA lista, NUNCA body, NUNCA destaque. Muitos slides só título.
-  Preciso  -> title-2 + UMA lista (2 a 3 tópicos OU 2 cards) OU um body curto, + subtitle curto opcional. A ÚNICA voz que enumera.
-  Presença -> title-2 manchete + no máximo UM acento de 1 a 3 palavras (highlight OU section-label). NUNCA lista, NUNCA body.
-Siga a estrutura da voz ativa à risca. O servidor DESCARTA qualquer bloco fora dela, então
-fugir da voz só faz o slide sair menor do que você planejou.
+A FORMA DE CADA SLIDE DE CONTEÚDO É O FORMATO QUE O PLANO NOMEIA. Monte exatamente os
+blocos da gramática do formato planejado. O servidor DESCARTA blocos fora da gramática e
+corta o que passar dos tetos, então fugir do formato só faz o slide sair menor do que
+você planejou. Se o plano não veio, escolha você o formato de cada slide pelo conteúdo
+dele, aplicando as regras de variedade do catálogo.
 
-VARIEDADE, DENTRO DA VOZ:
-- Em Preciso, alterne o formato de apoio entre slides vizinhos (tópicos num, cards noutro, body noutro) e varie a contagem de itens. Nunca cards e tópicos no mesmo slide, nunca body junto de lista.
-- Em Sereno e Presença a forma é uniforme (o título comanda): a variedade vem das IDEIAS, não do formato. Alterne slides só-título com slides que ganham a linha de apoio, pra criar respiro.
+VARIEDADE:
+- Dois slides vizinhos NUNCA têm o mesmo formato. O servidor converte repetições à força,
+  então é melhor você mesmo escolher a alternância.
 - Todo slide diz UMA coisa nova. Nenhum repete a mensagem do anterior.
+- Varie a contagem de itens entre listas do deck (3 tópicos num, 4 noutro).
 
 ALÉM DOS SLIDES, gere também:
 - "title": o nome da apresentação na plataforma. De 2 a 5 palavras, direto e específico ao tema (ex: "Pitch CITi Para Sympla"). Primeira letra de cada palavra principal em maiúscula, sem ponto final, sem aspas. É um nome, não um resumo.
@@ -105,7 +111,7 @@ function assetsLine(assets: DraftAssetMeta[]): string {
 /**
  * Lembrete estrutural no FIM do prompt, onde o modelo mais obedece. As regras já
  * estão no system instruction, mas sem este reforço final o primeiro slide às
- * vezes saía como "content" e os slides de conteúdo saíam sem body.
+ * vezes saía como "content" e os slides de conteúdo fugiam do formato planejado.
  */
 function structuralReminder(slideCount: number): string {
   if (slideCount === 1) {
@@ -116,45 +122,16 @@ function structuralReminder(slideCount: number): string {
   }
   return [
     `ESTRUTURA OBRIGATÓRIA: exatamente ${slideCount} slides. O primeiro é layout "cover" e o último é layout "closing". O miolo usa "content" (e "section" só quando as regras permitirem).`,
-    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": ele obedece a ESTRUTURA OBRIGATÓRIA da voz (só os blocos que ela permite) e é ENXUTO ao extremo? MENOS TEXTO É SEMPRE MELHOR: muitos slides devem ser só um título. Se um slide tem mais texto do que a estrutura da voz permite, CORTE até caber. Nenhum slide vira parede de texto.',
-    'CONFIRA TAMBÉM: no máximo 3 cards e 5 tópicos; nunca cards e tópicos no mesmo slide; nunca body junto de lista; e no máximo um trecho de destaque de 1 a 3 palavras por slide.',
+    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": (1) ele tem EXATAMENTE os blocos da gramática do formato planejado; (2) nenhum bloco passa do teto de palavras (body 25, tópico/etapa/ponto 10, card.body 16); (3) dois slides vizinhos nunca têm o mesmo formato; (4) stats só com números que o usuário deu. Nem parede de texto, nem slide oco.',
+    'CONFIRA TAMBÉM: no máximo 3 cards, 5 tópicos, 5 etapas e 4 stats; nunca dois tipos de lista no mesmo slide; compare sempre com exatamente 2 lados; e no máximo um trecho de destaque de 1 a 3 palavras por slide.',
   ].join('\n');
 }
 
-/**
- * DOIS exemplos concretos da FORMA da voz ativa, no schema REAL (texto em content:
- * [{text}], tópicos em topics: [[{text}]], cards em cards: [{title,body}]). O modelo
- * imita a forma dos exemplos; por isso eles PRECISAM do schema exato — um exemplo com
- * o shape errado faz o modelo copiar o erro e o slide volta vazio. O conteúdo é só
- * ilustrativo: a geradora escreve sobre o tema real do usuário.
- */
-function voiceExamples(style: VisualStyle): string {
-  const head = 'EXEMPLOS DA FORMA (copie o FORMATO, jamais o conteúdo; escreva sobre o tema real do usuário):';
-  if (style === 'minimal') {
-    return `${head}
-Sereno é só o título, ou o título e uma linha:
-{"layout":"content","blocks":[{"kind":"title-2","content":[{"text":"A fila é sintoma, não causa"}]}]}
-{"layout":"content","blocks":[{"kind":"title-2","content":[{"text":"Menos etapas, menos espera"}]},{"kind":"subtitle","content":[{"text":"O ganho vem da ordem, não do time"}]}]}`;
-  }
-  if (style === 'balanced') {
-    return `${head}
-Preciso é o título e UMA lista curta (tópicos OU cards, nunca os dois):
-{"layout":"content","blocks":[{"kind":"title-2","content":[{"text":"O que muda na rotina"}]},{"kind":"topics","topics":[[{"text":"Pedido chega já validado"}],[{"text":"Conferência durante, não depois"}],[{"text":"Retrabalho vira exceção"}]]}]}
-{"layout":"content","blocks":[{"kind":"title-2","content":[{"text":"Três frentes, na ordem certa"}]},{"kind":"cards","cards":[{"title":[{"text":"Validação na entrada"}],"body":[{"text":"O pedido não entra incompleto"}]},{"title":[{"text":"Conferência contínua"}],"body":[{"text":"Vira etapa curta em cada passo"}]}]}]}`;
-  }
-  return `${head}
-Presença é uma manchete seca, às vezes com um acento curto:
-{"layout":"content","blocks":[{"kind":"title-2","content":[{"text":"Contratar sem reordenar é comprar mais fila"}]}]}
-{"layout":"content","blocks":[{"kind":"section-label","content":[{"text":"O problema"}]},{"kind":"title-2","content":[{"text":"A fila não é o gargalo. É o sintoma."}]}]}`;
-}
-
 export function buildGeneratorPrompt(params: GeneratorPromptParams): string {
-  // Exemplos da forma só fazem sentido quando há slides de conteúdo (3+ slides).
-  const examples = params.slideCount >= 3 ? `\n\n${voiceExamples(params.style)}` : '';
   const closing = `
 ${slideCountGuidance(params.slideCount)}
 ${structuralReminder(params.slideCount)}
-${assetsLine(params.assets)}${examples}
+${assetsLine(params.assets)}
 `.trim();
 
   if (params.plan) {

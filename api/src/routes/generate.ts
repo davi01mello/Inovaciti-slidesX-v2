@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { generateJson, generateText } from '../llm/gemini.js';
 import { llmErrorToHttp } from '../llm/errors.js';
 import { logger } from '../logger.js';
-import { normalizeGenerateResponse, offBandContentSlides } from '../normalize.js';
+import { deckFormatSignature, normalizeGenerateResponse, offBandContentSlides } from '../normalize.js';
 import {
   GENERATOR_SYSTEM_INSTRUCTION,
   STRATEGIST_SYSTEM_INSTRUCTION,
@@ -59,7 +59,7 @@ generateRouter.post('/', async (req, res) => {
       prompt: buildGeneratorPrompt({ plan, ...briefing }),
       responseSchema: generateResponseSchema,
     });
-    const result = normalizeGenerateResponse(raw, body.style);
+    const result = normalizeGenerateResponse(raw);
     if (result.slides.length === 0) {
       res.status(502).json({ error: 'O modelo não retornou slides válidos. Tenta de novo.' });
       return;
@@ -79,8 +79,17 @@ generateRouter.post('/', async (req, res) => {
     if (offBand.shallow.length > 0 || offBand.heavy.length > 0) {
       logger.warn(
         { request_id: req.requestId, vazios: offBand.shallow, paredes: offBand.heavy, style: body.style },
-        'slides de conteúdo fora da faixa de densidade saudável',
+        'slides de conteúdo fora da faixa de densidade do formato',
       );
+    }
+    // Variedade estrutural é contrato do produto: vizinhos repetidos indicam o
+    // prompt escorregando (o dejavuBreaker já converteu o que dava sem tocar no texto).
+    const formats = deckFormatSignature(result.slides);
+    const repeats = formats.filter((f, i) => i > 0 && f !== 'section' && f === formats[i - 1]).length;
+    if (repeats > 0) {
+      logger.warn({ request_id: req.requestId, formatos: formats, repetidos: repeats }, 'deck saiu com formatos vizinhos repetidos');
+    } else {
+      logger.debug({ request_id: req.requestId, formatos: formats }, 'assinatura de formatos do deck');
     }
     res.json(result);
   } catch (err) {

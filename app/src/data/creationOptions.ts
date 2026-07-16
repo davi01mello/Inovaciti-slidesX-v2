@@ -58,22 +58,23 @@ export interface StyleOption {
   description: string;
 }
 
-/** A voz muda a QUANTIDADE e a forma do texto: cada uma gera um tipo de slide diferente. */
+/** A voz dá o RITMO da escrita e inclina a escolha dos formatos; a forma de cada
+ * slide nasce do conteúdo dele (catálogo de formatos, garantido pelo servidor). */
 export const STYLE_OPTIONS: StyleOption[] = [
   {
     value: 'minimal',
     label: 'Sereno',
-    description: 'Quase só o título. O mínimo de texto na tela.',
+    description: 'Calmo e econômico. Formatos leves, o mínimo de texto que ainda carrega a mensagem.',
   },
   {
     value: 'balanced',
     label: 'Preciso',
-    description: 'Título e poucos tópicos. O único que faz listas.',
+    description: 'O equilíbrio profissional. O formato de cada slide nasce do conteúdo dele.',
   },
   {
     value: 'bold',
     label: 'Presença',
-    description: 'Manchetes secas. Uma ideia de impacto por slide.',
+    description: 'Manchetes, números e frases de impacto. Uma ideia forte por slide.',
   },
 ];
 
