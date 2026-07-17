@@ -935,12 +935,19 @@ function mergeBlockPatch(block: Block, patch: Partial<Block>): Block {
     };
   }
   if (block.kind === 'steps') {
-    const p = patch as { items?: (typeof block)['items']; markers?: (typeof block)['markers'] };
+    const p = patch as {
+      items?: (typeof block)['items'];
+      markers?: (typeof block)['markers'];
+      icons?: (typeof block)['icons'];
+      iconAssets?: (typeof block)['iconAssets'];
+    };
     return {
       ...block,
       ...alignPatch,
       ...(p.items ? { items: p.items.slice(0, MAX_STEPS) } : {}),
       ...('markers' in patch ? { markers: p.markers?.slice(0, MAX_STEPS) } : {}),
+      ...('icons' in patch ? { icons: p.icons?.slice(0, MAX_STEPS) } : {}),
+      ...('iconAssets' in patch ? { iconAssets: p.iconAssets?.slice(0, MAX_STEPS) } : {}),
     };
   }
   if (block.kind === 'stats') {

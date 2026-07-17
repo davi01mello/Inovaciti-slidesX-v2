@@ -104,6 +104,7 @@ interface CompositionContextValue {
   commitCardIcon: (blockId: string, index: number, pick: IconPick) => void;
   commitStatIcon: (blockId: string, index: number, pick: IconPick) => void;
   commitCompareIcon: (blockId: string, sideIndex: number, pick: IconPick) => void;
+  commitStepIcon: (blockId: string, index: number, pick: IconPick) => void;
   addTopic: (blockId: string) => void;
   addCard: (blockId: string) => void;
   addStat: (blockId: string) => void;
@@ -134,6 +135,7 @@ const CompositionContext = createContext<CompositionContextValue>({
   commitCardIcon: () => {},
   commitStatIcon: () => {},
   commitCompareIcon: () => {},
+  commitStepIcon: () => {},
   addTopic: () => {},
   addCard: () => {},
   addStat: () => {},
@@ -329,6 +331,18 @@ export function SlideComposition({
           i === sideIndex ? { ...side, icon: pick?.icon, iconAsset: pick?.iconAsset } : side,
         );
         onBlockChange?.(blockId, { sides } as Partial<Block>);
+      },
+      commitStepIcon: (blockId, index, pick) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'steps') return;
+        const icons = block.items.map((_, i) => (i === index ? (pick?.icon ?? null) : (block.icons?.[i] ?? null)));
+        const iconAssets = block.items.map((_, i) =>
+          i === index ? (pick?.iconAsset ?? null) : (block.iconAssets?.[i] ?? null),
+        );
+        onBlockChange?.(blockId, {
+          icons: icons.some(Boolean) ? icons : undefined,
+          iconAssets: iconAssets.some(Boolean) ? iconAssets : undefined,
+        } as Partial<Block>);
       },
       // O override legado (só conteúdo) continua valendo como fallback do mapa novo.
       zoneOverrides: {
@@ -934,6 +948,9 @@ function SectionLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
 function StatementLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   const chrome = useChrome();
   const center = c.align === 'center';
+  // Só a manchete, sem apoio nenhum: modo PÔSTER — o textão gigante e estilizado
+  // que segura o slide sozinho, como os statements do deck oficial.
+  const poster = !plan.body && !plan.subtitle && !plan.highlight;
 
   return (
     <ContentFrame zone={c.content}>
@@ -945,16 +962,17 @@ function StatementLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
               block={plan.headline}
               ariaLabel="Título"
               spec={{
-                size: 3.8,
+                size: poster ? 5 : 3.8,
                 weight: 800,
-                lineHeight: 1.08,
-                letterSpacing: '-0.03em',
+                lineHeight: poster ? 1.02 : 1.08,
+                letterSpacing: '-0.032em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
                 clamp: 3,
               }}
             />
           )}
+          {poster && <Rule center={center} width="3.2em" />}
           {(plan.body || plan.subtitle) && <Rule center={center} width="2.8em" />}
           {plan.body && (
             <SlideText
@@ -987,16 +1005,21 @@ function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
     <ContentFrame zone={c.content}>
       <FitBox anchor="center" minScale={0.84}>
         <Stack gap={2.2} center={center}>
+          <SlideIcon
+            name="aspas"
+            size="2.6em"
+            style={{ color: chrome.accent, opacity: 0.9, filter: chrome.accentGlow !== 'none' ? 'drop-shadow(0 0 0.5em rgba(45,219,96,0.35))' : undefined }}
+          />
           <Label block={plan.label} center={center} />
           {plan.headline && (
             <SlideText
               block={plan.headline}
               ariaLabel="Título"
               spec={{
-                size: 4,
+                size: 4.3,
                 weight: 800,
-                lineHeight: 1.06,
-                letterSpacing: '-0.03em',
+                lineHeight: 1.05,
+                letterSpacing: '-0.032em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
                 clamp: 3,
@@ -1100,7 +1123,7 @@ function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
                     balance
                     clamp={1}
                     style={{
-                      fontSize: '5.6em',
+                      fontSize: '6.2em',
                       fontWeight: 800,
                       lineHeight: 1.05,
                       letterSpacing: '-0.035em',
@@ -1747,16 +1770,26 @@ function IconControl({
           <>
             <div className="fixed inset-0 z-[998]" onPointerDown={() => setPanel(null)} />
             <div
-              className="fixed z-[999] rounded-xl border border-white/15 p-2 shadow-2xl"
+              className="fixed z-[999] rounded-2xl border border-white/[0.12] p-3 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.85)]"
               style={{
-                left: Math.max(8, Math.min(panel.x, window.innerWidth - 340)),
-                top: Math.max(8, Math.min(panel.y, window.innerHeight - 240)),
-                width: 324,
-                background: 'rgba(10, 14, 12, 0.97)',
-                backdropFilter: 'blur(12px)',
+                left: Math.max(8, Math.min(panel.x, window.innerWidth - 372)),
+                top: Math.max(8, Math.min(panel.y, window.innerHeight - 300)),
+                width: 356,
+                background: 'linear-gradient(180deg, rgba(14, 20, 17, 0.98), rgba(7, 10, 9, 0.98))',
+                backdropFilter: 'blur(16px)',
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
+              <div className="mb-2 flex items-center gap-2 px-0.5">
+                <span
+                  aria-hidden="true"
+                  className="h-[3px] w-5 rounded-full"
+                  style={{ background: `linear-gradient(90deg, ${chrome.accent}, transparent)` }}
+                />
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                  Ícones
+                </span>
+              </div>
               <div className="grid grid-cols-8 gap-1">
                 {SLIDE_ICONS.map((name) => (
                   <button
@@ -1777,11 +1810,18 @@ function IconControl({
                   </button>
                 ))}
               </div>
-              <div className="mt-2 border-t border-white/10 pt-2">
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                  Iconografia CITi
+              <div className="mt-3 border-t border-white/[0.08] pt-2.5">
+                <div className="mb-2 flex items-center gap-2 px-0.5">
+                  <span
+                    aria-hidden="true"
+                    className="h-[3px] w-5 rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${chrome.accent}, transparent)` }}
+                  />
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                    Iconografia CITi
+                  </span>
                 </div>
-                <div className="grid max-h-[150px] grid-cols-8 gap-1 overflow-y-auto">
+                <div className="grid max-h-[168px] grid-cols-8 gap-1 overflow-y-auto pr-1">
                   {ICONS.map((asset) => (
                     <button
                       key={asset.key}
@@ -2111,7 +2151,12 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
 
   const items = stats.items.slice(0, MAX_STATS);
 
-  if (poster) {
+  // O PÔSTER só existe pra valores CURTOS ("30", "1ª", "88", "3x"): número gigante
+  // com valor longo ("6 semanas") trunca em "6…". Valor comprido demais? O slide
+  // rende como PAINEL mesmo no arranjo de pôster — o vidro cabe em qualquer zona.
+  const fitsPoster = items.every((item) => item.value.map((r) => r.text).join('').trim().length <= 8);
+
+  if (poster && fitsPoster) {
     const columns = items.length === 4 ? 2 : Math.max(1, items.length);
     return (
       <EditableZone zoneKey="content" zone={zone}>
@@ -2397,6 +2442,19 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
                 className="flex min-w-0 flex-col overflow-hidden rounded-[1.8em]"
                 style={{ ...shell, padding: '1.5em 1.5em 1.4em', rowGap: '0.7em' }}
               >
+                <IconControl
+                  icon={steps.icons?.[i] ?? undefined}
+                  iconAsset={steps.iconAssets?.[i] ?? undefined}
+                  onPick={(p) => ctx.commitStepIcon(steps.id, i, p)}
+                >
+                  <ItemIcon
+                    icon={steps.icons?.[i] ?? undefined}
+                    iconAsset={steps.iconAssets?.[i] ?? undefined}
+                    badge
+                    size="2.7em"
+                    color={chrome.accent}
+                  />
+                </IconControl>
                 <MarkerField
                   value={steps.markers?.[i]}
                   fallback={String(i + 1).padStart(2, '0')}
@@ -2467,13 +2525,28 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
                   />
                 )}
               </div>
-              <InlineField
-                value={item}
-                onCommit={(next) => ctx.commitStep(steps.id, i, next)}
-                ariaLabel={`Etapa ${i + 1}`}
-                clamp={2}
-                style={{ fontSize: '1.45em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
-              />
+              <div className="flex min-w-0 items-center" style={{ gap: '0.9em' }}>
+                <IconControl
+                  icon={steps.icons?.[i] ?? undefined}
+                  iconAsset={steps.iconAssets?.[i] ?? undefined}
+                  onPick={(p) => ctx.commitStepIcon(steps.id, i, p)}
+                >
+                  <ItemIcon
+                    icon={steps.icons?.[i] ?? undefined}
+                    iconAsset={steps.iconAssets?.[i] ?? undefined}
+                    badge
+                    size="2.3em"
+                    color={chrome.accent}
+                  />
+                </IconControl>
+                <InlineField
+                  value={item}
+                  onCommit={(next) => ctx.commitStep(steps.id, i, next)}
+                  ariaLabel={`Etapa ${i + 1}`}
+                  clamp={2}
+                  style={{ fontSize: '1.45em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink, flex: 1, minWidth: 0 }}
+                />
+              </div>
             </li>
           ))}
         </ol>

@@ -39,7 +39,7 @@ FORMAS EXATAS NO JSON (copie o SHAPE, escreva sobre o tema real do usuário):
   {"kind":"topics","topics":[[{"text":"..."}],[{"text":"..."}]]}
   {"kind":"cards","cards":[{"title":[{"text":"..."}],"body":[{"text":"..."}],"icon":"busca"}]}
   {"kind":"stats","stats":[{"value":[{"text":"R$ 48 mil"}],"label":[{"text":"investimento total"}],"icon":"cifrao"}]}
-  {"kind":"steps","steps":[[{"text":"Diagnóstico do fluxo"}],[{"text":"Prototipação com o time"}],[{"text":"Entrega e medição"}]]}
+  {"kind":"steps","steps":[[{"text":"Diagnóstico do fluxo"}],[{"text":"Prototipação com o time"}],[{"text":"Entrega e medição"}]],"icons":["busca","cubo","foguete"]}
   {"kind":"compare","sides":[{"label":[{"text":"Hoje"}],"points":[[{"text":"..."}]],"icon":"documento"},{"label":[{"text":"Com o CITi"}],"points":[[{"text":"..."}]],"icon":"raio"}]}
 
 ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):

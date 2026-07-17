@@ -92,6 +92,8 @@ qualquer bloco fora do formato.
                é a AFIRMAÇÃO (curta, forte); os seguintes sustentam. Antes/depois,
                com/sem, opção A vs B. Faixa: 16 a 46.
   jornada      Etapas em sequência. title-2 + steps de 3 a 5 etapas (3 a 10 palavras).
+               Aceita "icons": um array de ícones PARALELO às etapas (mesmo índice,
+               TODAS as etapas ou nenhuma) — vira uma linha de fases com ícones.
                Cronograma, metodologia, roadmap, passo a passo. Faixa: 14 a 40.
 
 REGRA DOS NÚMEROS: stats e indicadores só existem com números REAIS: os que o usuário deu
@@ -128,6 +130,9 @@ escreve variado:
   4. Dois slides vizinhos nunca têm o mesmo número de itens. (Tópicos e etapas: mínimo 3.)
 - ALTERNE PESO E RESPIRO: depois de um slide denso (cards, comparacao, indicadores), vem um
   leve (afirmacao, citacao, numero). A curva de densidade sobe e desce, nunca é uma reta.
+- SLIDES DE IMPACTO: pelo menos um a cada 4 slides de conteúdo é um momento de impacto —
+  afirmacao (a manchete gigante), citacao (a frase que fica) ou numero (o número gigante).
+  São eles que dão ritmo de apresentação de palco ao deck.
 - A variedade é subordinada ao conteúdo: escolha o formato que o conteúdo pede, dentro das
   regras acima. Nunca esvazie nem infle um slide só pra variar.
 `.trim();

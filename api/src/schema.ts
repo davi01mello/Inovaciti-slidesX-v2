@@ -95,6 +95,8 @@ export const blockSchema = {
     stats: { type: 'array', items: statSchema },
     /** kind = "steps": 3 a 5 etapas em sequência, uma linha cada. */
     steps: { type: 'array', items: richTextSchema },
+    /** kind = "steps": ícones paralelos às etapas (mesmo índice; todos ou nenhum). */
+    icons: { type: 'array', items: { type: 'string', enum: slideIconEnum } },
     /** kind = "compare": exatamente 2 lados {label, points de 1 a 3 itens}. */
     sides: { type: 'array', items: compareSideSchema },
   },

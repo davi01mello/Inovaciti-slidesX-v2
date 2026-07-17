@@ -63,6 +63,13 @@ const B = {
   topics: (...items: string[]): Block => ({ id: createId(), kind: 'topics', align: 'left', items: items.map(t) }),
   stats: (...items: StatItem[]): Block => ({ id: createId(), kind: 'stats', align: 'left', items }),
   steps: (...items: string[]): Block => ({ id: createId(), kind: 'steps', align: 'left', items: items.map(t) }),
+  stepsIcones: (icons: SlideIconName[], ...items: string[]): Block => ({
+    id: createId(),
+    kind: 'steps',
+    align: 'left',
+    items: items.map(t),
+    icons,
+  }),
   compare: (a: CompareSide, b: CompareSide): Block => ({ id: createId(), kind: 'compare', align: 'left', sides: [a, b] }),
 };
 
@@ -151,11 +158,17 @@ export function buildTestDeck(): Slide[] {
       B.sub('Antes da tecnologia, a gente mergulha na operação e mapeia a raiz do problema.'),
     ]),
 
-    // TIMELINE / cards de fase (ref. p.8).
+    // TIMELINE / cards de fase COM ÍCONES (as fases da referência, com iconografia).
     slide('content', [
       B.label('O plano'),
       B.t2Hl('Três fases. ', 'Seis semanas.'),
-      B.steps('Diagnóstico operacional', 'Desenho da solução', 'Business case e plano'),
+      B.stepsIcones(['busca', 'cubo', 'grafico'], 'Diagnóstico operacional', 'Desenho da solução', 'Business case e plano'),
+    ]),
+
+    // AFIRMAÇÃO-PÔSTER: o textão gigante que segura o slide sozinho.
+    slide('content', [
+      B.label('A convicção'),
+      B.t2Hl('Tecnologia sem diagnóstico ', 'é aposta.'),
     ]),
 
     // CARDS de entrega (podem sair como FAIXAS, ref. p.9, conforme o arranjo).

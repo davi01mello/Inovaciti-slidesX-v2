@@ -133,6 +133,10 @@ export interface StepsBlock {
   items: RichText[];
   /** Sobrescreve o ordinal automático ("01") do item de mesmo índice. Vazio = automático. */
   markers?: RichText[];
+  /** Ícone de traço da etapa de mesmo índice (null = sem). */
+  icons?: (SlideIconName | null)[];
+  /** Pictograma CITi da etapa de mesmo índice (vence o ícone de traço). */
+  iconAssets?: (string | null)[];
 }
 
 export interface CompareSide {

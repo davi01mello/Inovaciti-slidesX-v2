@@ -59,11 +59,15 @@ function toRealBlocks(generated: GeneratedBlock[]): Block[] {
       };
     }
     if (block.kind === 'steps') {
+      const items = block.items.slice(0, MAX_STEPS);
       return {
         id: createId(),
         kind: 'steps',
         align: 'left',
-        items: block.items.slice(0, MAX_STEPS),
+        items,
+        ...(block.icons && block.icons.length > 0
+          ? { icons: items.map((_, i) => block.icons?.[i] ?? null) }
+          : {}),
       };
     }
     if (block.kind === 'compare') {

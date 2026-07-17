@@ -46,6 +46,8 @@ export interface GeneratedStatsBlock {
 export interface GeneratedStepsBlock {
   kind: 'steps';
   items: RichText[];
+  /** Ícones paralelos às etapas (mesmo índice). Todos ou nenhum. */
+  icons?: SlideIconName[];
 }
 
 export interface GeneratedCompareSide {

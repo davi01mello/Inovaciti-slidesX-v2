@@ -48,6 +48,7 @@ const blockSchema = z
     items: z.array(z.unknown()).max(12, 'lista com itens demais (máximo 12)').optional(),
     stats: z.array(statItemSchema).max(12, 'métricas demais (máximo 12)').optional(),
     steps: z.array(richTextSchema).max(12, 'etapas demais (máximo 12)').optional(),
+    icons: z.array(z.string().max(24)).max(12).optional(),
     sides: z.array(compareSideSchema).max(4, 'comparação com lados demais (máximo 4)').optional(),
   })
   .passthrough();

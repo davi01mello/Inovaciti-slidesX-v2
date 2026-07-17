@@ -215,7 +215,7 @@ function capBlockWords(block: GeneratedBlock): GeneratedBlock {
     };
   }
   if (block.kind === 'topics' || block.kind === 'steps') {
-    return { kind: block.kind, items: block.items.map((item) => trimRichToWords(item, CAP_LIST_ITEM)) };
+    return { ...block, items: block.items.map((item) => trimRichToWords(item, CAP_LIST_ITEM)) };
   }
   if (block.kind === 'stats') {
     return {
@@ -395,7 +395,13 @@ export function normalizeBlock(raw: unknown): GeneratedBlock | null {
       .filter((rt) => rt.length > 0)
       .slice(0, MAX_STEPS);
     if (items.length === 0) return null;
-    return { kind: 'steps', items };
+    const rawIcons = record['icons'];
+    const icons = (Array.isArray(rawIcons) ? rawIcons : [])
+      .map(normalizeIcon)
+      .slice(0, items.length);
+    // Todos ou nenhum: metade das fases com ícone fica manca.
+    const complete = icons.length === items.length && icons.every((i) => i !== undefined);
+    return complete ? { kind: 'steps', items, icons: icons as SlideIconName[] } : { kind: 'steps', items };
   }
 
   if (kind === 'compare') {
