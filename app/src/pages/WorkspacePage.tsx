@@ -21,7 +21,7 @@ import { isInsertDrag, readInsertPayload } from '@/services/insertDnd';
 import { addSessionUpload, getSessionUpload } from '@/services/sessionUploads';
 import { pushToast } from '@/lib/toast';
 import type { FloatingTextKind } from '@/lib/blocks';
-import type { Block, BlockRect, Slide, SlideBrandMark } from '@/types/slide';
+import type { Block, BlockRect, Slide, SlideBrandMark, ZoneKey } from '@/types/slide';
 
 /**
  * Largura do palco do slide: cabe SEMPRE na viewport sem rolagem vertical.
@@ -231,18 +231,13 @@ export function WorkspacePage() {
     [presentation, currentSlide],
   );
 
-  const handleContentZoneMove = useCallback(
-    (rect: BlockRect) => {
+  const handleZoneChange = useCallback(
+    (zone: ZoneKey, rect: BlockRect | undefined) => {
       if (!presentation || !currentSlide) return;
-      presentationsStore.setContentZone(presentation.id, currentSlide.id, rect);
+      presentationsStore.setZone(presentation.id, currentSlide.id, zone, rect);
     },
     [presentation, currentSlide],
   );
-
-  const handleContentZoneReset = useCallback(() => {
-    if (!presentation || !currentSlide) return;
-    presentationsStore.resetContentZone(presentation.id, currentSlide.id);
-  }, [presentation, currentSlide]);
 
   const handleBrandMarkChange = useCallback(
     (mark: SlideBrandMark | undefined) => {
@@ -461,8 +456,7 @@ export function WorkspacePage() {
                   onBlockDelete={handleBlockDelete}
                   onDecorationMove={handleDecorationMove}
                   onDecorationDelete={handleDecorationDelete}
-                  onContentZoneMove={handleContentZoneMove}
-                  onContentZoneReset={handleContentZoneReset}
+                  onZoneChange={handleZoneChange}
                   onBrandMarkChange={handleBrandMarkChange}
                 />
                 {stageDragOver && (

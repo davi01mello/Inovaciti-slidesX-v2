@@ -52,7 +52,7 @@ export const MAX_COMPARE_POINTS = 3;
  * em normalize.ts — nome fora da lista simplesmente cai.
  * SYNC_WITH: app/src/types/slide.ts
  */
-export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao'] as const;
+export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao', 'lampada', 'estrela', 'trofeu', 'coracao', 'mapa', 'bandeira', 'chat', 'monitor', 'nuvem', 'chip', 'predio', 'play', 'camadas', 'globo'] as const;
 export type SlideIconName = (typeof SLIDE_ICONS)[number];
 
 export interface GeneratedTextBlock {

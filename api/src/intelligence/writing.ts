@@ -97,27 +97,38 @@ REGRA DOS NÚMEROS: stats e indicadores só existem com números REAIS: os que o
 no briefing, ou os da BASE DE CONHECIMENTO DO CITi quando o slide fala do CITi (1995, 60
 membros, NPS 88, 1ª e maior). NUNCA invente valor, percentual ou prazo.
 
-ÍCONES POR ITEM: cards, métricas (stats) e lados de comparação aceitam um campo "icon" com
-UM destes nomes: busca, grafico, usuarios, documento, calendario, lista, cadeado, cubo,
-alvo, raio, escudo, relogio, engrenagem, dados, foguete, check, aspas, cifrao.
-Escolha o ícone pelo SIGNIFICADO do item (diagnóstico -> busca; resultado -> grafico;
-equipe -> usuarios; prazo -> calendario ou relogio; entrega/documentação -> documento;
-segurança -> escudo ou cadeado; produto/solução -> cubo; meta -> alvo; velocidade -> raio;
-processos -> engrenagem; dados/BI -> dados; lançamento -> foguete; validação -> check;
-citação -> aspas; preço/investimento -> cifrao; etapas -> lista).
-Use ícones em TODOS os itens de um slide de cards/indicadores/comparacao, ou em NENHUM:
-metade com ícone e metade sem fica manco. Nunca repita o mesmo ícone dentro de um slide.
+ÍCONES POR ITEM (obrigatórios): TODO item de cards, indicadores (stats) e comparacao leva
+um campo "icon" com UM destes nomes:
+  busca, grafico, usuarios, documento, calendario, lista, cadeado, cubo, alvo, raio,
+  escudo, relogio, engrenagem, dados, foguete, check, aspas, cifrao, lampada, estrela,
+  trofeu, coracao, mapa, bandeira, chat, monitor, nuvem, chip, predio, play, camadas, globo.
+Escolha pelo SIGNIFICADO: diagnóstico -> busca; resultado/crescimento -> grafico; equipe ->
+usuarios; prazo -> calendario ou relogio; entrega/documentação -> documento; segurança ->
+escudo ou cadeado; produto/solução -> cubo; meta -> alvo; velocidade -> raio; processo ->
+engrenagem; dados/BI -> dados; IA -> chip; lançamento -> foguete; validação -> check;
+citação -> aspas; preço -> cifrao; ideia/inovação -> lampada; qualidade -> estrela;
+conquista -> trofeu; cultura/pessoas -> coracao; jornada/visão -> mapa ou bandeira;
+comunicação -> chat; plataforma/web -> monitor; nuvem/infra -> nuvem; empresa/mercado ->
+predio; demonstração -> play; arquitetura -> camadas; alcance -> globo.
+NUNCA repita o mesmo ícone dentro de um slide, e evite repetir entre slides vizinhos.
 
 LINHA DE APOIO: nos formatos com lista (topicos, cards, indicadores, comparacao, jornada),
 inclua um subtitle de apoio sob o título (8 a 12 palavras, tom de contexto) na MAIORIA dos
 slides: é o parágrafo cinza que respira entre o título e o conteúdo, como no deck oficial.
 
-VARIEDADE ESTRUTURAL (obrigatória; o estrategista planeja e a geradora obedece):
-- Dois slides vizinhos NUNCA têm o mesmo formato.
-- Até 12 slides, nenhum formato aparece mais de 2 vezes.
-- Um deck com 5 ou mais slides de conteúdo usa pelo menos 4 formatos diferentes.
-- A variedade é subordinada ao conteúdo: escolha o formato que o conteúdo pede, dentro
-  das regras acima. Nunca esvazie nem infle um slide só pra variar.
+VARIEDADE ESTRUTURAL: A REGRA MAIS VISÍVEL DO DECK. Uma apresentação profissional parece
+desenhada slide a slide por um diretor de arte, nunca gerada em série. O sistema varia a
+arte de fundo e o desenho de cada formato sozinho, mas ele só consegue variar o que você
+escreve variado:
+- Dois slides vizinhos NUNCA têm o mesmo formato. Sem exceção.
+- Até 12 slides, nenhum formato aparece mais de 2 vezes; com 5 ou mais slides de conteúdo,
+  use pelo menos 5 formatos diferentes.
+- VARIE AS CONTAGENS: se um slide de cards tem 3 itens, o próximo slide com lista tem 2 ou
+  4. Dois slides vizinhos nunca têm o mesmo número de itens.
+- ALTERNE PESO E RESPIRO: depois de um slide denso (cards, comparacao, indicadores), vem um
+  leve (afirmacao, citacao, numero). A curva de densidade sobe e desce, nunca é uma reta.
+- A variedade é subordinada ao conteúdo: escolha o formato que o conteúdo pede, dentro das
+  regras acima. Nunca esvazie nem infle um slide só pra variar.
 `.trim();
 
 /**

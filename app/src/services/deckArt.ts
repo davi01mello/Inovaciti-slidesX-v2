@@ -128,6 +128,21 @@ export interface DeckSlideRole {
 export interface ArtChoice {
   artId: string;
   arrangementId: string;
+  /**
+   * A SEMENTE DE VARIAÇÃO VISUAL do slide (0..7). É ela que faz dois slides de
+   * cards no MESMO deck saírem com desenhos de card DIFERENTES (painel numerado,
+   * ícone-herói, contorno com barra), duas listas saírem com marcadores
+   * diferentes, e assim por diante. Slides consecutivos do mesmo arquétipo
+   * recebem flavors consecutivos — repetição de desenho vira impossível, não
+   * improvável. Cada deck começa num offset próprio (o id entra no hash), então
+   * dois decks com o mesmo briefing também não saem gêmeos.
+   */
+  flavor: number;
+}
+
+/** Flavor estável pra um slide fora de um plano de deck (miniatura solta, fallback). */
+export function fallbackFlavor(slideId: string): number {
+  return hash(`flavor|${slideId}`) % 8;
 }
 
 /**
@@ -186,6 +201,10 @@ export function planDeckArt(
 
   const usedArts = new Set<string>();
   const usedArrangements = new Set<string>();
+  // Contador de flavor POR ARQUÉTIPO: o primeiro slide de cards do deck sai num
+  // desenho, o segundo no seguinte, o terceiro no outro — nunca dois iguais em
+  // sequência. O offset por deck vem do id da apresentação.
+  const flavorCount = new Map<Archetype, number>();
   let prevArrangement = '';
   let prevFamily: ArtFamily | '' = '';
 
@@ -225,7 +244,10 @@ export function planDeckArt(
     if (scored.length === 0) continue;
 
     const chosen = pickFromShortlist(scored, seed, slide.id);
-    plan.set(slide.id, { artId: chosen.art.id, arrangementId: chosen.arrangementId });
+    const seen = flavorCount.get(slide.archetype) ?? 0;
+    flavorCount.set(slide.archetype, seen + 1);
+    const flavor = (hash(`${seed}|flavor|${slide.archetype}`) + seen) % 8;
+    plan.set(slide.id, { artId: chosen.art.id, arrangementId: chosen.arrangementId, flavor });
     usedArts.add(chosen.art.id);
     usedArrangements.add(chosen.arrangementId);
     prevArrangement = chosen.arrangementId;

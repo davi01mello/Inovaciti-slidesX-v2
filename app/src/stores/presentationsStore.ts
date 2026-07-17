@@ -8,6 +8,7 @@ import { clampRect } from '@/lib/rect';
 import { applyGeneratedBlocksToSlide } from '@/lib/generatedSlide';
 import { AiClientError, generatePresentation, improveSlideRemote } from '@/services/aiClient';
 import { clampTone, DEFAULT_TONE } from '@/services/tone';
+import { decorateDeck } from '@/services/deckDecor';
 import { emptiestCorner, composeArtAs } from '@/services/artZones';
 import { artById, planDeckArt } from '@/services/deckArt';
 import { deckRoles } from '@/services/slideArchetype';
@@ -31,6 +32,7 @@ import {
   type SlideLayout,
   type StatItem,
   type TopicsBlock,
+  type ZoneKey,
 } from '@/types/slide';
 
 // v4: cards e tópicos viraram tipos DIFERENTES (antes era tudo "bullets"), e o
@@ -402,7 +404,10 @@ async function runGeneration(id: string): Promise<void> {
         chat: [],
         generationError: undefined,
       };
-      return assets?.logo ? { ...withPhotos, slides: attachLogo(withPhotos, assets.logo) } : withPhotos;
+      const withLogo = assets?.logo ? { ...withPhotos, slides: attachLogo(withPhotos, assets.logo) } : withPhotos;
+      // Os elementos 3D da marca entram por último, como decorações editáveis:
+      // acentos orgânicos nos slides de respiro, no canto mais vazio da arte.
+      return { ...withLogo, slides: decorateDeck(withLogo.id, withLogo.tone ?? DEFAULT_TONE, withLogo.slides) };
     });
     pendingAssets.delete(id);
     playSound('presentationReady');
@@ -484,6 +489,7 @@ export interface PresentationsApi {
   updateDecoration(id: string, slideId: string, decorationId: string, patch: Partial<Decoration>): void;
   moveDecoration(id: string, slideId: string, decorationId: string, rect: BlockRect): void;
   removeDecoration(id: string, slideId: string, decorationId: string): void;
+  setZone(id: string, slideId: string, zone: ZoneKey, rect: BlockRect | undefined): void;
   setContentZone(id: string, slideId: string, rect: BlockRect): void;
   resetContentZone(id: string, slideId: string): void;
   setBrandMark(id: string, slideId: string, mark: SlideBrandMark | undefined): void;
@@ -814,18 +820,33 @@ export const presentationsStore = {
     );
   },
 
-  setContentZone(id, slideId, rect) {
-    recordHistory(id, `zone:${slideId}`);
+  /**
+   * Move/redimensiona QUALQUER zona do slide (header, content, aside, banner).
+   * rect undefined = restaura a decisão do motor pra aquela zona. O override
+   * legado de conteúdo é limpo junto, senão ele ressuscitaria no reset.
+   */
+  setZone(id, slideId, zone, rect) {
+    recordHistory(id, `zone:${zone}:${slideId}`);
     updatePresentation(id, (p) =>
-      updateSlideInPresentation(p, slideId, (s) => ({ ...s, contentZoneOverride: clampRect(rect) })),
+      updateSlideInPresentation(p, slideId, (s) => {
+        const overrides = { ...(s.zoneOverrides ?? {}) };
+        if (rect) overrides[zone] = clampRect(rect);
+        else delete overrides[zone];
+        return {
+          ...s,
+          zoneOverrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          ...(zone === 'content' ? { contentZoneOverride: undefined } : {}),
+        };
+      }),
     );
   },
 
+  setContentZone(id, slideId, rect) {
+    presentationsStore.setZone(id, slideId, 'content', rect);
+  },
+
   resetContentZone(id, slideId) {
-    recordHistory(id, `zone-reset:${slideId}`);
-    updatePresentation(id, (p) =>
-      updateSlideInPresentation(p, slideId, (s) => ({ ...s, contentZoneOverride: undefined })),
-    );
+    presentationsStore.setZone(id, slideId, 'content', undefined);
   },
 
   /** Sobrescreve a marca CITi do canto: mover/redimensionar/apagar. undefined = volta ao motor. */

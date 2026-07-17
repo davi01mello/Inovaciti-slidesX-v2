@@ -586,6 +586,20 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
       content: { x: 0.10, y: 0.415, width: 0.80, height: 0.475 },
       align: 'center',
     },
+    // Título numa coluna, cards empilhados na outra (a proporção da coluna já
+    // força as faixas): o desenho editorial de revista.
+    {
+      id: 'cards-aside',
+      header: { x: M, y: 0.22, width: 0.30, height: 0.55 },
+      content: { x: 0.42, y: 0.185, width: RIGHT - 0.42, height: 0.68 },
+      align: 'left',
+    },
+    {
+      id: 'cards-aside-flip',
+      header: { x: 0.64, y: 0.22, width: RIGHT - 0.64, height: 0.55 },
+      content: { x: M, y: 0.185, width: 0.52, height: 0.68 },
+      align: 'left',
+    },
   ],
 
   /* Tópicos: lista LEVE numerada. Uma coluna estreita basta, então dá pra fugir muito. */
@@ -794,6 +808,20 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
       id: 'compare-hug-right',
       header: { x: 0.30, y: 0.19, width: RIGHT - 0.30, height: 0.23 },
       content: { x: RIGHT - 0.72, y: 0.46, width: 0.72, height: 0.40 },
+      align: 'left',
+    },
+    // Os dois painéis EMPILHADOS numa coluna (a proporção estreita empilha
+    // sozinha): libera a outra metade inteira pra escultura.
+    {
+      id: 'compare-stack-left',
+      header: { x: M, y: 0.175, width: 0.46, height: 0.20 },
+      content: { x: M, y: 0.415, width: 0.44, height: 0.50 },
+      align: 'left',
+    },
+    {
+      id: 'compare-stack-right',
+      header: { x: 0.50, y: 0.175, width: RIGHT - 0.50, height: 0.20 },
+      content: { x: 0.52, y: 0.415, width: RIGHT - 0.52, height: 0.50 },
       align: 'left',
     },
   ],

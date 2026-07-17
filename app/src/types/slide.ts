@@ -48,7 +48,7 @@ export const MAX_COMPARE_POINTS = 3;
  * components/present/slideIcons.tsx; o servidor valida o nome em normalize.ts.
  * SYNC_WITH: api/src/types.ts (verificado por scripts/check-contract.mjs).
  */
-export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao'] as const;
+export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao', 'lampada', 'estrela', 'trofeu', 'coracao', 'mapa', 'bandeira', 'chat', 'monitor', 'nuvem', 'chip', 'predio', 'play', 'camadas', 'globo'] as const;
 export type SlideIconName = (typeof SLIDE_ICONS)[number];
 
 /** Retângulo normalizado em relação ao slide (0..1 nos dois eixos). */
@@ -204,6 +204,14 @@ export interface SlideBrandMark {
   rect?: BlockRect;
 }
 
+/**
+ * As ZONAS de um slide composto: o grupo de título, o conteúdo principal, a
+ * coluna auxiliar (lista do split / foto do media) e a faixa de fecho. TODAS
+ * são móveis e redimensionáveis no editor — o motor decide, o humano pode
+ * discordar de cada uma, independentemente.
+ */
+export type ZoneKey = 'header' | 'content' | 'aside' | 'banner';
+
 export interface Slide {
   id: string;
   layout: SlideLayout;
@@ -212,10 +220,15 @@ export interface Slide {
   image?: SlideImage;
   decorations?: Decoration[];
   /**
-   * Sobrescreve a zona de conteúdo que o motor escolheu pra este slide (o usuário
-   * moveu ou redimensionou a área no editor). Ausente = quem manda é o motor.
+   * LEGADO: o override antigo, só da zona de conteúdo. Lido como fallback de
+   * zoneOverrides.content pra decks salvos antes das zonas todas serem móveis.
    */
   contentZoneOverride?: BlockRect;
+  /**
+   * Sobrescreve a posição/tamanho de QUALQUER zona do slide (título, conteúdo,
+   * coluna auxiliar, faixa). Ausente = quem manda é o motor de zonas.
+   */
+  zoneOverrides?: Partial<Record<ZoneKey, BlockRect>>;
   /** Sobrescreve a marca CITi do canto (mover/redimensionar/apagar). */
   brandMark?: SlideBrandMark;
 }

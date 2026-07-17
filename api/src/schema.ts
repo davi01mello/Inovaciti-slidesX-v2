@@ -33,7 +33,7 @@ const richTextSchema = {
 };
 
 /** SYNC_WITH: SLIDE_ICONS em api/src/types.ts. O normalize valida de novo (o corte é lá). */
-const slideIconEnum = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao'];
+const slideIconEnum = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao', 'lampada', 'estrela', 'trofeu', 'coracao', 'mapa', 'bandeira', 'chat', 'monitor', 'nuvem', 'chip', 'predio', 'play', 'camadas', 'globo'];
 
 const cardSchema = {
   type: 'object',

@@ -3,9 +3,11 @@ import {
   useContext,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { isEmpty, renderRich, fromPlain, type RichText } from '@/lib/richText';
 import { RichEditable } from '@/components/workspace/RichEditable';
 import { DecorationsLayer } from '@/components/present/DecorationsLayer';
@@ -27,7 +29,7 @@ import {
   type PlacedZone,
   type Zone,
 } from '@/services/artZones';
-import { artById, fallbackArt } from '@/services/deckArt';
+import { artById, fallbackArt, fallbackFlavor } from '@/services/deckArt';
 import { chromeFor, DEFAULT_TONE, type SlideChrome } from '@/services/tone';
 import type { TemplateArt } from '@/services/templateArt.generated';
 import logoBranco from '@/assets/logos/logo-citi30-branco.png';
@@ -36,6 +38,7 @@ import { IconBadge, SlideIcon } from '@/components/present/slideIcons';
 import {
   isTextBlock,
   MAX_CARDS,
+  SLIDE_ICONS,
   MAX_COMPARE_POINTS,
   MAX_STATS,
   MAX_STEPS,
@@ -45,8 +48,10 @@ import {
   type CardItem,
   type Slide,
   type SlideBrandMark,
+  type SlideIconName,
   type StatItem,
   type TextBlock,
+  type ZoneKey,
 } from '@/types/slide';
 
 /**
@@ -80,6 +85,8 @@ import {
 interface CompositionContextValue {
   editable: boolean;
   chrome: SlideChrome;
+  /** Semente de variação visual do slide (0..7) — decide variantes de card, lista, etc. */
+  flavor: number;
   commitContent: (blockId: string, content: RichText) => void;
   commitTopic: (blockId: string, index: number, content: RichText) => void;
   commitCard: (blockId: string, index: number, field: 'title' | 'body', content: RichText) => void;
@@ -91,15 +98,20 @@ interface CompositionContextValue {
   commitListMarker: (blockId: string, index: number, content: RichText) => void;
   /** Sobrescreve o ordinal de um card. Vazio = volta ao automático. */
   commitCardMarker: (blockId: string, index: number, content: RichText) => void;
+  /** Troca (ou remove, com undefined) o ícone de um card / métrica / lado. */
+  commitCardIcon: (blockId: string, index: number, icon: SlideIconName | undefined) => void;
+  commitStatIcon: (blockId: string, index: number, icon: SlideIconName | undefined) => void;
+  commitCompareIcon: (blockId: string, sideIndex: number, icon: SlideIconName | undefined) => void;
   addTopic: (blockId: string) => void;
   addCard: (blockId: string) => void;
   addStat: (blockId: string) => void;
   addStep: (blockId: string) => void;
   addComparePoint: (blockId: string, sideIndex: number) => void;
-  contentZoneOverride?: BlockRect;
-  contentZoneEditable: boolean;
-  commitContentZone: (rect: BlockRect) => void;
-  resetContentZone: () => void;
+  /** Overrides de posição das ZONAS do slide (todas móveis no editor). */
+  zoneOverrides: Partial<Record<ZoneKey, BlockRect>>;
+  zonesEditable: boolean;
+  commitZone: (zone: ZoneKey, rect: BlockRect) => void;
+  resetZone: (zone: ZoneKey) => void;
 }
 
 const NEUTRAL_CHROME = chromeFor(DEFAULT_TONE, false);
@@ -107,6 +119,7 @@ const NEUTRAL_CHROME = chromeFor(DEFAULT_TONE, false);
 const CompositionContext = createContext<CompositionContextValue>({
   editable: false,
   chrome: NEUTRAL_CHROME,
+  flavor: 0,
   commitContent: () => {},
   commitTopic: () => {},
   commitCard: () => {},
@@ -116,14 +129,18 @@ const CompositionContext = createContext<CompositionContextValue>({
   commitComparePoint: () => {},
   commitListMarker: () => {},
   commitCardMarker: () => {},
+  commitCardIcon: () => {},
+  commitStatIcon: () => {},
+  commitCompareIcon: () => {},
   addTopic: () => {},
   addCard: () => {},
   addStat: () => {},
   addStep: () => {},
   addComparePoint: () => {},
-  contentZoneEditable: false,
-  commitContentZone: () => {},
-  resetContentZone: () => {},
+  zoneOverrides: {},
+  zonesEditable: false,
+  commitZone: () => {},
+  resetZone: () => {},
 });
 
 const useChrome = () => useContext(CompositionContext).chrome;
@@ -133,15 +150,15 @@ interface SlideCompositionProps {
   /** O tom do deck (0 = Gelo, 0.5 = Azul, 1 = Verde). */
   tone?: number;
   /** A escolha do diretor de arte pra este slide. Sem ela, cai numa escolha estável pelo id. */
-  art?: { artId: string; arrangementId: string };
+  art?: { artId: string; arrangementId: string; flavor?: number };
   className?: string;
   editable?: boolean;
   onBlockChange?: (blockId: string, patch: Partial<Block>) => void;
   onDecorationMove?: (decorationId: string, rect: BlockRect) => void;
   onDecorationDelete?: (decorationId: string) => void;
   onBlockDelete?: (blockId: string) => void;
-  onContentZoneMove?: (rect: BlockRect) => void;
-  onContentZoneReset?: () => void;
+  /** Editor: mover/redimensionar QUALQUER zona do slide. rect undefined = volta ao motor. */
+  onZoneChange?: (zone: ZoneKey, rect: BlockRect | undefined) => void;
   /** Editor: mover/redimensionar/apagar a marca CITi do canto. undefined = volta ao motor. */
   onBrandMarkChange?: (mark: SlideBrandMark | undefined) => void;
   /** Export: esconde os textos (mantendo a arte) pra rasterizar só o fundo. */
@@ -160,8 +177,7 @@ export function SlideComposition({
   onDecorationMove,
   onDecorationDelete,
   onBlockDelete,
-  onContentZoneMove,
-  onContentZoneReset,
+  onZoneChange,
   onBrandMarkChange,
   artOnly = false,
   debug = false,
@@ -186,10 +202,13 @@ export function SlideComposition({
     [slide.blocks],
   );
 
+  const flavor = art?.flavor ?? fallbackFlavor(slide.id);
+
   const ctx = useMemo<CompositionContextValue>(
     () => ({
       editable: editable && !!onBlockChange,
       chrome,
+      flavor,
       commitContent: (blockId, content) => onBlockChange?.(blockId, { content } as Partial<Block>),
       commitTopic: (blockId, index, content) => {
         const block = slide.blocks.find((b) => b.id === blockId);
@@ -285,12 +304,36 @@ export function SlideComposition({
         );
         onBlockChange?.(blockId, { sides } as Partial<Block>);
       },
-      contentZoneOverride: slide.contentZoneOverride,
-      contentZoneEditable: editable && !!onContentZoneMove,
-      commitContentZone: (rect) => onContentZoneMove?.(rect),
-      resetContentZone: () => onContentZoneReset?.(),
+      commitCardIcon: (blockId, index, icon) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'cards') return;
+        const items = block.items.map((item, i) => (i === index ? { ...item, icon } : item));
+        onBlockChange?.(blockId, { items } as Partial<Block>);
+      },
+      commitStatIcon: (blockId, index, icon) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'stats') return;
+        const items = block.items.map((item, i) => (i === index ? { ...item, icon } : item));
+        onBlockChange?.(blockId, { items } as Partial<Block>);
+      },
+      commitCompareIcon: (blockId, sideIndex, icon) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'compare') return;
+        const sides = block.sides.map((side, i) => (i === sideIndex ? { ...side, icon } : side));
+        onBlockChange?.(blockId, { sides } as Partial<Block>);
+      },
+      // O override legado (só conteúdo) continua valendo como fallback do mapa novo.
+      zoneOverrides: {
+        ...slide.zoneOverrides,
+        ...(slide.zoneOverrides?.content || !slide.contentZoneOverride
+          ? {}
+          : { content: slide.contentZoneOverride }),
+      },
+      zonesEditable: editable && !!onZoneChange,
+      commitZone: (zone, rect) => onZoneChange?.(zone, rect),
+      resetZone: (zone) => onZoneChange?.(zone, undefined),
     }),
-    [editable, onBlockChange, chrome, slide.blocks, slide.contentZoneOverride, onContentZoneMove, onContentZoneReset],
+    [editable, onBlockChange, chrome, flavor, slide.blocks, slide.zoneOverrides, slide.contentZoneOverride, onZoneChange],
   );
 
   useOverflowAudit(stageRef, `slide ${slide.id.slice(0, 6)} [${plan.archetype}]`);
@@ -529,42 +572,71 @@ function BrandMark({
   );
 }
 
-/** A zona principal, movível pelo usuário no editor (o motor decide; o humano pode discordar). */
-function ContentFrame({
+/**
+ * QUALQUER zona do slide, movível e redimensionável no editor. O motor decide a
+ * posição medindo a arte; o humano pode discordar de CADA zona separadamente —
+ * o grupo de título vai pra cá, os cards vão pra lá, a foto vai pra acolá. O
+ * override fica salvo por slide e o botão de reset devolve a decisão do motor.
+ */
+function EditableZone({
+  zoneKey,
   zone,
   children,
   className,
+  style,
 }: {
+  zoneKey: ZoneKey;
   zone: PlacedZone;
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }) {
   const ctx = useContext(CompositionContext);
-  const rect = ctx.contentZoneOverride ?? { x: zone.x, y: zone.y, width: zone.width, height: zone.height };
+  const override = ctx.zoneOverrides[zoneKey];
+  const rect = override ?? { x: zone.x, y: zone.y, width: zone.width, height: zone.height };
+
+  if (!ctx.zonesEditable) {
+    // Leitura/export: um contêiner posicionado e nada mais.
+    return (
+      <div
+        className={cn('absolute', className)}
+        style={{
+          left: `${rect.x * 100}%`,
+          top: `${rect.y * 100}%`,
+          width: `${rect.width * 100}%`,
+          height: `${rect.height * 100}%`,
+          ...style,
+        }}
+      >
+        <div className="relative h-full w-full">{children}</div>
+      </div>
+    );
+  }
 
   return (
     <TransformBox
       kind="zone"
       rect={rect}
-      onChange={(next) => ctx.commitContentZone(next)}
-      interactive={ctx.contentZoneEditable}
-      selected={ctx.contentZoneEditable}
+      onChange={(next) => ctx.commitZone(zoneKey, next)}
+      interactive
+      selected
       onSelect={() => {}}
       bodyDraggable={false}
       grip
       tone="subtle"
       revealOnHover
-      minWidth={0.15}
-      minHeight={0.12}
+      minWidth={0.1}
+      minHeight={0.06}
       className={className}
+      style={style}
       chrome={
-        ctx.contentZoneOverride ? (
+        override ? (
           <button
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              ctx.resetContentZone();
+              ctx.resetZone(zoneKey);
             }}
             title="Restaurar a posição que o motor escolheu"
             aria-label="Restaurar a posição que o motor escolheu"
@@ -580,6 +652,15 @@ function ContentFrame({
     >
       <div className="relative h-full w-full">{children}</div>
     </TransformBox>
+  );
+}
+
+/** Compat: a zona principal (os layouts antigos chamavam ContentFrame). */
+function ContentFrame({ zone, children, className }: { zone: PlacedZone; children: ReactNode; className?: string }) {
+  return (
+    <EditableZone zoneKey="content" zone={zone} className={className}>
+      {children}
+    </EditableZone>
   );
 }
 
@@ -1096,7 +1177,7 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
   const chrome = useChrome();
   const center = align === 'center';
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey="header" zone={zone}>
       <FitBox anchor="center" minScale={0.76}>
         <Stack gap={1.6} center={center}>
           <Label block={plan.label} center={center} />
@@ -1146,7 +1227,7 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
           )}
         </Stack>
       </FitBox>
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -1175,7 +1256,7 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
 /** Abaixo desta proporção real, a zona é alta e estreita: cards em PILHA. Acima, em FILEIRA. */
 const STACK_BELOW_ASPECT = 2.4;
 
-function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: PlacedZone; rows?: boolean }) {
+function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: ComposedSlide; zone: PlacedZone; rows?: boolean; zoneKey?: ZoneKey }) {
   const ctx = useContext(CompositionContext);
   const chrome = useChrome();
   const cards = plan.cards;
@@ -1193,6 +1274,14 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
    * uma consequência da proporção.
    */
   const stacked = rows || zoneAspect(zone) < STACK_BELOW_ASPECT;
+
+  // A VARIANTE DE DESENHO do card vem do flavor do slide (o diretor de arte
+  // garante que slides de cards consecutivos recebem flavors diferentes):
+  //   0 painel numerado · 1 ícone-herói · 2 contorno com barra lateral.
+  // Ícone-herói só existe se TODOS os itens têm ícone; senão cai no painel.
+  const allHaveIcons = items.every((item) => !!item.icon);
+  const rawVariant = ctx.flavor % 3;
+  const variant = rawVariant === 1 && !allHaveIcons ? 0 : rawVariant;
 
   /**
    * A DENSIDADE DO VIDRO vem da OCUPAÇÃO MEDIDA daquela zona naquela arte.
@@ -1216,7 +1305,7 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
   };
 
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey={zoneKey} zone={zone}>
       <FitBox anchor="center" minScale={0.78}>
         <div
           className="grid w-full"
@@ -1256,7 +1345,9 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
                   className="self-stretch rounded-full"
                   style={{ width: '0.14em', background: chrome.accent, opacity: 0.45, flex: 'none' }}
                 />
-                {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="3em" />}
+                <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
+                  {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="3em" />}
+                </IconControl>
                 <div className="flex min-w-0 flex-1 flex-col" style={{ rowGap: '0.3em' }}>
                   <CardField
                     blockId={cards.id}
@@ -1278,9 +1369,113 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
                   />
                 </div>
               </div>
+            ) : variant === 1 ? (
+              // ÍCONE-HERÓI: o ícone grande comanda o card; sem número, sem filete.
+              // É o segundo desenho de card do deck: dois slides de cards no mesmo
+              // deck nunca saem com a mesma cara.
+              <div
+                key={item.id}
+                data-card=""
+                className="grid min-h-0 overflow-hidden rounded-[1.8em]"
+                style={{
+                  gridTemplateRows: '4em 3.9em 1fr',
+                  rowGap: '0.5em',
+                  ...shell,
+                  padding: '1.6em 1.55em 1.45em',
+                }}
+              >
+                <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
+                  <IconBadge name={item.icon ?? 'alvo'} color={chrome.accent} size="3.4em" glow={chrome.accentGlow} />
+                </IconControl>
+                <CardField
+                  blockId={cards.id}
+                  index={i}
+                  field="title"
+                  value={item.title}
+                  ariaLabel={`Título do card ${i + 1}`}
+                  style={{
+                    fontSize: '1.5em',
+                    fontWeight: 700,
+                    lineHeight: 1.22,
+                    letterSpacing: '-0.015em',
+                    color: chrome.ink,
+                    alignSelf: 'end',
+                  }}
+                  clamp={2}
+                />
+                <CardField
+                  blockId={cards.id}
+                  index={i}
+                  field="body"
+                  value={item.body}
+                  ariaLabel={`Corpo do card ${i + 1}`}
+                  style={{ fontSize: '1.18em', lineHeight: 1.52, color: chrome.inkSoft, textAlign: 'left' }}
+                  clamp={4}
+                />
+              </div>
+            ) : variant === 2 ? (
+              // CONTORNO COM BARRA: a barra lateral no acento, número e ícone na
+              // mesma linha, sem filete. O terceiro desenho de card.
+              <div
+                key={item.id}
+                data-card=""
+                className="grid min-h-0 overflow-hidden rounded-[1.2em]"
+                style={{
+                  gridTemplateRows: '2em 3.9em 1fr',
+                  rowGap: '0.55em',
+                  ...shell,
+                  borderLeft: `0.32em solid ${chrome.accent}`,
+                  padding: '1.5em 1.45em 1.4em',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <MarkerField
+                    value={item.marker}
+                    fallback={String(i + 1).padStart(2, '0')}
+                    onCommit={(next) => ctx.commitCardMarker(cards.id, i, next)}
+                    ariaLabel={`Número do card ${i + 1}`}
+                    style={{
+                      fontSize: '1.35em',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      letterSpacing: '0.12em',
+                      color: chrome.accent,
+                      textShadow: chrome.accentTextGlow,
+                    }}
+                  />
+                  <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
+                    {item.icon && <SlideIcon name={item.icon} size="1.7em" style={{ color: chrome.accent }} />}
+                  </IconControl>
+                </div>
+                <CardField
+                  blockId={cards.id}
+                  index={i}
+                  field="title"
+                  value={item.title}
+                  ariaLabel={`Título do card ${i + 1}`}
+                  style={{
+                    fontSize: '1.5em',
+                    fontWeight: 700,
+                    lineHeight: 1.22,
+                    letterSpacing: '-0.015em',
+                    color: chrome.ink,
+                    alignSelf: 'end',
+                  }}
+                  clamp={2}
+                />
+                <CardField
+                  blockId={cards.id}
+                  index={i}
+                  field="body"
+                  value={item.body}
+                  ariaLabel={`Corpo do card ${i + 1}`}
+                  style={{ fontSize: '1.18em', lineHeight: 1.52, color: chrome.inkSoft, textAlign: 'left' }}
+                  clamp={4}
+                />
+              </div>
             ) : (
-              // CARD (referência p.5/8): número + ícone, título com 2 linhas
-              // RESERVADAS, filete, corpo. As linhas fixas são o que mantém os três
+              // PAINEL NUMERADO (referência p.5/8): número + ícone, título com 2
+              // linhas RESERVADAS, filete, corpo. As linhas fixas mantêm os três
               // cards geometricamente idênticos, tenha o título uma linha ou duas.
               <div
                 key={item.id}
@@ -1307,7 +1502,9 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
                       textShadow: chrome.accentTextGlow,
                     }}
                   />
-                  {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="2.7em" />}
+                  <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
+                    {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="2.7em" />}
+                  </IconControl>
                 </div>
 
                 <CardField
@@ -1358,7 +1555,7 @@ function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: Pla
       {ctx.editable && items.length < MAX_CARDS && (
         <AddButton onClick={() => ctx.addCard(cards.id)} label="+ Novo card" />
       )}
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -1422,6 +1619,119 @@ function CardsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
     <>
       <Header plan={plan} zone={c.header} align={c.align} />
       <CardsRow plan={plan} zone={c.content} rows={c.arrangementId.startsWith('cards-rows')} />
+    </>
+  );
+}
+
+/**
+ * O CONTROLE DE ÍCONE do editor: clicou no ícone, abre o catálogo inteiro pra
+ * trocar; item sem ícone mostra um "+" tracejado pra adicionar; dá pra remover.
+ * Em leitura/export não existe: só o visual do ícone (children).
+ */
+function IconControl({
+  icon,
+  onPick,
+  children,
+}: {
+  icon?: SlideIconName;
+  onPick: (icon: SlideIconName | undefined) => void;
+  children: ReactNode;
+}) {
+  const ctx = useContext(CompositionContext);
+  const chrome = useChrome();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [panel, setPanel] = useState<{ x: number; y: number } | null>(null);
+
+  if (!ctx.editable) return <>{children}</>;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        title={icon ? 'Trocar ícone' : 'Adicionar ícone'}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          const r = btnRef.current?.getBoundingClientRect();
+          setPanel(panel ? null : r ? { x: r.left, y: r.bottom + 8 } : null);
+        }}
+        className="flex-none cursor-pointer"
+        style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', lineHeight: 0 }}
+      >
+        {icon ? (
+          children
+        ) : (
+          <span
+            aria-hidden="true"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '2.2em',
+              height: '2.2em',
+              borderRadius: '50%',
+              border: `1px dashed ${chrome.accent}66`,
+              color: chrome.accent,
+              fontSize: '1em',
+              lineHeight: 1,
+            }}
+          >
+            +
+          </span>
+        )}
+      </button>
+      {panel &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[998]" onPointerDown={() => setPanel(null)} />
+            <div
+              className="fixed z-[999] rounded-xl border border-white/15 p-2 shadow-2xl"
+              style={{
+                left: Math.max(8, Math.min(panel.x, window.innerWidth - 340)),
+                top: Math.max(8, Math.min(panel.y, window.innerHeight - 240)),
+                width: 324,
+                background: 'rgba(10, 14, 12, 0.97)',
+                backdropFilter: 'blur(12px)',
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="grid grid-cols-8 gap-1">
+                {SLIDE_ICONS.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    title={name}
+                    onClick={() => {
+                      onPick(name);
+                      setPanel(null);
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-100 hover:bg-white/10"
+                    style={{
+                      color: name === icon ? chrome.accent : 'rgba(240, 245, 243, 0.85)',
+                      outline: name === icon ? `1px solid ${chrome.accent}` : 'none',
+                    }}
+                  >
+                    <SlideIcon name={name} size="18px" />
+                  </button>
+                ))}
+              </div>
+              {icon && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPick(undefined);
+                    setPanel(null);
+                  }}
+                  className="mt-2 w-full rounded-md border border-white/15 px-2 py-1 text-[12px] text-white/70 transition-colors duration-100 hover:text-white"
+                >
+                  Remover ícone
+                </button>
+              )}
+            </div>
+          </>,
+          document.body,
+        )}
     </>
   );
 }
@@ -1540,25 +1850,33 @@ function InlineField({
  * grade de três colunas (número, filete, texto) alinha os três em todas as linhas,
  * então a lista tem uma coluna óptica limpa em vez de números dançando.
  */
-function TopicsList({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+/**
+ * A lista leve, em TRÊS marcações diferentes (o flavor do slide decide):
+ *   0  numerada com filete (o clássico da referência)
+ *   1  checklist: círculo de contorno com check no acento
+ *   2  losango do acento (o bullet geométrico da marca)
+ * Com 4+ itens e flavor ímpar, a lista abre em DUAS COLUNAS — mais uma cara
+ * possível pro mesmo formato. Nenhum sorteio: tudo vem do flavor determinístico.
+ */
+function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; zone: PlacedZone; zoneKey?: ZoneKey }) {
   const ctx = useContext(CompositionContext);
   const chrome = useChrome();
   const topics = plan.topics;
   if (!topics || topics.items.length === 0) return null;
 
   const items = topics.items.slice(0, MAX_TOPICS);
+  const variant = ctx.flavor % 3;
+  const twoCols = items.length >= 4 && ctx.flavor % 2 === 1;
 
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey={zoneKey} zone={zone}>
       <FitBox anchor="center">
-        <ol
-          className="grid w-full list-none p-0"
+        <div
+          className="grid w-full"
           style={{
-            gridTemplateColumns: 'auto auto 1fr',
-            columnGap: '1.2em',
-            rowGap: 'calc(2.4 * var(--rhythm))',
-            alignItems: 'center',
-            margin: 0,
+            gridTemplateColumns: twoCols ? '1fr 1fr' : '1fr',
+            columnGap: '2.2em',
+            rowGap: 'calc(2.2 * var(--rhythm))',
           }}
         >
           {items.map((item, i) => (
@@ -1569,14 +1887,15 @@ function TopicsList({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
               value={item}
               marker={topics.markers?.[i]}
               chrome={chrome}
+              variant={variant}
             />
           ))}
-        </ol>
+        </div>
       </FitBox>
       {ctx.editable && items.length < MAX_TOPICS && (
         <AddButton onClick={() => ctx.addTopic(topics.id)} label="+ Novo tópico" />
       )}
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -1586,12 +1905,14 @@ function TopicRow({
   value,
   marker,
   chrome,
+  variant,
 }: {
   blockId: string;
   index: number;
   value: RichText;
   marker?: RichText;
   chrome: SlideChrome;
+  variant: number;
 }) {
   const ctx = useContext(CompositionContext);
 
@@ -1613,36 +1934,58 @@ function TopicRow({
     </div>
   );
 
-  return (
-    <li className="contents">
-      <MarkerField
-        value={marker}
-        fallback={String(index + 1).padStart(2, '0')}
-        onCommit={(next) => ctx.commitListMarker(blockId, index, next)}
-        ariaLabel={`Número do tópico ${index + 1}`}
-        style={{
-          fontSize: '1.9em',
-          fontWeight: 800,
-          lineHeight: 1.2,
-          letterSpacing: '-0.02em',
-          color: chrome.accent,
-          textShadow: chrome.accentTextGlow,
-          alignSelf: 'center',
-          minWidth: '1.4em',
-        }}
-      />
+  const bullet =
+    variant === 1 ? (
+      <IconBadge name="check" color={chrome.accent} size="2em" />
+    ) : variant === 2 ? (
       <span
         aria-hidden="true"
-        className="self-center rounded-full"
-        style={{ width: '1.7em', height: '0.14em', background: chrome.accent, opacity: 0.55 }}
+        className="flex-none"
+        style={{
+          width: '0.85em',
+          height: '0.85em',
+          background: chrome.accent,
+          boxShadow: chrome.accentGlow,
+          transform: 'rotate(45deg)',
+          borderRadius: '0.14em',
+        }}
       />
+    ) : (
+      <>
+        <MarkerField
+          value={marker}
+          fallback={String(index + 1).padStart(2, '0')}
+          onCommit={(next) => ctx.commitListMarker(blockId, index, next)}
+          ariaLabel={`Número do tópico ${index + 1}`}
+          style={{
+            fontSize: '1.9em',
+            fontWeight: 800,
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
+            color: chrome.accent,
+            textShadow: chrome.accentTextGlow,
+            minWidth: '1.4em',
+            flex: 'none',
+          }}
+        />
+        <span
+          aria-hidden="true"
+          className="flex-none rounded-full"
+          style={{ width: '1.7em', height: '0.14em', background: chrome.accent, opacity: 0.55 }}
+        />
+      </>
+    );
+
+  return (
+    <div className="flex min-w-0 items-center" style={{ gap: '1.1em' }}>
+      {bullet}
       <div
-        className="min-w-0"
+        className="min-w-0 flex-1"
         style={{ fontSize: '1.5em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
       >
         {text}
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -1681,7 +2024,7 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
   if (poster) {
     const columns = items.length === 4 ? 2 : Math.max(1, items.length);
     return (
-      <ZoneBox zone={zone}>
+      <EditableZone zoneKey="content" zone={zone}>
         <FitBox anchor="center" minScale={0.72}>
           <div
             className="grid w-full"
@@ -1717,7 +2060,7 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
         {ctx.editable && items.length < MAX_STATS && (
           <AddButton onClick={() => ctx.addStat(stats.id)} label="+ Nova métrica" />
         )}
-      </ZoneBox>
+      </EditableZone>
     );
   }
 
@@ -1732,7 +2075,7 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
   const stacked = zoneAspect(zone) < STACK_BELOW_ASPECT;
 
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey="content" zone={zone}>
       <FitBox anchor="center" minScale={0.78}>
         <div
           className={cn('flex w-full overflow-hidden', stacked ? 'flex-col' : 'flex-row items-stretch')}
@@ -1753,7 +2096,9 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
                     : { borderLeft: `1px solid ${chrome.accentFaint}`, paddingLeft: '1.7em', marginLeft: '1.7em' }),
               }}
             >
-              {item.icon && <SlideIcon name={item.icon} size="1.9em" style={{ color: chrome.accent }} />}
+              <IconControl icon={item.icon} onPick={(n) => ctx.commitStatIcon(stats.id, i, n)}>
+                {item.icon && <SlideIcon name={item.icon} size="1.9em" style={{ color: chrome.accent }} />}
+              </IconControl>
               <InlineField
                 value={item.label}
                 onCommit={(next) => ctx.commitStat(stats.id, i, 'label', next)}
@@ -1783,7 +2128,7 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
       {ctx.editable && items.length < MAX_STATS && (
         <AddButton onClick={() => ctx.addStat(stats.id)} label="+ Nova métrica" />
       )}
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -1823,7 +2168,7 @@ function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
   const stacked = zoneAspect(zone) < 1.6;
 
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey="content" zone={zone}>
       <FitBox anchor="center" minScale={0.78}>
         <div
           className="grid w-full"
@@ -1838,7 +2183,9 @@ function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
               style={{ ...shell, padding: '1.6em 1.6em 1.45em', rowGap: '0.8em' }}
             >
               <div className="flex items-center" style={{ gap: '1em' }}>
-                {side.icon && <IconBadge name={side.icon} color={chrome.accent} size="2.9em" />}
+                <IconControl icon={side.icon} onPick={(n) => ctx.commitCompareIcon(compare.id, si, n)}>
+                  {side.icon && <IconBadge name={side.icon} color={chrome.accent} size="2.9em" />}
+                </IconControl>
                 <InlineField
                   value={side.label}
                   onCommit={(next) => ctx.commitCompareLabel(compare.id, si, next)}
@@ -1905,7 +2252,7 @@ function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
           ))}
         </div>
       </FitBox>
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -1947,7 +2294,7 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
       boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
     };
     return (
-      <ZoneBox zone={zone}>
+      <EditableZone zoneKey="content" zone={zone}>
         <FitBox anchor="center" minScale={0.78}>
           <div
             className="grid w-full"
@@ -1994,12 +2341,12 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
         {ctx.editable && items.length < MAX_STEPS && (
           <AddButton onClick={() => ctx.addStep(steps.id)} label="+ Nova etapa" />
         )}
-      </ZoneBox>
+      </EditableZone>
     );
   }
 
   return (
-    <ZoneBox zone={zone}>
+    <EditableZone zoneKey="content" zone={zone}>
       <FitBox anchor="center" minScale={0.8}>
         <ol
           className="grid w-full list-none p-0"
@@ -2044,7 +2391,7 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
       {ctx.editable && items.length < MAX_STEPS && (
         <AddButton onClick={() => ctx.addStep(steps.id)} label="+ Nova etapa" />
       )}
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
@@ -2104,7 +2451,11 @@ function SplitLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
           </Stack>
         </FitBox>
       </ContentFrame>
-      {plan.cards ? <CardsRow plan={plan} zone={c.aside} /> : <TopicsList plan={plan} zone={c.aside} />}
+      {plan.cards ? (
+        <CardsRow plan={plan} zone={c.aside} zoneKey="aside" />
+      ) : (
+        <TopicsList plan={plan} zone={c.aside} zoneKey="aside" />
+      )}
     </>
   );
 }
@@ -2168,7 +2519,8 @@ function MediaLayout({ plan, c, slide }: { plan: ComposedSlide; c: Composition; 
         </FitBox>
       </ContentFrame>
 
-      <ZoneBox
+      <EditableZone
+        zoneKey="aside"
         zone={c.aside}
         className="overflow-hidden rounded-[1.6cqw]"
         style={{
@@ -2184,7 +2536,7 @@ function MediaLayout({ plan, c, slide }: { plan: ComposedSlide; c: Composition; 
           className="h-full w-full object-cover"
           draggable={false}
         />
-      </ZoneBox>
+      </EditableZone>
     </>
   );
 }
@@ -2218,7 +2570,8 @@ function HighlightLine({ block }: { block: TextBlock }) {
 function Banner({ block, zone }: { block: TextBlock; zone: PlacedZone }) {
   const chrome = useChrome();
   return (
-    <ZoneBox
+    <EditableZone
+      zoneKey="banner"
       zone={zone}
       className="flex items-center overflow-hidden rounded-[1.2cqw]"
       style={{
@@ -2240,7 +2593,7 @@ function Banner({ block, zone }: { block: TextBlock; zone: PlacedZone }) {
           spec={{ prose: true, size: 1.22, weight: 500, lineHeight: 1.42, color: chrome.ink, wrap: 'balance', clamp: 2 }}
         />
       </FitBox>
-    </ZoneBox>
+    </EditableZone>
   );
 }
 
