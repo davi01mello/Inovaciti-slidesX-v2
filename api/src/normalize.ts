@@ -593,8 +593,10 @@ function ensureContentTitle(blocks: GeneratedBlock[]): GeneratedBlock[] {
   return [{ kind: 'title-2', content: borrowed }, ...blocks];
 }
 
-/** Menos itens que isto e a lista deixa de ser lista. A poda para aqui. */
-const LIST_FLOOR: Record<string, number> = { topics: 2, cards: 2, steps: 3, stats: 1 };
+/** Menos itens que isto e a lista deixa de ser lista. A poda para aqui.
+ *  Tópicos têm piso 3: DOIS tópicos soltos num slide é exatamente o vazio
+ *  constrangedor que o produto proíbe (2 pontos são cards ou comparacao). */
+const LIST_FLOOR: Record<string, number> = { topics: 3, cards: 2, steps: 3, stats: 1 };
 
 /**
  * Aplica a gramática do formato a UM slide de conteúdo.

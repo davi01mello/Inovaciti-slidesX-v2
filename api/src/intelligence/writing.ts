@@ -75,7 +75,8 @@ qualquer bloco fora do formato.
   citacao      Frase de impacto. title-2 manchete + highlight de 6 a 14 palavras
                (+ section-label opcional). Tese, provocação, fecho de capítulo. Faixa: 9 a 28.
   topicos      Título + 3 a 5 tópicos telegráficos (3 a 10 palavras cada). Agenda,
-               entregas, requisitos. Faixa: 14 a 40.
+               entregas, requisitos. NUNCA 2 tópicos: dois pontos soltos deixam o
+               slide vazio — com só 2 pontos, use cards ou comparacao. Faixa: 14 a 40.
   cards        Título + 2 a 3 cards (título de 2 a 4 palavras + UMA frase de 5 a 16).
                Pilares e frentes que pedem um pingo de explicação. Faixa: 18 a 48.
   split        Título + body de 12 a 25 + UMA lista curta (2 a 4 tópicos OU 2 cards).
@@ -124,7 +125,7 @@ escreve variado:
 - Até 12 slides, nenhum formato aparece mais de 2 vezes; com 5 ou mais slides de conteúdo,
   use pelo menos 5 formatos diferentes.
 - VARIE AS CONTAGENS: se um slide de cards tem 3 itens, o próximo slide com lista tem 2 ou
-  4. Dois slides vizinhos nunca têm o mesmo número de itens.
+  4. Dois slides vizinhos nunca têm o mesmo número de itens. (Tópicos e etapas: mínimo 3.)
 - ALTERNE PESO E RESPIRO: depois de um slide denso (cards, comparacao, indicadores), vem um
   leve (afirmacao, citacao, numero). A curva de densidade sobe e desce, nunca é uma reta.
 - A variedade é subordinada ao conteúdo: escolha o formato que o conteúdo pede, dentro das

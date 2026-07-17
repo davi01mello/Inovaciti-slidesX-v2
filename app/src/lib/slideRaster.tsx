@@ -194,13 +194,17 @@ export async function renderSlidesForExport(presentation: Presentation): Promise
         .map((el) => measureText(el, stageRect))
         .filter((t): t is ExportText => t !== null);
 
-      // Esconde os textos (mantendo a geometria) e rasteriza só a arte.
+      // Esconde os textos (mantendo a geometria) e rasteriza só a arte. O CINTO
+      // é a regra CSS (visibility: hidden); a SUSPENSÓRIO é o filter, que REMOVE
+      // os nós de texto do clone rasterizado — texto no fundo é exatamente o
+      // defeito do "texto duplicado" no Canva, então aqui são duas garantias.
       stage.setAttribute('data-slide-export', 'art');
       const background = await toPng(stage, {
         width: RASTER_WIDTH,
         height: RASTER_HEIGHT,
         pixelRatio: 1,
         backgroundColor: '#040605',
+        filter: (node) => !(node instanceof HTMLElement && node.hasAttribute('data-export-text')),
       });
       results.push({ background, texts });
     }

@@ -64,6 +64,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         title: cloneRich(item.title),
         body: cloneRich(item.body),
         ...(item.icon ? { icon: item.icon } : {}),
+        ...(item.iconAsset ? { iconAsset: item.iconAsset } : {}),
         ...(item.marker ? { marker: cloneRich(item.marker) } : {}),
       })),
     };
@@ -87,6 +88,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         value: cloneRich(item.value),
         label: cloneRich(item.label),
         ...(item.icon ? { icon: item.icon } : {}),
+        ...(item.iconAsset ? { iconAsset: item.iconAsset } : {}),
       })),
     };
   }
@@ -100,6 +102,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         label: cloneRich(side.label),
         points: side.points.map(cloneRich),
         ...(side.icon ? { icon: side.icon } : {}),
+        ...(side.iconAsset ? { iconAsset: side.iconAsset } : {}),
       })),
     };
   }

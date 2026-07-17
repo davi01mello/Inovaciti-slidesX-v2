@@ -81,6 +81,8 @@ export interface CardItem {
   title: RichText;
   body: RichText;
   icon?: SlideIconName;
+  /** Pictograma da iconografia CITi (chave do iconsManifest) no lugar do ícone de traço. */
+  iconAsset?: string;
   /** Sobrescreve o ordinal automático ("01"). Vazio/ausente = automático. */
   marker?: RichText;
 }
@@ -109,6 +111,8 @@ export interface StatItem {
   value: RichText;
   label: RichText;
   icon?: SlideIconName;
+  /** Pictograma da iconografia CITi (chave do iconsManifest) no lugar do ícone de traço. */
+  iconAsset?: string;
 }
 
 /** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
@@ -137,6 +141,8 @@ export interface CompareSide {
   /** No máximo MAX_COMPARE_POINTS por lado. O primeiro é a afirmação; os demais sustentam. */
   points: RichText[];
   icon?: SlideIconName;
+  /** Pictograma da iconografia CITi (chave do iconsManifest) no lugar do ícone de traço. */
+  iconAsset?: string;
 }
 
 /** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */

@@ -8,7 +8,6 @@ import { clampRect } from '@/lib/rect';
 import { applyGeneratedBlocksToSlide } from '@/lib/generatedSlide';
 import { AiClientError, generatePresentation, improveSlideRemote } from '@/services/aiClient';
 import { clampTone, DEFAULT_TONE } from '@/services/tone';
-import { decorateDeck } from '@/services/deckDecor';
 import { emptiestCorner, composeArtAs } from '@/services/artZones';
 import { artById, planDeckArt } from '@/services/deckArt';
 import { deckRoles } from '@/services/slideArchetype';
@@ -404,10 +403,7 @@ async function runGeneration(id: string): Promise<void> {
         chat: [],
         generationError: undefined,
       };
-      const withLogo = assets?.logo ? { ...withPhotos, slides: attachLogo(withPhotos, assets.logo) } : withPhotos;
-      // Os elementos 3D da marca entram por último, como decorações editáveis:
-      // acentos orgânicos nos slides de respiro, no canto mais vazio da arte.
-      return { ...withLogo, slides: decorateDeck(withLogo.id, withLogo.tone ?? DEFAULT_TONE, withLogo.slides) };
+      return assets?.logo ? { ...withPhotos, slides: attachLogo(withPhotos, assets.logo) } : withPhotos;
     });
     pendingAssets.delete(id);
     playSound('presentationReady');

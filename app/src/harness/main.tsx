@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import '@/index.css';
 import { SlideComposition } from '@/components/present/SlideComposition';
 import { buildTestDeck } from '@/harness/deck';
-import { decorateDeck } from '@/services/deckDecor';
 import { planFor } from '@/services/deckPlan';
 import { composeSlide } from '@/services/slideArchetype';
 import { findOverflowing } from '@/lib/textFit';
@@ -120,8 +119,7 @@ function Stage({ slide, tone, art, debug }: { slide: Slide; tone: number; art?: 
 
 function Harness() {
   const { tone: qTone, debug, only } = useQuery();
-  // O decorador entra igual à geração real: elementos 3D da marca nos respiros.
-  const slides = useMemo(() => decorateDeck('harness-deck-0001', 1, buildTestDeck()), []);
+  const slides = useMemo(() => buildTestDeck(), []);
   const tones = qTone !== null ? [qTone] : TONES;
 
   return (

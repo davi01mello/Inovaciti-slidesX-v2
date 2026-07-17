@@ -217,6 +217,13 @@ export function buildTestDeck(): Slide[] {
       ),
     ]),
 
+    // DUO: dois tópicos NUNCA podem parecer lista murcha — viram tiles grandes.
+    slide('content', [
+      B.label('Em resumo'),
+      B.t2Hl('Dois ganhos ', 'imediatos.'),
+      B.topics('Diagnóstico preciso das necessidades', 'Resultados mensuráveis pra empresa'),
+    ]),
+
     media,
 
     slide('section', [B.label('Capítulo dois'), B.t1Hl('O que a operação ', 'ganha.')]),

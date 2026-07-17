@@ -30,6 +30,7 @@ import {
   type Zone,
 } from '@/services/artZones';
 import { artById, fallbackArt, fallbackFlavor } from '@/services/deckArt';
+import { ICONS, iconByKey, iconCategoryLabel, iconNameLabel } from '@/services/iconsManifest';
 import { chromeFor, DEFAULT_TONE, type SlideChrome } from '@/services/tone';
 import type { TemplateArt } from '@/services/templateArt.generated';
 import logoBranco from '@/assets/logos/logo-citi30-branco.png';
@@ -98,10 +99,11 @@ interface CompositionContextValue {
   commitListMarker: (blockId: string, index: number, content: RichText) => void;
   /** Sobrescreve o ordinal de um card. Vazio = volta ao automático. */
   commitCardMarker: (blockId: string, index: number, content: RichText) => void;
-  /** Troca (ou remove, com undefined) o ícone de um card / métrica / lado. */
-  commitCardIcon: (blockId: string, index: number, icon: SlideIconName | undefined) => void;
-  commitStatIcon: (blockId: string, index: number, icon: SlideIconName | undefined) => void;
-  commitCompareIcon: (blockId: string, sideIndex: number, icon: SlideIconName | undefined) => void;
+  /** Troca (ou remove, com undefined) o ícone de um card / métrica / lado —
+   * um ícone de traço OU um pictograma da iconografia CITi. */
+  commitCardIcon: (blockId: string, index: number, pick: IconPick) => void;
+  commitStatIcon: (blockId: string, index: number, pick: IconPick) => void;
+  commitCompareIcon: (blockId: string, sideIndex: number, pick: IconPick) => void;
   addTopic: (blockId: string) => void;
   addCard: (blockId: string) => void;
   addStat: (blockId: string) => void;
@@ -304,22 +306,28 @@ export function SlideComposition({
         );
         onBlockChange?.(blockId, { sides } as Partial<Block>);
       },
-      commitCardIcon: (blockId, index, icon) => {
+      commitCardIcon: (blockId, index, pick) => {
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'cards') return;
-        const items = block.items.map((item, i) => (i === index ? { ...item, icon } : item));
+        const items = block.items.map((item, i) =>
+          i === index ? { ...item, icon: pick?.icon, iconAsset: pick?.iconAsset } : item,
+        );
         onBlockChange?.(blockId, { items } as Partial<Block>);
       },
-      commitStatIcon: (blockId, index, icon) => {
+      commitStatIcon: (blockId, index, pick) => {
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'stats') return;
-        const items = block.items.map((item, i) => (i === index ? { ...item, icon } : item));
+        const items = block.items.map((item, i) =>
+          i === index ? { ...item, icon: pick?.icon, iconAsset: pick?.iconAsset } : item,
+        );
         onBlockChange?.(blockId, { items } as Partial<Block>);
       },
-      commitCompareIcon: (blockId, sideIndex, icon) => {
+      commitCompareIcon: (blockId, sideIndex, pick) => {
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'compare') return;
-        const sides = block.sides.map((side, i) => (i === sideIndex ? { ...side, icon } : side));
+        const sides = block.sides.map((side, i) =>
+          i === sideIndex ? { ...side, icon: pick?.icon, iconAsset: pick?.iconAsset } : side,
+        );
         onBlockChange?.(blockId, { sides } as Partial<Block>);
       },
       // O override legado (só conteúdo) continua valendo como fallback do mapa novo.
@@ -1279,7 +1287,7 @@ function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: Com
   // garante que slides de cards consecutivos recebem flavors diferentes):
   //   0 painel numerado · 1 ícone-herói · 2 contorno com barra lateral.
   // Ícone-herói só existe se TODOS os itens têm ícone; senão cai no painel.
-  const allHaveIcons = items.every((item) => !!item.icon);
+  const allHaveIcons = items.every((item) => !!item.icon || !!item.iconAsset);
   const rawVariant = ctx.flavor % 3;
   const variant = rawVariant === 1 && !allHaveIcons ? 0 : rawVariant;
 
@@ -1345,8 +1353,8 @@ function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: Com
                   className="self-stretch rounded-full"
                   style={{ width: '0.14em', background: chrome.accent, opacity: 0.45, flex: 'none' }}
                 />
-                <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
-                  {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="3em" />}
+                <IconControl icon={item.icon} iconAsset={item.iconAsset} onPick={(p) => ctx.commitCardIcon(cards.id, i, p)}>
+                  <ItemIcon icon={item.icon} iconAsset={item.iconAsset} badge size="3em" color={chrome.accent} />
                 </IconControl>
                 <div className="flex min-w-0 flex-1 flex-col" style={{ rowGap: '0.3em' }}>
                   <CardField
@@ -1384,8 +1392,15 @@ function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: Com
                   padding: '1.6em 1.55em 1.45em',
                 }}
               >
-                <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
-                  <IconBadge name={item.icon ?? 'alvo'} color={chrome.accent} size="3.4em" glow={chrome.accentGlow} />
+                <IconControl icon={item.icon} iconAsset={item.iconAsset} onPick={(p) => ctx.commitCardIcon(cards.id, i, p)}>
+                  <ItemIcon
+                    icon={item.icon ?? 'alvo'}
+                    iconAsset={item.iconAsset}
+                    badge
+                    size="3.4em"
+                    color={chrome.accent}
+                    glow={chrome.accentGlow}
+                  />
                 </IconControl>
                 <CardField
                   blockId={cards.id}
@@ -1443,8 +1458,8 @@ function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: Com
                       textShadow: chrome.accentTextGlow,
                     }}
                   />
-                  <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
-                    {item.icon && <SlideIcon name={item.icon} size="1.7em" style={{ color: chrome.accent }} />}
+                  <IconControl icon={item.icon} iconAsset={item.iconAsset} onPick={(p) => ctx.commitCardIcon(cards.id, i, p)}>
+                    <ItemIcon icon={item.icon} iconAsset={item.iconAsset} badge={false} size="1.7em" color={chrome.accent} />
                   </IconControl>
                 </div>
                 <CardField
@@ -1502,8 +1517,8 @@ function CardsRow({ plan, zone, rows = false, zoneKey = 'content' }: { plan: Com
                       textShadow: chrome.accentTextGlow,
                     }}
                   />
-                  <IconControl icon={item.icon} onPick={(n) => ctx.commitCardIcon(cards.id, i, n)}>
-                    {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="2.7em" />}
+                  <IconControl icon={item.icon} iconAsset={item.iconAsset} onPick={(p) => ctx.commitCardIcon(cards.id, i, p)}>
+                    <ItemIcon icon={item.icon} iconAsset={item.iconAsset} badge size="2.7em" color={chrome.accent} />
                   </IconControl>
                 </div>
 
@@ -1623,18 +1638,62 @@ function CardsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   );
 }
 
+/** O que o usuário escolheu no catálogo: traço, pictograma da marca, ou nada. */
+type IconPick = { icon?: SlideIconName; iconAsset?: string } | undefined;
+
 /**
- * O CONTROLE DE ÍCONE do editor: clicou no ícone, abre o catálogo inteiro pra
- * trocar; item sem ícone mostra um "+" tracejado pra adicionar; dá pra remover.
+ * O VISUAL do ícone de um item: pictograma da iconografia CITi quando o usuário
+ * escolheu um (menorzinho, sem círculo — a arte já é rica), senão o ícone de
+ * traço no desenho que o layout pedir (badge com círculo ou traço puro).
+ */
+function ItemIcon({
+  icon,
+  iconAsset,
+  badge,
+  size,
+  color,
+  glow,
+}: {
+  icon?: SlideIconName;
+  iconAsset?: string;
+  badge: boolean;
+  size: string;
+  color: string;
+  glow?: string;
+}) {
+  if (iconAsset) {
+    const src = iconByKey(iconAsset)?.src;
+    if (src) {
+      return (
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          style={{ width: `calc(${size} * 0.94)`, height: `calc(${size} * 0.94)`, objectFit: 'contain', flex: 'none' }}
+        />
+      );
+    }
+  }
+  if (!icon) return null;
+  if (badge) return <IconBadge name={icon} color={color} size={size} glow={glow} />;
+  return <SlideIcon name={icon} size={size} style={{ color }} />;
+}
+
+/**
+ * O CONTROLE DE ÍCONE do editor: clicou no ícone, abre o catálogo inteiro — os
+ * ícones de traço E a iconografia oficial do CITi (pictogramas) — pra trocar;
+ * item sem ícone mostra um "+" tracejado pra adicionar; dá pra remover.
  * Em leitura/export não existe: só o visual do ícone (children).
  */
 function IconControl({
   icon,
+  iconAsset,
   onPick,
   children,
 }: {
   icon?: SlideIconName;
-  onPick: (icon: SlideIconName | undefined) => void;
+  iconAsset?: string;
+  onPick: (pick: IconPick) => void;
   children: ReactNode;
 }) {
   const ctx = useContext(CompositionContext);
@@ -1649,7 +1708,7 @@ function IconControl({
       <button
         ref={btnRef}
         type="button"
-        title={icon ? 'Trocar ícone' : 'Adicionar ícone'}
+        title={icon || iconAsset ? 'Trocar ícone' : 'Adicionar ícone'}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
@@ -1659,7 +1718,7 @@ function IconControl({
         className="flex-none cursor-pointer"
         style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', lineHeight: 0 }}
       >
-        {icon ? (
+        {icon || iconAsset ? (
           children
         ) : (
           <span
@@ -1703,7 +1762,7 @@ function IconControl({
                     type="button"
                     title={name}
                     onClick={() => {
-                      onPick(name);
+                      onPick({ icon: name });
                       setPanel(null);
                     }}
                     className="flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-100 hover:bg-white/10"
@@ -1716,7 +1775,29 @@ function IconControl({
                   </button>
                 ))}
               </div>
-              {icon && (
+              <div className="mt-2 border-t border-white/10 pt-2">
+                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                  Iconografia CITi
+                </div>
+                <div className="grid max-h-[150px] grid-cols-8 gap-1 overflow-y-auto">
+                  {ICONS.map((asset) => (
+                    <button
+                      key={asset.key}
+                      type="button"
+                      title={`${iconNameLabel(asset.name)} · ${iconCategoryLabel(asset.category)}`}
+                      onClick={() => {
+                        onPick({ iconAsset: asset.key });
+                        setPanel(null);
+                      }}
+                      className="flex h-9 w-9 items-center justify-center rounded-md transition-colors duration-100 hover:bg-white/10"
+                      style={{ outline: asset.key === iconAsset ? `1px solid ${chrome.accent}` : 'none' }}
+                    >
+                      <img src={asset.src} alt="" className="h-6 w-6 object-contain" draggable={false} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(icon || iconAsset) && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1867,15 +1948,18 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
   const items = topics.items.slice(0, MAX_TOPICS);
   const variant = ctx.flavor % 3;
   const twoCols = items.length >= 4 && ctx.flavor % 2 === 1;
+  // DOIS itens não podem parecer uma lista que murchou: viram um DUO de tiles
+  // grandes lado a lado (quando a zona é larga), com texto em escala de destaque.
+  const duo = items.length === 2 && zoneAspect(zone) >= 1.6;
 
   return (
     <EditableZone zoneKey={zoneKey} zone={zone}>
-      <FitBox anchor="center">
+      <FitBox anchor={zoneKey === 'aside' ? 'top' : 'center'}>
         <div
           className="grid w-full"
           style={{
-            gridTemplateColumns: twoCols ? '1fr 1fr' : '1fr',
-            columnGap: '2.2em',
+            gridTemplateColumns: duo ? '1fr 1fr' : twoCols ? '1fr 1fr' : '1fr',
+            columnGap: duo ? '2.6em' : '2.2em',
             rowGap: 'calc(2.2 * var(--rhythm))',
           }}
         >
@@ -1888,6 +1972,7 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
               marker={topics.markers?.[i]}
               chrome={chrome}
               variant={variant}
+              scale={duo ? 1.25 : 1}
             />
           ))}
         </div>
@@ -1906,6 +1991,7 @@ function TopicRow({
   marker,
   chrome,
   variant,
+  scale = 1,
 }: {
   blockId: string;
   index: number;
@@ -1913,6 +1999,8 @@ function TopicRow({
   marker?: RichText;
   chrome: SlideChrome;
   variant: number;
+  /** O DUO (2 itens) sobe a escala do par inteiro. */
+  scale?: number;
 }) {
   const ctx = useContext(CompositionContext);
 
@@ -1977,7 +2065,7 @@ function TopicRow({
     );
 
   return (
-    <div className="flex min-w-0 items-center" style={{ gap: '1.1em' }}>
+    <div className="flex min-w-0 items-center" style={{ gap: '1.1em', fontSize: `${scale}em` }}>
       {bullet}
       <div
         className="min-w-0 flex-1"
@@ -2096,8 +2184,8 @@ function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZ
                     : { borderLeft: `1px solid ${chrome.accentFaint}`, paddingLeft: '1.7em', marginLeft: '1.7em' }),
               }}
             >
-              <IconControl icon={item.icon} onPick={(n) => ctx.commitStatIcon(stats.id, i, n)}>
-                {item.icon && <SlideIcon name={item.icon} size="1.9em" style={{ color: chrome.accent }} />}
+              <IconControl icon={item.icon} iconAsset={item.iconAsset} onPick={(p) => ctx.commitStatIcon(stats.id, i, p)}>
+                <ItemIcon icon={item.icon} iconAsset={item.iconAsset} badge={false} size="1.9em" color={chrome.accent} />
               </IconControl>
               <InlineField
                 value={item.label}
@@ -2183,8 +2271,8 @@ function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
               style={{ ...shell, padding: '1.6em 1.6em 1.45em', rowGap: '0.8em' }}
             >
               <div className="flex items-center" style={{ gap: '1em' }}>
-                <IconControl icon={side.icon} onPick={(n) => ctx.commitCompareIcon(compare.id, si, n)}>
-                  {side.icon && <IconBadge name={side.icon} color={chrome.accent} size="2.9em" />}
+                <IconControl icon={side.icon} iconAsset={side.iconAsset} onPick={(p) => ctx.commitCompareIcon(compare.id, si, p)}>
+                  <ItemIcon icon={side.icon} iconAsset={side.iconAsset} badge size="2.9em" color={chrome.accent} />
                 </IconControl>
                 <InlineField
                   value={side.label}
