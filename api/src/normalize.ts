@@ -27,7 +27,7 @@
  *
  * A voz virou o que o nome diz: ritmo de redação + tendência na escolha (só prompt).
  */
-import { MAX_CARDS, MAX_COMPARE_POINTS, MAX_STATS, MAX_STEPS, MAX_TOPICS } from './types.js';
+import { MAX_CARDS, MAX_COMPARE_POINTS, MAX_STATS, MAX_STEPS, MAX_TOPICS, SLIDE_ICONS } from './types.js';
 import type {
   GeneratedBlock,
   GeneratedCard,
@@ -42,7 +42,15 @@ import type {
   GeneratedTopicsBlock,
   RichRun,
   RichText,
+  SlideIconName,
 } from './types.js';
+
+const SLIDE_ICON_SET = new Set<string>(SLIDE_ICONS);
+
+/** Ícone válido do vocabulário, ou undefined (o item sobrevive sem ícone). */
+function normalizeIcon(raw: unknown): SlideIconName | undefined {
+  return typeof raw === 'string' && SLIDE_ICON_SET.has(raw) ? (raw as SlideIconName) : undefined;
+}
 
 const TEXT_KINDS = new Set([
   'title-1',
@@ -200,6 +208,7 @@ function capBlockWords(block: GeneratedBlock): GeneratedBlock {
     return {
       kind: 'cards',
       items: block.items.map((card) => ({
+        ...card,
         title: trimRichToWords(card.title, 6),
         body: trimRichToWords(card.body, CAP_CARD_BODY),
       })),
@@ -213,13 +222,14 @@ function capBlockWords(block: GeneratedBlock): GeneratedBlock {
       kind: 'stats',
       items: block.items
         .filter((s) => wordsIn(s.value) <= CAP_STAT_VALUE)
-        .map((s) => ({ value: s.value, label: trimRichToWords(s.label, CAP_STAT_LABEL) })),
+        .map((s) => ({ ...s, value: s.value, label: trimRichToWords(s.label, CAP_STAT_LABEL) })),
     };
   }
   if (block.kind === 'compare') {
     return {
       kind: 'compare',
       sides: block.sides.map((side) => ({
+        ...side,
         label: trimRichToWords(side.label, 5),
         points: side.points.map((p) => trimRichToWords(p, CAP_LIST_ITEM)),
       })),
@@ -240,49 +250,61 @@ function capBlockWords(block: GeneratedBlock): GeneratedBlock {
 /**
  * O DESTAQUE, CORTADO NO SERVIDOR. Camada 2 da regra "seja cirúrgico".
  *
- * O prompt pede no máximo UM trecho marcado por slide, de 1 a 3 palavras. Mas modelo
- * nenhum obedece 100%: às vezes ele pinta uma frase inteira de verde, ou marca três
- * coisas no mesmo slide. Texto grande verde é exatamente o defeito que aparece na
- * frente do cliente. Então aqui o servidor GARANTE: some o destaque longo (mais de 3
- * palavras) e só o PRIMEIRO destaque curto do slide sobrevive, o resto é desmarcado.
+ * DOIS destaques distintos, como no deck de referência da marca:
+ *
+ *   TÍTULO   o segmento-chave do título sai na cor de destaque ("Três fases.
+ *            {Seis semanas.}"). Até 5 palavras, UM por slide. É a assinatura
+ *            visual mais forte do deck oficial.
+ *   CORPO    o destaque cirúrgico de sempre: 1 a 3 palavras, UM por slide, só
+ *            no coração da mensagem.
+ *
+ * Modelo nenhum obedece 100%: às vezes pinta a frase inteira ou marca três coisas.
+ * Texto todo verde é o defeito que aparece na frente do cliente, então o servidor
+ * GARANTE: destaque longo some, e só o PRIMEIRO de cada categoria sobrevive.
  */
+const TITLE_HIGHLIGHT_MAX_WORDS = 5;
 const HIGHLIGHT_MAX_WORDS = 3;
 
-/** Percorre todo texto rico do slide e mantém, no máximo, um único destaque curto. */
+const TITLE_KINDS = new Set(['title-1', 'title-2', 'title-3']);
+
+/** Percorre todo texto rico do slide: um destaque de título + um de corpo, no máximo. */
 function capHighlights(blocks: GeneratedBlock[]): void {
-  let used = false;
-  const visit = (rich: RichText) => {
+  let titleUsed = false;
+  let bodyUsed = false;
+  const visit = (rich: RichText, isTitle: boolean) => {
     for (const run of rich) {
       if (!run.highlight) continue;
-      // Trecho longo nunca é destaque legítimo: some. Curto sobrevive só se for o
-      // primeiro do slide; do segundo em diante, desmarca.
-      if (used || wordsOf(run.text) > HIGHLIGHT_MAX_WORDS) {
+      const max = isTitle ? TITLE_HIGHLIGHT_MAX_WORDS : HIGHLIGHT_MAX_WORDS;
+      const used = isTitle ? titleUsed : bodyUsed;
+      if (used || wordsOf(run.text) > max) {
         delete run.highlight;
+      } else if (isTitle) {
+        titleUsed = true;
       } else {
-        used = true;
+        bodyUsed = true;
       }
     }
   };
   for (const block of blocks) {
     if (block.kind === 'cards') {
       for (const card of block.items) {
-        visit(card.title);
-        visit(card.body);
+        visit(card.title, false);
+        visit(card.body, false);
       }
     } else if (block.kind === 'topics' || block.kind === 'steps') {
-      for (const item of block.items) visit(item);
+      for (const item of block.items) visit(item, false);
     } else if (block.kind === 'stats') {
       for (const item of block.items) {
-        visit(item.value);
-        visit(item.label);
+        visit(item.value, false);
+        visit(item.label, false);
       }
     } else if (block.kind === 'compare') {
       for (const side of block.sides) {
-        visit(side.label);
-        for (const point of side.points) visit(point);
+        visit(side.label, false);
+        for (const point of side.points) visit(point, false);
       }
     } else {
-      visit(block.content);
+      visit(block.content, TITLE_KINDS.has(block.kind));
     }
   }
 }
@@ -303,7 +325,8 @@ function normalizeCard(raw: unknown): GeneratedCard | null {
   const title = normalizeRichText((raw as Record<string, unknown>)['title']);
   const body = normalizeRichText((raw as Record<string, unknown>)['body']);
   if (title.length === 0 || body.length === 0) return null;
-  return { title, body };
+  const icon = normalizeIcon((raw as Record<string, unknown>)['icon']);
+  return icon ? { title, body, icon } : { title, body };
 }
 
 /** Uma métrica precisa de valor E rótulo, e o valor precisa carregar um dígito. */
@@ -313,7 +336,8 @@ function normalizeStat(raw: unknown): GeneratedStatItem | null {
   const label = normalizeRichText((raw as Record<string, unknown>)['label']);
   if (value.length === 0 || label.length === 0) return null;
   if (!/\d/.test(plainOf(value))) return null;
-  return { value, label };
+  const icon = normalizeIcon((raw as Record<string, unknown>)['icon']);
+  return icon ? { value, label, icon } : { value, label };
 }
 
 function normalizeCompareSide(raw: unknown): GeneratedCompareSide | null {
@@ -325,7 +349,8 @@ function normalizeCompareSide(raw: unknown): GeneratedCompareSide | null {
     .filter((rt) => rt.length > 0)
     .slice(0, MAX_COMPARE_POINTS);
   if (label.length === 0 || points.length === 0) return null;
-  return { label, points };
+  const icon = normalizeIcon((raw as Record<string, unknown>)['icon']);
+  return icon ? { label, points, icon } : { label, points };
 }
 
 export function normalizeBlock(raw: unknown): GeneratedBlock | null {
@@ -701,6 +726,7 @@ function convertForVariety(slide: GeneratedSlide, format: SlideFormat): Generate
     const sides: GeneratedCompareSide[] = cards.items.map((card) => ({
       label: trimRichToWords(card.title, 5),
       points: [card.body],
+      ...(card.icon ? { icon: card.icon } : {}),
     }));
     return {
       ...slide,

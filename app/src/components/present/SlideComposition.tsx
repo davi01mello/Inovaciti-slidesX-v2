@@ -9,6 +9,7 @@ import {
 import { isEmpty, renderRich, fromPlain, type RichText } from '@/lib/richText';
 import { RichEditable } from '@/components/workspace/RichEditable';
 import { DecorationsLayer } from '@/components/present/DecorationsLayer';
+import { useLayerSelection } from '@/components/present/useLayerSelection';
 import { FloatingTextLayer } from '@/components/present/FloatingTextLayer';
 import { TransformBox } from '@/components/present/TransformBox';
 import { FitBox } from '@/components/present/fit';
@@ -31,6 +32,7 @@ import { chromeFor, DEFAULT_TONE, type SlideChrome } from '@/services/tone';
 import type { TemplateArt } from '@/services/templateArt.generated';
 import logoBranco from '@/assets/logos/logo-citi30-branco.png';
 import logoPreto from '@/assets/logos/logo-citi30-preto.png';
+import { IconBadge, SlideIcon } from '@/components/present/slideIcons';
 import {
   isTextBlock,
   MAX_CARDS,
@@ -42,6 +44,7 @@ import {
   type BlockRect,
   type CardItem,
   type Slide,
+  type SlideBrandMark,
   type StatItem,
   type TextBlock,
 } from '@/types/slide';
@@ -84,6 +87,10 @@ interface CompositionContextValue {
   commitStep: (blockId: string, index: number, content: RichText) => void;
   commitCompareLabel: (blockId: string, sideIndex: number, content: RichText) => void;
   commitComparePoint: (blockId: string, sideIndex: number, pointIndex: number, content: RichText) => void;
+  /** Sobrescreve o ordinal ("01") de um item de topics/steps. Vazio = volta ao automático. */
+  commitListMarker: (blockId: string, index: number, content: RichText) => void;
+  /** Sobrescreve o ordinal de um card. Vazio = volta ao automático. */
+  commitCardMarker: (blockId: string, index: number, content: RichText) => void;
   addTopic: (blockId: string) => void;
   addCard: (blockId: string) => void;
   addStat: (blockId: string) => void;
@@ -107,6 +114,8 @@ const CompositionContext = createContext<CompositionContextValue>({
   commitStep: () => {},
   commitCompareLabel: () => {},
   commitComparePoint: () => {},
+  commitListMarker: () => {},
+  commitCardMarker: () => {},
   addTopic: () => {},
   addCard: () => {},
   addStat: () => {},
@@ -133,6 +142,8 @@ interface SlideCompositionProps {
   onBlockDelete?: (blockId: string) => void;
   onContentZoneMove?: (rect: BlockRect) => void;
   onContentZoneReset?: () => void;
+  /** Editor: mover/redimensionar/apagar a marca CITi do canto. undefined = volta ao motor. */
+  onBrandMarkChange?: (mark: SlideBrandMark | undefined) => void;
   /** Export: esconde os textos (mantendo a arte) pra rasterizar só o fundo. */
   artOnly?: boolean;
   /** Overlay de depuração: heatmap da grade medida + o retângulo do arranjo escolhido. */
@@ -151,6 +162,7 @@ export function SlideComposition({
   onBlockDelete,
   onContentZoneMove,
   onContentZoneReset,
+  onBrandMarkChange,
   artOnly = false,
   debug = false,
 }: SlideCompositionProps) {
@@ -224,6 +236,22 @@ export function SlideComposition({
           return { ...side, points };
         });
         onBlockChange?.(blockId, { sides } as Partial<Block>);
+      },
+      commitListMarker: (blockId, index, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || (block.kind !== 'topics' && block.kind !== 'steps')) return;
+        const markers = block.items.map((_, i) => block.markers?.[i] ?? []);
+        markers[index] = isEmpty(content) ? [] : content;
+        const hasAny = markers.some((m) => m.length > 0);
+        onBlockChange?.(blockId, { markers: hasAny ? markers : undefined } as Partial<Block>);
+      },
+      commitCardMarker: (blockId, index, content) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'cards') return;
+        const items = block.items.map((item, i) =>
+          i === index ? { ...item, marker: isEmpty(content) ? undefined : content } : item,
+        );
+        onBlockChange?.(blockId, { items } as Partial<Block>);
       },
       addTopic: (blockId) => {
         const block = slide.blocks.find((b) => b.id === blockId);
@@ -305,7 +333,13 @@ export function SlideComposition({
         <Veil zone={composition.content} chrome={chrome} />
         <Veil zone={composition.aside} chrome={chrome} />
 
-        <BrandMark composition={composition} light={templateArt.light} />
+        <BrandMark
+          composition={composition}
+          light={templateArt.light}
+          mark={slide.brandMark}
+          editable={editable && !!onBrandMarkChange}
+          onChange={onBrandMarkChange}
+        />
 
         {A === 'cover' && <HeroLayout plan={plan} c={composition} variant="cover" />}
         {A === 'closing' && <HeroLayout plan={plan} c={composition} variant="closing" />}
@@ -407,17 +441,91 @@ function Veil({ zone, chrome }: { zone?: PlacedZone; chrome: SlideChrome }) {
 /**
  * A marca. O canto foi MEDIDO na arte (o mais vazio dos dois), então ela nunca cai
  * em cima da escultura. Em arte clara, a logo preta — a branca sumiria.
+ *
+ * EDITÁVEL: no editor ela é um TransformBox como qualquer decoração — dá pra
+ * mover, redimensionar e apagar (Delete ou o botão da moldura). O override vive
+ * em slide.brandMark; sem override, quem manda continua sendo o motor.
  */
-function BrandMark({ composition, light }: { composition: Composition; light: boolean }) {
+function BrandMark({
+  composition,
+  light,
+  mark,
+  editable,
+  onChange,
+}: {
+  composition: Composition;
+  light: boolean;
+  mark?: SlideBrandMark;
+  editable: boolean;
+  onChange?: (mark: SlideBrandMark | undefined) => void;
+}) {
+  // Seleção com clique-fora e tecla Delete, igual às decorações. O hook roda
+  // sempre (regra dos hooks); os returns condicionais vêm depois.
+  const [selectedId, setSelectedId] = useLayerSelection({
+    kind: 'zone',
+    editable: editable && !!onChange,
+    ids: ['brand-mark'],
+    onDelete: () => onChange?.({ ...mark, hidden: true }),
+  });
+  if (mark?.hidden) return null;
+
+  const zone = mark?.rect ?? composition.logo;
+  const img = (
+    <img
+      src={light ? logoPreto : logoBranco}
+      alt=""
+      className={cn(
+        'h-full w-full object-contain',
+        mark?.rect ? 'object-center' : composition.logoSide === 'left' ? 'object-left' : 'object-right',
+      )}
+      draggable={false}
+    />
+  );
+
+  if (!editable || !onChange) {
+    return <ZoneBox zone={zone}>{img}</ZoneBox>;
+  }
+
   return (
-    <ZoneBox zone={composition.logo}>
-      <img
-        src={light ? logoPreto : logoBranco}
-        alt=""
-        className={cn('h-full w-full object-contain', composition.logoSide === 'left' ? 'object-left' : 'object-right')}
-        draggable={false}
-      />
-    </ZoneBox>
+    <TransformBox
+      kind="zone"
+      rect={zone}
+      onChange={(rect) => onChange({ ...mark, hidden: undefined, rect })}
+      interactive
+      selected={selectedId === 'brand-mark'}
+      onSelect={() => setSelectedId('brand-mark')}
+      onDelete={() => {
+        onChange({ ...mark, hidden: true });
+        setSelectedId(null);
+      }}
+      lockAspectOnCorners
+      revealOnHover
+      minWidth={0.05}
+      minHeight={0.03}
+      chrome={
+        mark ? (
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(undefined);
+              setSelectedId(null);
+            }}
+            title="Restaurar a posição que o motor escolheu"
+            aria-label="Restaurar a posição que o motor escolheu"
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-white/20 bg-surface-3 text-ink-secondary shadow-[0_4px_10px_rgba(0,0,0,0.4)] transition-colors duration-150 hover:text-ink"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+              <path d="M4 10a6 6 0 1 1 1.76 4.24.75.75 0 1 1 1.06-1.06A4.5 4.5 0 1 0 5.5 10a.75.75 0 0 1-1.5 0Z" />
+              <path d="M4 5.5v3a.75.75 0 0 0 .75.75h3a.75.75 0 0 0 0-1.5H5.5v-2.25a.75.75 0 0 0-1.5 0Z" />
+            </svg>
+          </button>
+        ) : null
+      }
+    >
+      {img}
+    </TransformBox>
   );
 }
 
@@ -564,33 +672,42 @@ function SlideText({
   );
 }
 
-/** O rótulo verde (kicker): traço + texto em maiúsculas. */
+/**
+ * O rótulo (kicker): texto em maiúsculas com o traço da marca. À esquerda o traço
+ * senta ACIMA do texto (a capa da referência); centrado, ele desce pra BAIXO
+ * (o kicker do slide de investimento). Nunca ao lado: o traço é respiro, não seta.
+ */
 function Label({ block, center = false }: { block: TextBlock | null; center?: boolean }) {
   const chrome = useChrome();
   const ctx = useContext(CompositionContext);
   if (!block || (!ctx.editable && isEmpty(block.content))) return null;
+  const dash = (
+    <span
+      aria-hidden="true"
+      className={cn('block flex-none rounded-full', center && 'mx-auto')}
+      style={{ width: '2.6em', height: '0.18em', background: chrome.accent, boxShadow: chrome.accentGlow }}
+    />
+  );
   return (
-    <div className={cn('flex w-full items-center', center && 'justify-center')} style={{ gap: '0.9em' }}>
-      <span
-        aria-hidden="true"
-        className="flex-none rounded-full"
-        style={{ width: '2.6em', height: '0.16em', background: chrome.accent, boxShadow: chrome.accentGlow }}
-      />
+    <div className={cn('flex w-full flex-col', center && 'items-center text-center')} style={{ gap: '0.8em' }}>
+      {!center && dash}
       <SlideText
         block={block}
         ariaLabel="Rótulo"
         spec={{
-          size: 0.95,
+          size: 1.0,
           weight: 600,
           lineHeight: 1.4,
-          letterSpacing: '0.28em',
+          letterSpacing: '0.3em',
           color: chrome.accent,
           uppercase: true,
           wrap: 'balance',
           clamp: 1,
+          align: center ? 'center' : 'left',
         }}
-        style={{ width: 'auto', textShadow: chrome.accentTextGlow }}
+        style={{ width: center ? '100%' : 'auto', textShadow: chrome.accentTextGlow }}
       />
+      {center && dash}
     </div>
   );
 }
@@ -633,12 +750,12 @@ function Stack({ gap = 2, center = false, children }: { gap?: number; center?: b
 function HeroLayout({ plan, c, variant }: { plan: ComposedSlide; c: Composition; variant: 'cover' | 'closing' }) {
   const chrome = useChrome();
   const center = c.align === 'center';
-  const titleSize = variant === 'cover' ? 4.4 : 3.9;
+  const titleSize = variant === 'cover' ? 4.7 : 4.1;
 
   return (
     <>
       <ContentFrame zone={c.content}>
-        <FitBox anchor={variant === 'cover' ? 'bottom' : 'center'} minScale={0.84}>
+        <FitBox anchor={variant === 'cover' ? 'bottom' : 'center'} minScale={0.8}>
           <Stack gap={2.4} center={center}>
             <Label block={plan.label} center={center} />
             {plan.headline && (
@@ -656,12 +773,13 @@ function HeroLayout({ plan, c, variant }: { plan: ComposedSlide; c: Composition;
                 }}
               />
             )}
+            {variant === 'closing' && plan.subtitle && <Rule center={center} width="2.8em" />}
             {plan.subtitle && (
               <SlideText
                 block={plan.subtitle}
                 ariaLabel="Subtítulo"
                 spec={{ prose: true,
-                  size: 1.5,
+                  size: 1.7,
                   weight: 400,
                   lineHeight: 1.5,
                   color: chrome.inkSoft,
@@ -703,9 +821,9 @@ function SectionLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
               block={plan.headline}
               ariaLabel="Título da seção"
               spec={{
-                size: 3.9,
+                size: 4.3,
                 weight: 800,
-                lineHeight: 1.06,
+                lineHeight: 1.05,
                 letterSpacing: '-0.03em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
@@ -720,45 +838,46 @@ function SectionLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   );
 }
 
-/** Afirmação central: a tese, e o parágrafo que a sustenta. */
+/** Afirmação central: a tese GRANDE, o traço da marca, e o apoio que a sustenta
+ * (a régua do "Por que o Discovery?" oficial). */
 function StatementLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   const chrome = useChrome();
   const center = c.align === 'center';
-  const bodyAlign = center ? 'center' : justifyIfWide(c.content.width, 1.32);
 
   return (
     <ContentFrame zone={c.content}>
-      <FitBox anchor="center">
-        <Stack gap={2} center={center}>
+      <FitBox anchor="center" minScale={0.76}>
+        <Stack gap={2.2} center={center}>
           <Label block={plan.label} center={center} />
           {plan.headline && (
             <SlideText
               block={plan.headline}
               ariaLabel="Título"
               spec={{
-                size: 3,
+                size: 3.8,
                 weight: 800,
-                lineHeight: 1.1,
-                letterSpacing: '-0.025em',
+                lineHeight: 1.08,
+                letterSpacing: '-0.03em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
                 clamp: 3,
               }}
             />
           )}
+          {(plan.body || plan.subtitle) && <Rule center={center} width="2.8em" />}
           {plan.body && (
             <SlideText
               block={plan.body}
               ariaLabel="Parágrafo"
-              spec={{ size: 1.32, lineHeight: 1.62, color: chrome.inkSoft, wrap: 'pretty',
-                prose: true, align: bodyAlign }}
+              spec={{ size: 1.55, lineHeight: 1.55, color: chrome.inkSoft, wrap: 'pretty',
+                prose: true, align: center ? 'center' : 'left' }}
             />
           )}
           {plan.subtitle && (
             <SlideText
               block={plan.subtitle}
               ariaLabel="Apoio"
-              spec={{ prose: true, size: 1.15, lineHeight: 1.55, color: chrome.inkFaint, align: center ? 'center' : 'left' }}
+              spec={{ prose: true, size: 1.3, lineHeight: 1.55, color: chrome.inkFaint, align: center ? 'center' : 'left' }}
             />
           )}
           {plan.highlight && <HighlightLine block={plan.highlight} />}
@@ -783,10 +902,10 @@ function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
               block={plan.headline}
               ariaLabel="Título"
               spec={{
-                size: 3.4,
+                size: 4,
                 weight: 800,
-                lineHeight: 1.08,
-                letterSpacing: '-0.028em',
+                lineHeight: 1.06,
+                letterSpacing: '-0.03em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
                 clamp: 3,
@@ -799,7 +918,7 @@ function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
               style={
                 center
                   ? undefined
-                  : { borderLeft: `0.24em solid ${chrome.accent}`, paddingLeft: '1.2em' }
+                  : { borderLeft: `0.26em solid ${chrome.accent}`, paddingLeft: '1.2em' }
               }
             >
               {center && <Rule center width="2.8em" />}
@@ -808,9 +927,9 @@ function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
                 ariaLabel="Frase de impacto"
                 spec={{
                   prose: true,
-                  size: 1.6,
+                  size: 1.8,
                   weight: 600,
-                  lineHeight: 1.4,
+                  lineHeight: 1.38,
                   color: chrome.inkSoft,
                   wrap: 'balance',
                   align: center ? 'center' : 'left',
@@ -834,7 +953,9 @@ function QuoteLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
 }
 
 /**
- * Número em destaque: o número é a peça, o resto é legenda.
+ * Número em destaque, na régua do slide de investimento oficial: kicker, título,
+ * o número GIGANTE numa pill de vidro, o rótulo como legenda, e o apoio como
+ * letra miúda com cadeado (as condições da proposta).
  *
  * Dois caminhos pro número: o bloco `stats` com 1 item (o caminho novo, que a
  * geração usa no formato "numero") e o LEGADO de decks antigos (um title-3 curto
@@ -847,36 +968,64 @@ function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   const stats = plan.stats;
   const stat = stats?.items[0] ?? null;
 
+  const glass = glassOpacityFor(c.content.cost);
+  const pill: CSSProperties = {
+    border: `1px solid ${chrome.cardBorder}`,
+    background: chrome.cardBg(glass),
+    backdropFilter: 'blur(1.2cqw)',
+    boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+    borderRadius: '0.32em',
+    padding: '0.34em 0.7em',
+  };
+
   return (
     <ContentFrame zone={c.content}>
-      <FitBox anchor="center">
-        <Stack gap={1.8} center={center}>
+      <FitBox anchor="center" minScale={0.76}>
+        <Stack gap={2} center={center}>
           <Label block={plan.label} center={center} />
+          {plan.headline && (
+            <SlideText
+              block={plan.headline}
+              ariaLabel="Título"
+              spec={{
+                size: 2.6,
+                weight: 800,
+                lineHeight: 1.1,
+                letterSpacing: '-0.025em',
+                wrap: 'balance',
+                align: center ? 'center' : 'left',
+                clamp: 2,
+              }}
+            />
+          )}
           {stats && stat ? (
-            <div className={cn('flex w-full flex-col', center && 'items-center text-center')} style={{ gap: '0.45em' }}>
-              <InlineField
-                value={stat.value}
-                onCommit={(next) => ctx.commitStat(stats.id, 0, 'value', next)}
-                ariaLabel="Número em destaque"
-                balance
-                clamp={1}
-                style={{
-                  fontSize: '6.4em',
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  letterSpacing: '-0.04em',
-                  color: chrome.accent,
-                  textShadow: chrome.accentTextGlow,
-                  textAlign: center ? 'center' : 'left',
-                }}
-              />
+            <div className={cn('flex w-full flex-col', center && 'items-center text-center')} style={{ gap: '0.6em' }}>
+              <div className={cn('flex', center ? 'justify-center' : 'justify-start')} style={{ width: '100%' }}>
+                <div style={pill}>
+                  <InlineField
+                    value={stat.value}
+                    onCommit={(next) => ctx.commitStat(stats.id, 0, 'value', next)}
+                    ariaLabel="Número em destaque"
+                    balance
+                    clamp={1}
+                    style={{
+                      fontSize: '5.6em',
+                      fontWeight: 800,
+                      lineHeight: 1.05,
+                      letterSpacing: '-0.035em',
+                      color: chrome.ink,
+                      textAlign: 'center',
+                    }}
+                  />
+                </div>
+              </div>
               <InlineField
                 value={stat.label}
                 onCommit={(next) => ctx.commitStat(stats.id, 0, 'label', next)}
                 ariaLabel="Rótulo do número"
                 clamp={1}
                 style={{
-                  fontSize: '1.3em',
+                  fontSize: '1.35em',
                   fontWeight: 500,
                   lineHeight: 1.4,
                   color: chrome.inkSoft,
@@ -902,41 +1051,30 @@ function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
               />
             )
           )}
-          {plan.headline && (
-            <SlideText
-              block={plan.headline}
-              ariaLabel="Título"
-              spec={{
-                size: 2.1,
-                weight: 700,
-                lineHeight: 1.16,
-                letterSpacing: '-0.02em',
-                wrap: 'balance',
-                align: center ? 'center' : 'left',
-                clamp: 2,
-              }}
-            />
-          )}
           {plan.body && (
             <SlideText
               block={plan.body}
               ariaLabel="Parágrafo"
               spec={{
-                size: 1.26,
-                lineHeight: 1.6,
+                size: 1.35,
+                lineHeight: 1.55,
                 color: chrome.inkSoft,
                 wrap: 'pretty',
                 prose: true,
-                align: center ? 'center' : justifyIfWide(c.content.width, 1.26),
+                align: center ? 'center' : 'left',
               }}
             />
           )}
           {plan.subtitle && (
-            <SlideText
-              block={plan.subtitle}
-              ariaLabel="Apoio"
-              spec={{ prose: true, size: 1.1, lineHeight: 1.5, color: chrome.inkFaint, align: center ? 'center' : 'left' }}
-            />
+            <div className={cn('flex w-full items-center', center && 'justify-center')} style={{ gap: '0.6em' }}>
+              <SlideIcon name="cadeado" size="1.1em" style={{ color: chrome.inkFaint }} />
+              <SlideText
+                block={plan.subtitle}
+                ariaLabel="Apoio"
+                spec={{ prose: true, size: 1.08, lineHeight: 1.5, color: chrome.inkFaint, align: center ? 'center' : 'left' }}
+                style={{ width: 'auto' }}
+              />
+            </div>
           )}
         </Stack>
       </FitBox>
@@ -949,29 +1087,28 @@ function BigNumberLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
 /* ------------------------------------------------------------------------ */
 
 /**
- * O grupo de título dos arquétipos com header (cards, topics).
- *
- * O PARÁGRAFO mora aqui, junto do título, e não é opcional: slide de conteúdo sem
- * body é slide raso, e slide raso é defeito. Num slide de cards, o corpo é a
- * introdução que dá sentido aos três cards; sem ele, os cards ficam boiando.
+ * O grupo de título dos arquétipos com header (cards, topics, kpis, compare,
+ * timeline). Na régua da referência da marca: título GRANDE (o segmento-chave
+ * sai na cor de destaque via highlight run), e embaixo o parágrafo de apoio
+ * cinza que respira entre o título e o conteúdo.
  */
 function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; align: 'left' | 'center' }) {
   const chrome = useChrome();
   const center = align === 'center';
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.82}>
-        <Stack gap={1.5} center={center}>
+      <FitBox anchor="center" minScale={0.76}>
+        <Stack gap={1.6} center={center}>
           <Label block={plan.label} center={center} />
           {plan.headline && (
             <SlideText
               block={plan.headline}
               ariaLabel="Título"
               spec={{
-                size: 2.5,
+                size: 3.3,
                 weight: 800,
-                lineHeight: 1.1,
-                letterSpacing: '-0.025em',
+                lineHeight: 1.06,
+                letterSpacing: '-0.03em',
                 wrap: 'balance',
                 align: center ? 'center' : 'left',
                 clamp: 2,
@@ -983,13 +1120,13 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
               block={plan.body}
               ariaLabel="Parágrafo"
               spec={{
-                size: 1.16,
-                lineHeight: 1.58,
+                size: 1.3,
+                lineHeight: 1.55,
                 color: chrome.inkSoft,
                 wrap: 'pretty',
                 prose: true,
-                align: center ? 'center' : justifyIfWide(zone.width, 1.16),
-                clamp: 5,
+                align: center ? 'center' : 'left',
+                clamp: 3,
               }}
             />
           )}
@@ -998,12 +1135,12 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
               block={plan.subtitle}
               ariaLabel="Subtítulo"
               spec={{ prose: true,
-                size: 1.08,
-                lineHeight: 1.5,
-                color: chrome.inkFaint,
-                wrap: 'balance',
+                size: 1.28,
+                lineHeight: 1.55,
+                color: chrome.inkSoft,
+                wrap: 'pretty',
                 align: center ? 'center' : 'left',
-                clamp: 2,
+                clamp: 3,
               }}
             />
           )}
@@ -1038,7 +1175,7 @@ function Header({ plan, zone, align }: { plan: ComposedSlide; zone: PlacedZone; 
 /** Abaixo desta proporção real, a zona é alta e estreita: cards em PILHA. Acima, em FILEIRA. */
 const STACK_BELOW_ASPECT = 2.4;
 
-function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+function CardsRow({ plan, zone, rows = false }: { plan: ComposedSlide; zone: PlacedZone; rows?: boolean }) {
   const ctx = useContext(CompositionContext);
   const chrome = useChrome();
   const cards = plan.cards;
@@ -1047,15 +1184,15 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
   const items = cards.items.slice(0, MAX_CARDS);
 
   /**
-   * A FORMA DA ZONA DECIDE A FORMA DOS CARDS.
+   * A FORMA DA ZONA DECIDE A FORMA DOS CARDS — ou o arranjo decide por ela.
    *
    * Numa coluna alta e estreita (o `aside` de um split), três cards lado a lado
-   * teriam 200px cada e o corpo viraria letra de bula. Numa faixa larga e baixa,
-   * três cards empilhados viram três tiras de letreiro com texto microscópico —
-   * e foi exatamente isso que apareceu no primeiro print. A proporção REAL da
-   * zona (o slide é 16:9, então fração não é proporção) resolve os dois casos.
+   * teriam 200px cada e o corpo viraria letra de bula: empilha. E o arranjo
+   * `cards-rows` FORÇA as faixas full-width (o desenho de linhas numeradas da
+   * referência) mesmo em banda larga — é uma escolha do diretor de arte, não
+   * uma consequência da proporção.
    */
-  const stacked = zoneAspect(zone) < STACK_BELOW_ASPECT;
+  const stacked = rows || zoneAspect(zone) < STACK_BELOW_ASPECT;
 
   /**
    * A DENSIDADE DO VIDRO vem da OCUPAÇÃO MEDIDA daquela zona naquela arte.
@@ -1080,43 +1217,55 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
 
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.82}>
+      <FitBox anchor="center" minScale={0.78}>
         <div
           className="grid w-full"
           style={{
             gridTemplateColumns: stacked ? '1fr' : `repeat(${items.length}, minmax(0, 1fr))`,
-            gap: stacked ? '0.9em' : '1.5em',
+            gap: stacked ? '1em' : '1.5em',
             alignItems: 'stretch',
           }}
         >
           {items.map((item, i) =>
             stacked ? (
+              // FAIXA (referência p.9): número gigante | linha vertical | ícone | texto.
               <div
                 key={item.id}
                 data-card=""
-                className="grid min-h-0 overflow-hidden rounded-[1.1em]"
-                style={{ ...shell, gridTemplateColumns: '2.4em 1fr', columnGap: '0.9em', padding: '1.1em 1.2em' }}
+                className="flex min-h-0 items-center overflow-hidden rounded-[1.5em]"
+                style={{ ...shell, columnGap: '1.15em', padding: '1.3em 1.5em' }}
               >
-                <span
-                  className="font-extrabold tabular-nums"
+                <MarkerField
+                  value={item.marker}
+                  fallback={String(i + 1).padStart(2, '0')}
+                  onCommit={(next) => ctx.commitCardMarker(cards.id, i, next)}
+                  ariaLabel={`Número do card ${i + 1}`}
                   style={{
-                    fontSize: '1.5em',
-                    lineHeight: 1.05,
+                    fontSize: '2.4em',
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
                     color: chrome.accent,
                     textShadow: chrome.accentTextGlow,
+                    minWidth: '1.5em',
+                    flex: 'none',
                   }}
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <div className="grid min-w-0" style={{ gridTemplateRows: 'auto 1fr', rowGap: '0.35em' }}>
+                />
+                <span
+                  aria-hidden="true"
+                  className="self-stretch rounded-full"
+                  style={{ width: '0.14em', background: chrome.accent, opacity: 0.45, flex: 'none' }}
+                />
+                {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="3em" />}
+                <div className="flex min-w-0 flex-1 flex-col" style={{ rowGap: '0.3em' }}>
                   <CardField
                     blockId={cards.id}
                     index={i}
                     field="title"
                     value={item.title}
                     ariaLabel={`Título do card ${i + 1}`}
-                    style={{ fontSize: '1.3em', fontWeight: 700, lineHeight: 1.2, color: chrome.ink }}
-                    clamp={1}
+                    style={{ fontSize: '1.4em', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.01em', color: chrome.ink }}
+                    clamp={2}
                   />
                   <CardField
                     blockId={cards.id}
@@ -1124,39 +1273,42 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
                     field="body"
                     value={item.body}
                     ariaLabel={`Corpo do card ${i + 1}`}
-                    style={{ fontSize: '1em', lineHeight: 1.48, color: chrome.inkSoft, textAlign: 'left' }}
-                    clamp={4}
+                    style={{ fontSize: '1.12em', lineHeight: 1.5, color: chrome.inkSoft, textAlign: 'left' }}
+                    clamp={2}
                   />
                 </div>
               </div>
             ) : (
+              // CARD (referência p.5/8): número + ícone, título com 2 linhas
+              // RESERVADAS, filete, corpo. As linhas fixas são o que mantém os três
+              // cards geometricamente idênticos, tenha o título uma linha ou duas.
               <div
                 key={item.id}
                 data-card=""
-                className="grid min-h-0 overflow-hidden rounded-[1.4em]"
+                className="grid min-h-0 overflow-hidden rounded-[1.8em]"
                 style={{
-                  // AS LINHAS FIXAS. É isto que faz os três cards serem idênticos:
-                  // com `auto`, a linha do título cresce quando o título quebra em
-                  // duas, e aí o filete e o corpo de um card ficam mais baixos que
-                  // os do vizinho. Reservando 2 linhas SEMPRE, tenha o título uma ou
-                  // duas, os três cards ficam geometricamente iguais.
-                  gridTemplateRows: '1.5em 3.2em 0.9em 1fr',
+                  gridTemplateRows: '3em 3.9em 1.3em 1fr',
                   ...shell,
-                  padding: '1.5em 1.35em',
+                  padding: '1.6em 1.55em 1.45em',
                 }}
               >
-                <span
-                  className="font-extrabold tabular-nums"
-                  style={{
-                    fontSize: '1.5em',
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: chrome.accent,
-                    textShadow: chrome.accentTextGlow,
-                  }}
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
+                <div className="flex items-start justify-between">
+                  <MarkerField
+                    value={item.marker}
+                    fallback={String(i + 1).padStart(2, '0')}
+                    onCommit={(next) => ctx.commitCardMarker(cards.id, i, next)}
+                    ariaLabel={`Número do card ${i + 1}`}
+                    style={{
+                      fontSize: '2.3em',
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      letterSpacing: '-0.02em',
+                      color: chrome.accent,
+                      textShadow: chrome.accentTextGlow,
+                    }}
+                  />
+                  {item.icon && <IconBadge name={item.icon} color={chrome.accent} size="2.7em" />}
+                </div>
 
                 <CardField
                   blockId={cards.id}
@@ -1165,10 +1317,10 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
                   value={item.title}
                   ariaLabel={`Título do card ${i + 1}`}
                   style={{
-                    fontSize: '1.35em',
+                    fontSize: '1.5em',
                     fontWeight: 700,
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.01em',
+                    lineHeight: 1.22,
+                    letterSpacing: '-0.015em',
                     color: chrome.ink,
                     alignSelf: 'end',
                   }}
@@ -1178,7 +1330,7 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
                 <span
                   aria-hidden="true"
                   className="self-center rounded-full"
-                  style={{ width: '2em', height: '0.14em', background: chrome.accent, opacity: 0.75 }}
+                  style={{ width: '2em', height: '0.16em', background: chrome.accent, opacity: 0.85 }}
                 />
 
                 <CardField
@@ -1188,16 +1340,15 @@ function CardsRow({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
                   value={item.body}
                   ariaLabel={`Corpo do card ${i + 1}`}
                   style={{
-                    fontSize: '1.02em',
+                    fontSize: '1.18em',
                     fontWeight: 400,
-                    lineHeight: 1.5,
+                    lineHeight: 1.52,
                     color: chrome.inkSoft,
                     // Corpo de card é UMA frase curta numa coluna estreita: justificar
-                    // aqui abre rios de espaço na primeira linha (medido no print). Card
-                    // é sempre à esquerda.
+                    // abriria rios de espaço. Card é sempre à esquerda.
                     textAlign: 'left',
                   }}
-                  clamp={5}
+                  clamp={4}
                 />
               </div>
             ),
@@ -1270,8 +1421,53 @@ function CardsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   return (
     <>
       <Header plan={plan} zone={c.header} align={c.align} />
-      <CardsRow plan={plan} zone={c.content} />
+      <CardsRow plan={plan} zone={c.content} rows={c.arrangementId.startsWith('cards-rows')} />
     </>
+  );
+}
+
+/**
+ * O ORDINAL EDITÁVEL ("01", "02"...). Por padrão é automático (a posição do item),
+ * mas o usuário pode sobrescrever pra qualquer coisa curta ("1º", "2024", "S1").
+ * Esvaziar o campo volta pro automático. Tem data-export-text: no PPTX vira caixa
+ * de texto real, editável, como qualquer outro texto do slide.
+ */
+function MarkerField({
+  value,
+  fallback,
+  onCommit,
+  ariaLabel,
+  style,
+}: {
+  value?: RichText;
+  fallback: string;
+  onCommit: (next: RichText) => void;
+  ariaLabel: string;
+  style: CSSProperties;
+}) {
+  const ctx = useContext(CompositionContext);
+  const effective = value && !isEmpty(value) ? value : fromPlain(fallback);
+
+  if (ctx.editable) {
+    return (
+      <div className="min-h-0" style={style}>
+        <RichEditable
+          value={effective}
+          onCommit={onCommit}
+          placeholder={fallback}
+          multiline={false}
+          ariaLabel={ariaLabel}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-0" style={style}>
+      <div data-export-text="" data-fit-guard="" style={{ whiteSpace: 'nowrap' }}>
+        {renderRich(effective)}
+      </div>
+    </div>
   );
 }
 
@@ -1359,14 +1555,21 @@ function TopicsList({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
           className="grid w-full list-none p-0"
           style={{
             gridTemplateColumns: 'auto auto 1fr',
-            columnGap: '1.1em',
-            rowGap: 'calc(2.2 * var(--rhythm))',
+            columnGap: '1.2em',
+            rowGap: 'calc(2.4 * var(--rhythm))',
             alignItems: 'center',
             margin: 0,
           }}
         >
           {items.map((item, i) => (
-            <TopicRow key={`${topics.id}-${i}`} blockId={topics.id} index={i} value={item} chrome={chrome} />
+            <TopicRow
+              key={`${topics.id}-${i}`}
+              blockId={topics.id}
+              index={i}
+              value={item}
+              marker={topics.markers?.[i]}
+              chrome={chrome}
+            />
           ))}
         </ol>
       </FitBox>
@@ -1381,11 +1584,13 @@ function TopicRow({
   blockId,
   index,
   value,
+  marker,
   chrome,
 }: {
   blockId: string;
   index: number;
   value: RichText;
+  marker?: RichText;
   chrome: SlideChrome;
 }) {
   const ctx = useContext(CompositionContext);
@@ -1410,26 +1615,30 @@ function TopicRow({
 
   return (
     <li className="contents">
-      <span
-        className="font-extrabold tabular-nums"
+      <MarkerField
+        value={marker}
+        fallback={String(index + 1).padStart(2, '0')}
+        onCommit={(next) => ctx.commitListMarker(blockId, index, next)}
+        ariaLabel={`Número do tópico ${index + 1}`}
         style={{
-          fontSize: '1.35em',
-          lineHeight: 1.35,
+          fontSize: '1.9em',
+          fontWeight: 800,
+          lineHeight: 1.2,
+          letterSpacing: '-0.02em',
           color: chrome.accent,
           textShadow: chrome.accentTextGlow,
           alignSelf: 'center',
+          minWidth: '1.4em',
         }}
-      >
-        {String(index + 1).padStart(2, '0')}
-      </span>
+      />
       <span
         aria-hidden="true"
         className="self-center rounded-full"
-        style={{ width: '1.6em', height: '0.12em', background: chrome.accent, opacity: 0.55 }}
+        style={{ width: '1.7em', height: '0.14em', background: chrome.accent, opacity: 0.55 }}
       />
       <div
         className="min-w-0"
-        style={{ fontSize: '1.3em', fontWeight: 500, lineHeight: 1.42, color: chrome.ink }}
+        style={{ fontSize: '1.5em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
       >
         {text}
       </div>
@@ -1452,57 +1661,120 @@ function TopicsLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
 /* ------------------------------------------------------------------------ */
 
 /**
- * KPIs: 2 a 4 métricas, cada uma valor grande na cor de destaque + rótulo curto.
- * SEM caixa: como os tópicos, é texto pelado com um filete de apoio — a arte
- * continua viva atrás. Fileira em banda larga, pilha em coluna (a PROPORÇÃO da
- * zona decide, mesmo critério dos cards).
+ * KPIs em DOIS desenhos, os dois da referência da marca:
+ *
+ *   PAINEL  (arranjos kpis-band/aside/hug): UM card de vidro largo com as métricas
+ *           em colunas separadas por divisores verticais — ícone, rótulo verde em
+ *           maiúsculas, valor branco bold. É o card de condições do slide de
+ *           investimento oficial.
+ *   PÔSTER  (arranjos kpis-poster-*): números BRANCOS GIGANTES sem caixa nenhuma,
+ *           rótulo embaixo — o "O CITi em números" oficial. A arte respira atrás.
  */
-function StatsPanel({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
+function StatsPanel({ plan, zone, poster }: { plan: ComposedSlide; zone: PlacedZone; poster: boolean }) {
   const ctx = useContext(CompositionContext);
   const chrome = useChrome();
   const stats = plan.stats;
   if (!stats || stats.items.length === 0) return null;
 
   const items = stats.items.slice(0, MAX_STATS);
+
+  if (poster) {
+    const columns = items.length === 4 ? 2 : Math.max(1, items.length);
+    return (
+      <ZoneBox zone={zone}>
+        <FitBox anchor="center" minScale={0.72}>
+          <div
+            className="grid w-full"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: '2em 2.6em' }}
+          >
+            {items.map((item, i) => (
+              <div key={item.id} className="flex min-w-0 flex-col" style={{ rowGap: '0.15em' }}>
+                <InlineField
+                  value={item.value}
+                  onCommit={(next) => ctx.commitStat(stats.id, i, 'value', next)}
+                  ariaLabel={`Valor da métrica ${i + 1}`}
+                  balance
+                  clamp={1}
+                  style={{
+                    fontSize: '6.2em',
+                    fontWeight: 800,
+                    lineHeight: 1.02,
+                    letterSpacing: '-0.035em',
+                    color: chrome.ink,
+                  }}
+                />
+                <InlineField
+                  value={item.label}
+                  onCommit={(next) => ctx.commitStat(stats.id, i, 'label', next)}
+                  ariaLabel={`Rótulo da métrica ${i + 1}`}
+                  clamp={2}
+                  style={{ fontSize: '1.45em', fontWeight: 500, lineHeight: 1.35, color: chrome.inkSoft }}
+                />
+              </div>
+            ))}
+          </div>
+        </FitBox>
+        {ctx.editable && items.length < MAX_STATS && (
+          <AddButton onClick={() => ctx.addStat(stats.id)} label="+ Nova métrica" />
+        )}
+      </ZoneBox>
+    );
+  }
+
+  const glass = glassOpacityFor(zone.cost);
+  const shell: CSSProperties = {
+    border: `1px solid ${chrome.cardBorder}`,
+    background: chrome.cardBg(glass),
+    backdropFilter: 'blur(1.2cqw)',
+    boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+  };
+  // Em coluna estreita as métricas empilham; em banda larga, ficam lado a lado.
   const stacked = zoneAspect(zone) < STACK_BELOW_ASPECT;
 
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.82}>
+      <FitBox anchor="center" minScale={0.78}>
         <div
-          className="grid w-full"
-          style={{
-            gridTemplateColumns: stacked ? '1fr' : `repeat(${items.length}, minmax(0, 1fr))`,
-            gap: stacked ? '1.1em' : '1.6em',
-          }}
+          className={cn('flex w-full overflow-hidden', stacked ? 'flex-col' : 'flex-row items-stretch')}
+          style={{ ...shell, borderRadius: '1.6em', padding: stacked ? '1.4em 1.6em' : '1.7em 1.9em' }}
         >
           {items.map((item, i) => (
             <div
               key={item.id}
-              className="flex min-w-0 flex-col"
-              style={{ rowGap: '0.35em', borderLeft: `0.16em solid ${chrome.accent}`, paddingLeft: '0.85em' }}
+              className="flex min-w-0 flex-1 flex-col"
+              style={{
+                rowGap: '0.55em',
+                // O divisor vive na borda do próprio item: vertical entre colunas,
+                // horizontal entre linhas quando a zona é estreita e o painel empilha.
+                ...(i === 0
+                  ? {}
+                  : stacked
+                    ? { borderTop: `1px solid ${chrome.accentFaint}`, paddingTop: '1.1em', marginTop: '1.1em' }
+                    : { borderLeft: `1px solid ${chrome.accentFaint}`, paddingLeft: '1.7em', marginLeft: '1.7em' }),
+              }}
             >
-              <InlineField
-                value={item.value}
-                onCommit={(next) => ctx.commitStat(stats.id, i, 'value', next)}
-                ariaLabel={`Valor da métrica ${i + 1}`}
-                balance
-                clamp={1}
-                style={{
-                  fontSize: '2.6em',
-                  fontWeight: 800,
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.03em',
-                  color: chrome.accent,
-                  textShadow: chrome.accentTextGlow,
-                }}
-              />
+              {item.icon && <SlideIcon name={item.icon} size="1.9em" style={{ color: chrome.accent }} />}
               <InlineField
                 value={item.label}
                 onCommit={(next) => ctx.commitStat(stats.id, i, 'label', next)}
                 ariaLabel={`Rótulo da métrica ${i + 1}`}
                 clamp={2}
-                style={{ fontSize: '1.02em', fontWeight: 500, lineHeight: 1.35, color: chrome.inkSoft }}
+                style={{
+                  fontSize: '0.92em',
+                  fontWeight: 600,
+                  lineHeight: 1.4,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: chrome.accent,
+                  textShadow: chrome.accentTextGlow,
+                }}
+              />
+              <InlineField
+                value={item.value}
+                onCommit={(next) => ctx.commitStat(stats.id, i, 'value', next)}
+                ariaLabel={`Valor da métrica ${i + 1}`}
+                clamp={2}
+                style={{ fontSize: '1.9em', fontWeight: 700, lineHeight: 1.18, letterSpacing: '-0.015em', color: chrome.ink }}
               />
             </div>
           ))}
@@ -1520,7 +1792,7 @@ function KpisLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
   return (
     <>
       <Header plan={plan} zone={c.header} align={c.align} />
-      <StatsPanel plan={plan} zone={c.content} />
+      <StatsPanel plan={plan} zone={c.content} poster={c.arrangementId.startsWith('kpis-poster')} />
     </>
   );
 }
@@ -1552,47 +1824,70 @@ function ComparePanels({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
 
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.82}>
+      <FitBox anchor="center" minScale={0.78}>
         <div
           className="grid w-full"
-          style={{ gridTemplateColumns: stacked ? '1fr' : '1fr 1fr', gap: stacked ? '0.9em' : '1.4em' }}
+          style={{ gridTemplateColumns: stacked ? '1fr' : '1fr 1fr', gap: stacked ? '1em' : '1.5em' }}
         >
           {compare.sides.slice(0, 2).map((side, si) => (
+            // A anatomia da referência: ícone em círculo, rótulo verde em maiúsculas,
+            // a AFIRMAÇÃO (primeiro ponto) em bold, filete, e a sustentação em cinza.
             <div
               key={side.id}
-              className="flex min-h-0 flex-col overflow-hidden rounded-[1.4em]"
-              style={{ ...shell, padding: '1.3em 1.35em', rowGap: '0.75em' }}
+              className="flex min-h-0 flex-col overflow-hidden rounded-[1.8em]"
+              style={{ ...shell, padding: '1.6em 1.6em 1.45em', rowGap: '0.8em' }}
             >
-              <InlineField
-                value={side.label}
-                onCommit={(next) => ctx.commitCompareLabel(compare.id, si, next)}
-                ariaLabel={`Rótulo do lado ${si + 1}`}
-                balance
-                clamp={1}
-                style={{
-                  fontSize: '1.05em',
-                  fontWeight: 700,
-                  lineHeight: 1.3,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: si === 1 ? chrome.accent : chrome.inkSoft,
-                  textShadow: si === 1 ? chrome.accentTextGlow : undefined,
-                }}
-              />
+              <div className="flex items-center" style={{ gap: '1em' }}>
+                {side.icon && <IconBadge name={side.icon} color={chrome.accent} size="2.9em" />}
+                <InlineField
+                  value={side.label}
+                  onCommit={(next) => ctx.commitCompareLabel(compare.id, si, next)}
+                  ariaLabel={`Rótulo do lado ${si + 1}`}
+                  balance
+                  clamp={1}
+                  style={{
+                    fontSize: '1em',
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                    letterSpacing: '0.24em',
+                    textTransform: 'uppercase',
+                    color: chrome.accent,
+                    textShadow: chrome.accentTextGlow,
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                />
+              </div>
+              {side.points[0] && (
+                <InlineField
+                  value={side.points[0]}
+                  onCommit={(next) => ctx.commitComparePoint(compare.id, si, 0, next)}
+                  ariaLabel={`Afirmação do lado ${si + 1}`}
+                  balance
+                  clamp={2}
+                  style={{
+                    fontSize: '1.55em',
+                    fontWeight: 700,
+                    lineHeight: 1.22,
+                    letterSpacing: '-0.015em',
+                    color: chrome.ink,
+                  }}
+                />
+              )}
               <span
                 aria-hidden="true"
                 className="rounded-full"
-                style={{ width: '2em', height: '0.14em', background: chrome.accent, opacity: si === 1 ? 0.9 : 0.4 }}
+                style={{ width: '2em', height: '0.16em', background: chrome.accent, opacity: 0.85, flex: 'none' }}
               />
-              <div className="flex min-h-0 flex-col" style={{ rowGap: '0.55em' }}>
-                {side.points.map((point, pi) => (
+              <div className="flex min-h-0 flex-col" style={{ rowGap: '0.5em' }}>
+                {side.points.slice(1).map((point, pi) => (
                   <InlineField
-                    key={`${side.id}-${pi}`}
+                    key={`${side.id}-${pi + 1}`}
                     value={point}
-                    onCommit={(next) => ctx.commitComparePoint(compare.id, si, pi, next)}
-                    ariaLabel={`Ponto ${pi + 1} do lado ${si + 1}`}
-                    clamp={2}
-                    style={{ fontSize: '1.06em', lineHeight: 1.45, color: chrome.ink }}
+                    onCommit={(next) => ctx.commitComparePoint(compare.id, si, pi + 1, next)}
+                    ariaLabel={`Ponto ${pi + 2} do lado ${si + 1}`}
+                    clamp={3}
+                    style={{ fontSize: '1.15em', lineHeight: 1.5, color: chrome.inkSoft }}
                   />
                 ))}
               </div>
@@ -1629,10 +1924,10 @@ function CompareLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
 /* ------------------------------------------------------------------------ */
 
 /**
- * Timeline: etapas em sequência, cada uma com número na cor de destaque e um
- * conector que liga à próxima. Texto pelado, sem caixa. Numa banda larga as
- * etapas correm na horizontal (o desenho clássico de roadmap); numa coluna,
- * descem na vertical com o trilho à esquerda. A proporção da zona decide.
+ * Timeline: etapas em sequência. Numa banda larga cada etapa vira um CARD DE
+ * FASE (a referência "Três fases. Seis semanas."): número gigante na cor da
+ * marca, texto bold, filete. Numa coluna estreita, as etapas descem num trilho
+ * vertical leve. A proporção da zona decide, como nos cards.
  */
 function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }) {
   const ctx = useContext(CompositionContext);
@@ -1644,36 +1939,53 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
   const horizontal = zoneAspect(zone) >= STACK_BELOW_ASPECT;
 
   if (horizontal) {
+    const glass = glassOpacityFor(zone.cost);
+    const shell: CSSProperties = {
+      border: `1px solid ${chrome.cardBorder}`,
+      background: chrome.cardBg(glass),
+      backdropFilter: 'blur(1.2cqw)',
+      boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+    };
     return (
       <ZoneBox zone={zone}>
-        <FitBox anchor="center" minScale={0.82}>
+        <FitBox anchor="center" minScale={0.78}>
           <div
             className="grid w-full"
-            style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`, columnGap: '1.2em' }}
+            style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`, columnGap: '1.5em', alignItems: 'stretch' }}
           >
             {items.map((item, i) => (
-              <div key={`${steps.id}-${i}`} className="flex min-w-0 flex-col" style={{ rowGap: '0.7em' }}>
-                <div className="flex w-full items-center" style={{ gap: '0.7em' }}>
-                  <span
-                    className="font-extrabold tabular-nums"
-                    style={{ fontSize: '1.4em', lineHeight: 1, color: chrome.accent, textShadow: chrome.accentTextGlow }}
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  {i < items.length - 1 && (
-                    <span
-                      aria-hidden="true"
-                      className="min-w-0 flex-1 rounded-full"
-                      style={{ height: '0.13em', background: chrome.accent, opacity: 0.35 }}
-                    />
-                  )}
-                </div>
+              <div
+                key={`${steps.id}-${i}`}
+                data-card=""
+                className="flex min-w-0 flex-col overflow-hidden rounded-[1.8em]"
+                style={{ ...shell, padding: '1.5em 1.5em 1.4em', rowGap: '0.7em' }}
+              >
+                <MarkerField
+                  value={steps.markers?.[i]}
+                  fallback={String(i + 1).padStart(2, '0')}
+                  onCommit={(next) => ctx.commitListMarker(steps.id, i, next)}
+                  ariaLabel={`Número da etapa ${i + 1}`}
+                  style={{
+                    fontSize: '2.8em',
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: chrome.accent,
+                    textShadow: chrome.accentTextGlow,
+                  }}
+                />
                 <InlineField
                   value={item}
                   onCommit={(next) => ctx.commitStep(steps.id, i, next)}
                   ariaLabel={`Etapa ${i + 1}`}
+                  balance
                   clamp={3}
-                  style={{ fontSize: '1.12em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
+                  style={{ fontSize: '1.4em', fontWeight: 700, lineHeight: 1.25, letterSpacing: '-0.01em', color: chrome.ink }}
+                />
+                <span
+                  aria-hidden="true"
+                  className="rounded-full"
+                  style={{ width: '2em', height: '0.16em', background: chrome.accent, opacity: 0.85, flex: 'none', marginTop: 'auto' }}
                 />
               </div>
             ))}
@@ -1688,24 +2000,32 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
 
   return (
     <ZoneBox zone={zone}>
-      <FitBox anchor="center" minScale={0.82}>
+      <FitBox anchor="center" minScale={0.8}>
         <ol
           className="grid w-full list-none p-0"
-          style={{ gridTemplateColumns: 'auto 1fr', columnGap: '1em', rowGap: 'calc(1.6 * var(--rhythm))', margin: 0 }}
+          style={{ gridTemplateColumns: 'auto 1fr', columnGap: '1.1em', rowGap: 'calc(1.8 * var(--rhythm))', margin: 0 }}
         >
           {items.map((item, i) => (
             <li key={`${steps.id}-${i}`} className="contents">
               <div className="flex flex-col items-center" style={{ rowGap: '0.35em' }}>
-                <span
-                  className="font-extrabold tabular-nums"
-                  style={{ fontSize: '1.3em', lineHeight: 1.2, color: chrome.accent, textShadow: chrome.accentTextGlow }}
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
+                <MarkerField
+                  value={steps.markers?.[i]}
+                  fallback={String(i + 1).padStart(2, '0')}
+                  onCommit={(next) => ctx.commitListMarker(steps.id, i, next)}
+                  ariaLabel={`Número da etapa ${i + 1}`}
+                  style={{
+                    fontSize: '1.8em',
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.02em',
+                    color: chrome.accent,
+                    textShadow: chrome.accentTextGlow,
+                  }}
+                />
                 {i < items.length - 1 && (
                   <span
                     aria-hidden="true"
-                    className="w-[0.13em] flex-1 rounded-full"
+                    className="w-[0.14em] flex-1 rounded-full"
                     style={{ background: chrome.accent, opacity: 0.3, minHeight: '0.8em' }}
                   />
                 )}
@@ -1715,7 +2035,7 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
                 onCommit={(next) => ctx.commitStep(steps.id, i, next)}
                 ariaLabel={`Etapa ${i + 1}`}
                 clamp={2}
-                style={{ fontSize: '1.2em', fontWeight: 500, lineHeight: 1.42, color: chrome.ink }}
+                style={{ fontSize: '1.45em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
               />
             </li>
           ))}
@@ -1757,7 +2077,7 @@ function SplitLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
                 block={plan.headline}
                 ariaLabel="Título"
                 spec={{
-                  size: 2.3,
+                  size: 2.8,
                   weight: 800,
                   lineHeight: 1.1,
                   letterSpacing: '-0.025em',
@@ -1771,7 +2091,7 @@ function SplitLayout({ plan, c }: { plan: ComposedSlide; c: Composition }) {
                 block={plan.body}
                 ariaLabel="Parágrafo"
                 spec={{
-                  size: 1.18,
+                  size: 1.3,
                   lineHeight: 1.6,
                   color: chrome.inkSoft,
                   wrap: 'pretty',
@@ -1814,7 +2134,7 @@ function MediaLayout({ plan, c, slide }: { plan: ComposedSlide; c: Composition; 
                 block={plan.headline}
                 ariaLabel="Título"
                 spec={{
-                  size: 2.3,
+                  size: 2.8,
                   weight: 800,
                   lineHeight: 1.1,
                   letterSpacing: '-0.025em',
@@ -1828,7 +2148,7 @@ function MediaLayout({ plan, c, slide }: { plan: ComposedSlide; c: Composition; 
                 block={plan.body}
                 ariaLabel="Parágrafo"
                 spec={{
-                  size: 1.18,
+                  size: 1.3,
                   lineHeight: 1.6,
                   color: chrome.inkSoft,
                   wrap: 'pretty',
@@ -1880,15 +2200,15 @@ function HighlightLine({ block }: { block: TextBlock }) {
     <div
       className="w-full"
       style={{
-        borderLeft: `0.22em solid ${chrome.accent}`,
-        paddingLeft: '1.1em',
+        borderLeft: `0.24em solid ${chrome.accent}`,
+        paddingLeft: '1.15em',
         marginTop: 'calc(0.8 * var(--rhythm))',
       }}
     >
       <SlideText
         block={block}
         ariaLabel="Destaque"
-        spec={{ prose: true, size: 1.22, weight: 600, lineHeight: 1.45, color: chrome.ink, wrap: 'balance', clamp: 3 }}
+        spec={{ prose: true, size: 1.4, weight: 600, lineHeight: 1.45, color: chrome.ink, wrap: 'balance', clamp: 3 }}
       />
     </div>
   );

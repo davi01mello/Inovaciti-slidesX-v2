@@ -8,6 +8,7 @@
  * plano, ideia original, quantidade, objetivo, público e voz.
  */
 import type { DraftAssetMeta, PresentationGoal, VisualStyle } from '../types.js';
+import { currentYearLine } from './knowledge.js';
 import { audienceLine, goalGuidance, slideCountGuidance, styleGuidance } from './templates.js';
 import { BASE_SYSTEM_INSTRUCTION } from './writing.js';
 
@@ -34,11 +35,12 @@ VOCABULÁRIO DE SLIDES:
     compare        exatamente 2 lados {label, points} frente a frente
 
 FORMAS EXATAS NO JSON (copie o SHAPE, escreva sobre o tema real do usuário):
+  {"kind":"title-2","content":[{"text":"Três fases. "},{"text":"Seis semanas.","highlight":true}]}
   {"kind":"topics","topics":[[{"text":"..."}],[{"text":"..."}]]}
-  {"kind":"cards","cards":[{"title":[{"text":"..."}],"body":[{"text":"..."}]}]}
-  {"kind":"stats","stats":[{"value":[{"text":"R$ 48 mil"}],"label":[{"text":"investimento total"}]}]}
+  {"kind":"cards","cards":[{"title":[{"text":"..."}],"body":[{"text":"..."}],"icon":"busca"}]}
+  {"kind":"stats","stats":[{"value":[{"text":"R$ 48 mil"}],"label":[{"text":"investimento total"}],"icon":"cifrao"}]}
   {"kind":"steps","steps":[[{"text":"Diagnóstico do fluxo"}],[{"text":"Prototipação com o time"}],[{"text":"Entrega e medição"}]]}
-  {"kind":"compare","sides":[{"label":[{"text":"Hoje"}],"points":[[{"text":"..."}]]},{"label":[{"text":"Com o CITi"}],"points":[[{"text":"..."}]]}]}
+  {"kind":"compare","sides":[{"label":[{"text":"Hoje"}],"points":[[{"text":"..."}]],"icon":"documento"},{"label":[{"text":"Com o CITi"}],"points":[[{"text":"..."}]],"icon":"raio"}]}
 
 ESTRUTURA POR QUANTIDADE DE SLIDES (adapte, sem exceção):
 - 1 slide: um único "cover" autocontido: section-label, title-1 forte e um subtitle que carregue a mensagem inteira.
@@ -122,13 +124,14 @@ function structuralReminder(slideCount: number): string {
   }
   return [
     `ESTRUTURA OBRIGATÓRIA: exatamente ${slideCount} slides. O primeiro é layout "cover" e o último é layout "closing". O miolo usa "content" (e "section" só quando as regras permitirem).`,
-    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": (1) ele tem EXATAMENTE os blocos da gramática do formato planejado; (2) nenhum bloco passa do teto de palavras (body 25, tópico/etapa/ponto 10, card.body 16); (3) dois slides vizinhos nunca têm o mesmo formato; (4) stats só com números que o usuário deu. Nem parede de texto, nem slide oco.',
-    'CONFIRA TAMBÉM: no máximo 3 cards, 5 tópicos, 5 etapas e 4 stats; nunca dois tipos de lista no mesmo slide; compare sempre com exatamente 2 lados; e no máximo um trecho de destaque de 1 a 3 palavras por slide.',
+    'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": (1) ele tem EXATAMENTE os blocos da gramática do formato planejado; (2) nenhum bloco passa do teto de palavras (body 25, tópico/etapa/ponto 10, card.body 16); (3) dois slides vizinhos nunca têm o mesmo formato; (4) stats só com números reais (do briefing ou da base do CITi). Nem parede de texto, nem slide oco.',
+    'CONFIRA TAMBÉM: todo title-2 termina com ponto final e tem UM segmento de 2 a 5 palavras com highlight (a assinatura da marca); itens de cards/stats/compare com "icon" do vocabulário (todos os itens do slide, ou nenhum); no máximo 3 cards, 5 tópicos, 5 etapas e 4 stats; nunca dois tipos de lista no mesmo slide; compare sempre com exatamente 2 lados; e no máximo um destaque de corpo de 1 a 3 palavras por slide.',
   ].join('\n');
 }
 
 export function buildGeneratorPrompt(params: GeneratorPromptParams): string {
   const closing = `
+${currentYearLine()}
 ${slideCountGuidance(params.slideCount)}
 ${structuralReminder(params.slideCount)}
 ${assetsLine(params.assets)}

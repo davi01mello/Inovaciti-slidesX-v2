@@ -27,6 +27,7 @@ import {
   type CompareSide,
   type Decoration,
   type Slide,
+  type SlideBrandMark,
   type SlideLayout,
   type StatItem,
   type TopicsBlock,
@@ -485,6 +486,7 @@ export interface PresentationsApi {
   removeDecoration(id: string, slideId: string, decorationId: string): void;
   setContentZone(id: string, slideId: string, rect: BlockRect): void;
   resetContentZone(id: string, slideId: string): void;
+  setBrandMark(id: string, slideId: string, mark: SlideBrandMark | undefined): void;
   appendChatMessage(id: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): ChatMessage;
   setStatus(id: string, status: PresentationStatus): void;
   duplicate(id: string): string | null;
@@ -826,6 +828,17 @@ export const presentationsStore = {
     );
   },
 
+  /** Sobrescreve a marca CITi do canto: mover/redimensionar/apagar. undefined = volta ao motor. */
+  setBrandMark(id, slideId, mark) {
+    recordHistory(id, `brand:${slideId}`);
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        brandMark: mark ? { ...mark, ...(mark.rect ? { rect: clampRect(mark.rect) } : {}) } : undefined,
+      })),
+    );
+  },
+
   appendChatMessage(id, message) {
     const full: ChatMessage = { id: createId(), createdAt: Date.now(), ...message };
     updatePresentation(id, (p) => ({ ...p, chat: [...p.chat, full] }));
@@ -896,12 +909,22 @@ function mergeBlockPatch(block: Block, patch: Partial<Block>): Block {
     return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_CARDS) } : {}) };
   }
   if (block.kind === 'topics') {
-    const p = patch as { items?: (typeof block)['items'] };
-    return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_TOPICS) } : {}) };
+    const p = patch as { items?: (typeof block)['items']; markers?: (typeof block)['markers'] };
+    return {
+      ...block,
+      ...alignPatch,
+      ...(p.items ? { items: p.items.slice(0, MAX_TOPICS) } : {}),
+      ...('markers' in patch ? { markers: p.markers?.slice(0, MAX_TOPICS) } : {}),
+    };
   }
   if (block.kind === 'steps') {
-    const p = patch as { items?: (typeof block)['items'] };
-    return { ...block, ...alignPatch, ...(p.items ? { items: p.items.slice(0, MAX_STEPS) } : {}) };
+    const p = patch as { items?: (typeof block)['items']; markers?: (typeof block)['markers'] };
+    return {
+      ...block,
+      ...alignPatch,
+      ...(p.items ? { items: p.items.slice(0, MAX_STEPS) } : {}),
+      ...('markers' in patch ? { markers: p.markers?.slice(0, MAX_STEPS) } : {}),
+    };
   }
   if (block.kind === 'stats') {
     const p = patch as { items?: StatItem[] };

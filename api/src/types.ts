@@ -45,6 +45,16 @@ export const MAX_STATS = 4;
 export const MAX_STEPS = 5;
 export const MAX_COMPARE_POINTS = 3;
 
+/**
+ * OS ÍCONES DE SLIDE: o vocabulário fechado que a IA pode pedir por item (card,
+ * métrica, lado de comparação). O desenho vive no front
+ * (app/src/components/present/slideIcons.tsx); aqui só existe o NOME, validado
+ * em normalize.ts — nome fora da lista simplesmente cai.
+ * SYNC_WITH: app/src/types/slide.ts
+ */
+export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao'] as const;
+export type SlideIconName = (typeof SLIDE_ICONS)[number];
+
 export interface GeneratedTextBlock {
   kind: TextBlockKind;
   align?: BlockAlign;
@@ -54,6 +64,7 @@ export interface GeneratedTextBlock {
 export interface GeneratedCard {
   title: RichText;
   body: RichText;
+  icon?: SlideIconName;
 }
 
 export interface GeneratedCardsBlock {
@@ -70,6 +81,7 @@ export interface GeneratedTopicsBlock {
 export interface GeneratedStatItem {
   value: RichText;
   label: RichText;
+  icon?: SlideIconName;
 }
 
 /** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
@@ -87,6 +99,7 @@ export interface GeneratedStepsBlock {
 export interface GeneratedCompareSide {
   label: RichText;
   points: RichText[];
+  icon?: SlideIconName;
 }
 
 /** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */

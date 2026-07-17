@@ -33,6 +33,7 @@ function toRealBlocks(generated: GeneratedBlock[]): Block[] {
           id: createId(),
           title: card.title,
           body: card.body,
+          ...(card.icon ? { icon: card.icon } : {}),
         })),
       };
     }
@@ -53,6 +54,7 @@ function toRealBlocks(generated: GeneratedBlock[]): Block[] {
           id: createId(),
           value: stat.value,
           label: stat.label,
+          ...(stat.icon ? { icon: stat.icon } : {}),
         })),
       };
     }
@@ -73,6 +75,7 @@ function toRealBlocks(generated: GeneratedBlock[]): Block[] {
           id: createId(),
           label: side.label,
           points: side.points.slice(0, MAX_COMPARE_POINTS),
+          ...(side.icon ? { icon: side.icon } : {}),
         })),
       };
     }
@@ -104,19 +107,28 @@ export function toGeneratedSlide(slide: Slide): GeneratedSlide {
     layout: slide.layout,
     blocks: slide.blocks.map((b): GeneratedBlock => {
       if (b.kind === 'cards') {
-        return { kind: 'cards', items: b.items.map((i) => ({ title: i.title, body: i.body })) };
+        return {
+          kind: 'cards',
+          items: b.items.map((i) => ({ title: i.title, body: i.body, ...(i.icon ? { icon: i.icon } : {}) })),
+        };
       }
       if (b.kind === 'topics') {
         return { kind: 'topics', items: b.items };
       }
       if (b.kind === 'stats') {
-        return { kind: 'stats', items: b.items.map((i) => ({ value: i.value, label: i.label })) };
+        return {
+          kind: 'stats',
+          items: b.items.map((i) => ({ value: i.value, label: i.label, ...(i.icon ? { icon: i.icon } : {}) })),
+        };
       }
       if (b.kind === 'steps') {
         return { kind: 'steps', items: b.items };
       }
       if (b.kind === 'compare') {
-        return { kind: 'compare', sides: b.sides.map((s) => ({ label: s.label, points: s.points })) };
+        return {
+          kind: 'compare',
+          sides: b.sides.map((s) => ({ label: s.label, points: s.points, ...(s.icon ? { icon: s.icon } : {}) })),
+        };
       }
       return { kind: b.kind, align: b.align, content: b.content };
     }),

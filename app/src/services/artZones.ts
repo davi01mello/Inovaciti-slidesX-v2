@@ -533,40 +533,58 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
   cards: [
     {
       id: 'cards-title-left',
-      header: { x: M, y: 0.19, width: 0.56, height: 0.25 },
-      content: { x: M, y: 0.475, width: 1 - 2 * M, height: 0.375 },
+      header: { x: M, y: 0.19, width: 0.58, height: 0.24 },
+      content: { x: M, y: 0.455, width: 1 - 2 * M, height: 0.42 },
       align: 'left',
     },
     {
       id: 'cards-title-right',
-      header: { x: 0.38, y: 0.19, width: RIGHT - 0.38, height: 0.25 },
-      content: { x: M, y: 0.475, width: 1 - 2 * M, height: 0.375 },
+      header: { x: 0.38, y: 0.19, width: RIGHT - 0.38, height: 0.24 },
+      content: { x: M, y: 0.455, width: 1 - 2 * M, height: 0.42 },
       align: 'left',
     },
     {
       id: 'cards-title-center',
-      header: { x: 0.16, y: 0.19, width: 0.68, height: 0.25 },
-      content: { x: 0.085, y: 0.475, width: 1 - 2 * 0.085, height: 0.375 },
+      header: { x: 0.16, y: 0.19, width: 0.68, height: 0.24 },
+      content: { x: 0.085, y: 0.455, width: 1 - 2 * 0.085, height: 0.42 },
       align: 'center',
     },
     // Tudo empurrado pra baixo: deixa a metade de cima da arte inteiramente livre.
     {
       id: 'cards-low',
-      header: { x: M, y: 0.20, width: 0.60, height: 0.24 },
-      content: { x: M, y: 0.49, width: 1 - 2 * M, height: 0.36 },
+      header: { x: M, y: 0.20, width: 0.60, height: 0.23 },
+      content: { x: M, y: 0.47, width: 1 - 2 * M, height: 0.40 },
       align: 'left',
     },
     {
       id: 'cards-hug-left',
-      header: { x: M, y: 0.19, width: 0.52, height: 0.25 },
-      content: { x: M, y: 0.475, width: 0.70, height: 0.375 },
+      header: { x: M, y: 0.19, width: 0.54, height: 0.24 },
+      content: { x: M, y: 0.455, width: 0.72, height: 0.42 },
       align: 'left',
     },
     {
       id: 'cards-hug-right',
-      header: { x: 0.30, y: 0.19, width: RIGHT - 0.30, height: 0.25 },
-      content: { x: RIGHT - 0.70, y: 0.475, width: 0.70, height: 0.375 },
+      header: { x: 0.30, y: 0.19, width: RIGHT - 0.30, height: 0.24 },
+      content: { x: RIGHT - 0.72, y: 0.455, width: 0.72, height: 0.42 },
       align: 'left',
+    },
+    /*
+     * FAIXAS (o "O que fica ao fim" da referência): cada card vira uma linha
+     * full-width com número gigante, linha vertical, ícone e texto. É um desenho
+     * deliberado (o render lê o id), não uma consequência da proporção — e dá ao
+     * diretor de arte uma alternativa REAL ao grid de colunas.
+     */
+    {
+      id: 'cards-rows',
+      header: { x: M, y: 0.175, width: 0.62, height: 0.20 },
+      content: { x: M, y: 0.415, width: 1 - 2 * M, height: 0.475 },
+      align: 'left',
+    },
+    {
+      id: 'cards-rows-center',
+      header: { x: 0.17, y: 0.175, width: 0.66, height: 0.20 },
+      content: { x: 0.10, y: 0.415, width: 0.80, height: 0.475 },
+      align: 'center',
     },
   ],
 
@@ -682,9 +700,9 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
 
   /* Número em destaque: o número é a peça, o resto é legenda. */
   bignumber: [
-    { id: 'bignumber-left', content: { x: M, y: 0.26, width: 0.50, height: 0.54 }, align: 'left' },
-    { id: 'bignumber-right', content: { x: 0.44, y: 0.26, width: RIGHT - 0.44, height: 0.54 }, align: 'left' },
-    { id: 'bignumber-center', content: { x: 0.18, y: 0.26, width: 0.64, height: 0.54 }, align: 'center' },
+    { id: 'bignumber-center', content: { x: 0.17, y: 0.22, width: 0.66, height: 0.62 }, align: 'center' },
+    { id: 'bignumber-left', content: { x: M, y: 0.23, width: 0.54, height: 0.60 }, align: 'left' },
+    { id: 'bignumber-right', content: { x: 0.42, y: 0.23, width: RIGHT - 0.42, height: 0.60 }, align: 'left' },
   ],
 
   /*
@@ -695,13 +713,13 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
     {
       id: 'kpis-band',
       header: { x: M, y: 0.19, width: 0.60, height: 0.24 },
-      content: { x: M, y: 0.50, width: 1 - 2 * M, height: 0.34 },
+      content: { x: M, y: 0.49, width: 1 - 2 * M, height: 0.37 },
       align: 'left',
     },
     {
       id: 'kpis-band-center',
       header: { x: 0.17, y: 0.19, width: 0.66, height: 0.24 },
-      content: { x: 0.085, y: 0.50, width: 1 - 2 * 0.085, height: 0.34 },
+      content: { x: 0.085, y: 0.49, width: 1 - 2 * 0.085, height: 0.37 },
       align: 'center',
     },
     // Título numa coluna, métricas empilhadas na outra: o desenho de dashboard.
@@ -721,7 +739,30 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
     {
       id: 'kpis-hug-left',
       header: { x: M, y: 0.19, width: 0.52, height: 0.24 },
-      content: { x: M, y: 0.50, width: 0.70, height: 0.34 },
+      content: { x: M, y: 0.49, width: 0.72, height: 0.37 },
+      align: 'left',
+    },
+    /*
+     * PÔSTER (o "O CITi em números" oficial): números gigantes sem caixa, então
+     * o conteúdo é texto pelado numa área grande — o motor foge da escultura e
+     * os números convivem com a arte atrás.
+     */
+    {
+      id: 'kpis-poster-center',
+      header: { x: 0.16, y: 0.185, width: 0.68, height: 0.19 },
+      content: { x: 0.11, y: 0.42, width: 0.78, height: 0.47 },
+      align: 'center',
+    },
+    {
+      id: 'kpis-poster-left',
+      header: { x: M, y: 0.185, width: 0.58, height: 0.19 },
+      content: { x: M, y: 0.42, width: 0.66, height: 0.47 },
+      align: 'left',
+    },
+    {
+      id: 'kpis-poster-right',
+      header: { x: 0.36, y: 0.185, width: RIGHT - 0.36, height: 0.19 },
+      content: { x: 0.34, y: 0.42, width: RIGHT - 0.34, height: 0.47 },
       align: 'left',
     },
   ],
@@ -766,13 +807,13 @@ export const ARRANGEMENTS: Record<Archetype, Arrangement[]> = {
     {
       id: 'timeline-band',
       header: { x: M, y: 0.19, width: 0.60, height: 0.23 },
-      content: { x: M, y: 0.50, width: 1 - 2 * M, height: 0.34 },
+      content: { x: M, y: 0.465, width: 1 - 2 * M, height: 0.41 },
       align: 'left',
     },
     {
       id: 'timeline-band-center',
       header: { x: 0.17, y: 0.19, width: 0.66, height: 0.23 },
-      content: { x: 0.085, y: 0.50, width: 1 - 2 * 0.085, height: 0.34 },
+      content: { x: 0.085, y: 0.465, width: 1 - 2 * 0.085, height: 0.41 },
       align: 'center',
     },
     // Título em cima, etapas em coluna vertical no lado limpo.

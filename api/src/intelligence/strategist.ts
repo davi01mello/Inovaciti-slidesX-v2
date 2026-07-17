@@ -16,6 +16,7 @@
  * routes/generate.ts, que loga apenas o tamanho em nível debug).
  */
 import type { DraftAssetMeta, PresentationGoal, VisualStyle } from '../types.js';
+import { currentYearLine } from './knowledge.js';
 import { audienceLine, goalGuidance, slideCountGuidance, styleGuidance } from './templates.js';
 import { FORMAT_CATALOG, WRITING_PRINCIPLES } from './writing.js';
 
@@ -112,6 +113,8 @@ export function buildStrategistPrompt(briefing: StrategistBriefing): string {
       : 'O usuário não anexou arquivos.';
 
   return `
+${currentYearLine()}
+
 O fluxo de criação terminou. Estas são TODAS as respostas do usuário:
 
 IDEIA (fonte da verdade factual, pode vir livre ou já estruturada):

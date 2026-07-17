@@ -25,6 +25,7 @@ const CONTRACT_TYPES = [
   'SlideLayout',
   'BlockAlign',
   'TextBlockKind',
+  'SlideIconName',
   'RichRun',
   'GeneratedTextBlock',
   'GeneratedCard',
@@ -48,7 +49,7 @@ const CONTRACT_TYPES = [
  * slide que a UI não sabe desenhar — e é o tipo de divergência que só aparece na
  * frente do cliente. Então o build falha aqui.
  */
-const CONTRACT_CONSTS = ['MAX_CARDS', 'MAX_TOPICS', 'MAX_STATS', 'MAX_STEPS', 'MAX_COMPARE_POINTS'];
+const CONTRACT_CONSTS = ['MAX_CARDS', 'MAX_TOPICS', 'MAX_STATS', 'MAX_STEPS', 'MAX_COMPARE_POINTS', 'SLIDE_ICONS'];
 
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');

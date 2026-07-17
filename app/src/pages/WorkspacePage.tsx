@@ -21,7 +21,7 @@ import { isInsertDrag, readInsertPayload } from '@/services/insertDnd';
 import { addSessionUpload, getSessionUpload } from '@/services/sessionUploads';
 import { pushToast } from '@/lib/toast';
 import type { FloatingTextKind } from '@/lib/blocks';
-import type { Block, BlockRect, Slide } from '@/types/slide';
+import type { Block, BlockRect, Slide, SlideBrandMark } from '@/types/slide';
 
 /**
  * Largura do palco do slide: cabe SEMPRE na viewport sem rolagem vertical.
@@ -244,6 +244,14 @@ export function WorkspacePage() {
     presentationsStore.resetContentZone(presentation.id, currentSlide.id);
   }, [presentation, currentSlide]);
 
+  const handleBrandMarkChange = useCallback(
+    (mark: SlideBrandMark | undefined) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.setBrandMark(presentation.id, currentSlide.id, mark);
+    },
+    [presentation, currentSlide],
+  );
+
   const handleUndo = useCallback(() => {
     if (presentation) presentationsStore.undo(presentation.id);
   }, [presentation]);
@@ -455,6 +463,7 @@ export function WorkspacePage() {
                   onDecorationDelete={handleDecorationDelete}
                   onContentZoneMove={handleContentZoneMove}
                   onContentZoneReset={handleContentZoneReset}
+                  onBrandMarkChange={handleBrandMarkChange}
                 />
                 {stageDragOver && (
                   <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-[#040705]/55 backdrop-blur-[2px]">

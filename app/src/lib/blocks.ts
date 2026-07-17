@@ -63,6 +63,8 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         id: createId(),
         title: cloneRich(item.title),
         body: cloneRich(item.body),
+        ...(item.icon ? { icon: item.icon } : {}),
+        ...(item.marker ? { marker: cloneRich(item.marker) } : {}),
       })),
     };
   }
@@ -72,6 +74,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
       kind: block.kind,
       align: block.align,
       items: block.items.map(cloneRich),
+      ...(block.markers ? { markers: block.markers.map(cloneRich) } : {}),
     };
   }
   if (block.kind === 'stats') {
@@ -83,6 +86,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         id: createId(),
         value: cloneRich(item.value),
         label: cloneRich(item.label),
+        ...(item.icon ? { icon: item.icon } : {}),
       })),
     };
   }
@@ -95,6 +99,7 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
         id: createId(),
         label: cloneRich(side.label),
         points: side.points.map(cloneRich),
+        ...(side.icon ? { icon: side.icon } : {}),
       })),
     };
   }

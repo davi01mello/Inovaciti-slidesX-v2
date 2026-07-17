@@ -42,6 +42,15 @@ export const MAX_STATS = 4;
 export const MAX_STEPS = 5;
 export const MAX_COMPARE_POINTS = 3;
 
+/**
+ * OS ÍCONES DE SLIDE: o vocabulário fechado que a IA pode pedir por item (card,
+ * métrica, lado de comparação). O desenho vive em
+ * components/present/slideIcons.tsx; o servidor valida o nome em normalize.ts.
+ * SYNC_WITH: api/src/types.ts (verificado por scripts/check-contract.mjs).
+ */
+export const SLIDE_ICONS = ['busca', 'grafico', 'usuarios', 'documento', 'calendario', 'lista', 'cadeado', 'cubo', 'alvo', 'raio', 'escudo', 'relogio', 'engrenagem', 'dados', 'foguete', 'check', 'aspas', 'cifrao'] as const;
+export type SlideIconName = (typeof SLIDE_ICONS)[number];
+
 /** Retângulo normalizado em relação ao slide (0..1 nos dois eixos). */
 export interface BlockRect {
   x: number;
@@ -71,6 +80,9 @@ export interface CardItem {
   id: string;
   title: RichText;
   body: RichText;
+  icon?: SlideIconName;
+  /** Sobrescreve o ordinal automático ("01"). Vazio/ausente = automático. */
+  marker?: RichText;
 }
 
 export interface CardsBlock {
@@ -87,6 +99,8 @@ export interface TopicsBlock {
   align: BlockAlign;
   /** No máximo MAX_TOPICS. Cada item é UMA linha. */
   items: RichText[];
+  /** Sobrescreve o ordinal automático ("01") do item de mesmo índice. Vazio = automático. */
+  markers?: RichText[];
 }
 
 /** Uma métrica: valor curto com dígito ("R$ 48 mil", "3x") + rótulo de 1 a 6 palavras. */
@@ -94,6 +108,7 @@ export interface StatItem {
   id: string;
   value: RichText;
   label: RichText;
+  icon?: SlideIconName;
 }
 
 /** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
@@ -112,13 +127,16 @@ export interface StepsBlock {
   align: BlockAlign;
   /** No máximo MAX_STEPS. */
   items: RichText[];
+  /** Sobrescreve o ordinal automático ("01") do item de mesmo índice. Vazio = automático. */
+  markers?: RichText[];
 }
 
 export interface CompareSide {
   id: string;
   label: RichText;
-  /** No máximo MAX_COMPARE_POINTS por lado. */
+  /** No máximo MAX_COMPARE_POINTS por lado. O primeiro é a afirmação; os demais sustentam. */
   points: RichText[];
+  icon?: SlideIconName;
 }
 
 /** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */
@@ -177,6 +195,15 @@ export interface Decoration {
   rotation?: number;
 }
 
+/**
+ * Sobrescreve a MARCA CITi do canto deste slide: o usuário pode movê-la,
+ * redimensioná-la ou apagá-la. Ausente = o motor decide o canto (o padrão).
+ */
+export interface SlideBrandMark {
+  hidden?: boolean;
+  rect?: BlockRect;
+}
+
 export interface Slide {
   id: string;
   layout: SlideLayout;
@@ -189,4 +216,6 @@ export interface Slide {
    * moveu ou redimensionou a área no editor). Ausente = quem manda é o motor.
    */
   contentZoneOverride?: BlockRect;
+  /** Sobrescreve a marca CITi do canto (mover/redimensionar/apagar). */
+  brandMark?: SlideBrandMark;
 }

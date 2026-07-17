@@ -1,4 +1,4 @@
-import type { BlockAlign, SlideLayout, TextBlockKind } from '@/types/slide';
+import type { BlockAlign, SlideIconName, SlideLayout, TextBlockKind } from '@/types/slide';
 import type { RichText } from '@/lib/richText';
 
 /**
@@ -16,6 +16,7 @@ export interface GeneratedTextBlock {
 export interface GeneratedCard {
   title: RichText;
   body: RichText;
+  icon?: SlideIconName;
 }
 
 export interface GeneratedCardsBlock {
@@ -32,6 +33,7 @@ export interface GeneratedTopicsBlock {
 export interface GeneratedStatItem {
   value: RichText;
   label: RichText;
+  icon?: SlideIconName;
 }
 
 /** 1 item = número gigante (bignumber). 2 a 4 = painel de indicadores (kpis). */
@@ -49,6 +51,7 @@ export interface GeneratedStepsBlock {
 export interface GeneratedCompareSide {
   label: RichText;
   points: RichText[];
+  icon?: SlideIconName;
 }
 
 /** Dois lados frente a frente (antes/depois, com/sem). Sempre exatamente 2 lados. */

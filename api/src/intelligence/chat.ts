@@ -3,6 +3,7 @@
  * storyboard, vê os slides atuais e as imagens anexadas na mensagem.
  */
 import type { ChatHistoryMessage, GeneratedSlide, PresentationGoal, VisualStyle } from '../types.js';
+import { currentYearLine } from './knowledge.js';
 import { goalGuidance, styleGuidance } from './templates.js';
 import { BASE_SYSTEM_INSTRUCTION } from './writing.js';
 
@@ -43,6 +44,8 @@ export function buildChatPrompt(params: {
       : '';
 
   return `
+${currentYearLine()}
+
 BRIEFING ORIGINAL:
 Ideia: "${params.idea}"
 ${goalGuidance(params.goal)}

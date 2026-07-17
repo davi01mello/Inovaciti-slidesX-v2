@@ -29,11 +29,13 @@ const richTextSchema = z.array(richRunSchema).max(50, 'texto com trechos demais'
 const statItemSchema = z.object({
   value: richTextSchema,
   label: richTextSchema,
+  icon: z.string().max(24).optional(),
 });
 
 const compareSideSchema = z.object({
   label: richTextSchema,
   points: z.array(richTextSchema).max(8, 'lado da comparação com pontos demais (máximo 8)'),
+  icon: z.string().max(24).optional(),
 });
 
 // `items` cobre topics/steps (linhas) e, via passthrough, cards/stats/compare chegam nos

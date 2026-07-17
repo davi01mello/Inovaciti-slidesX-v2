@@ -6,6 +6,7 @@
  *
  * Organização da central (api/src/intelligence/):
  *   writing.ts     este arquivo, o prompt base (densidade, formatos, escrita)
+ *   knowledge.ts   a base de conhecimento do CITi (fatos oficiais da casa)
  *   templates.ts   especificações ricas de objetivo e de VOZ
  *   strategist.ts  o Agente Estrategista (briefing -> plano interno)
  *   generator.ts   a IA geradora do storyboard (plano -> JSON)
@@ -14,6 +15,7 @@
  *
  * Nenhum prompt vive fora deste diretório. Nenhuma rota tem prompt inline.
  */
+import { CITI_KNOWLEDGE } from './knowledge.js';
 
 export const PLATFORM_IDENTITY = `
 Você faz parte do CITi Slides, ferramenta interna da CITi, empresa júnior de tecnologia e IA do CIn UFPE, usada para montar apresentações institucionais: propostas comerciais, relatórios, pitches, roadmaps, treinamentos.
@@ -85,13 +87,30 @@ qualquer bloco fora do formato.
   indicadores  Painel de 2 a 4 métricas. title-2 + stats com 2 a 4 itens. Resultados,
                prova, dimensão do problema. Só com números REAIS do briefing. Faixa: 10 a 34.
   comparacao   Dois lados frente a frente. title-2 + compare com exatamente 2 lados
-               (label de 1 a 4 palavras + 1 a 3 pontos de 3 a 10 cada). Antes/depois,
+               (label de 1 a 4 palavras + 1 a 3 pontos). O PRIMEIRO ponto de cada lado
+               é a AFIRMAÇÃO (curta, forte); os seguintes sustentam. Antes/depois,
                com/sem, opção A vs B. Faixa: 16 a 46.
   jornada      Etapas em sequência. title-2 + steps de 3 a 5 etapas (3 a 10 palavras).
                Cronograma, metodologia, roadmap, passo a passo. Faixa: 14 a 40.
 
-REGRA DOS NÚMEROS: stats e indicadores só existem com números que o usuário deu.
-NUNCA invente valor, percentual ou prazo. Sem número real, escolha outro formato.
+REGRA DOS NÚMEROS: stats e indicadores só existem com números REAIS: os que o usuário deu
+no briefing, ou os da BASE DE CONHECIMENTO DO CITi quando o slide fala do CITi (1995, 60
+membros, NPS 88, 1ª e maior). NUNCA invente valor, percentual ou prazo.
+
+ÍCONES POR ITEM: cards, métricas (stats) e lados de comparação aceitam um campo "icon" com
+UM destes nomes: busca, grafico, usuarios, documento, calendario, lista, cadeado, cubo,
+alvo, raio, escudo, relogio, engrenagem, dados, foguete, check, aspas, cifrao.
+Escolha o ícone pelo SIGNIFICADO do item (diagnóstico -> busca; resultado -> grafico;
+equipe -> usuarios; prazo -> calendario ou relogio; entrega/documentação -> documento;
+segurança -> escudo ou cadeado; produto/solução -> cubo; meta -> alvo; velocidade -> raio;
+processos -> engrenagem; dados/BI -> dados; lançamento -> foguete; validação -> check;
+citação -> aspas; preço/investimento -> cifrao; etapas -> lista).
+Use ícones em TODOS os itens de um slide de cards/indicadores/comparacao, ou em NENHUM:
+metade com ícone e metade sem fica manco. Nunca repita o mesmo ícone dentro de um slide.
+
+LINHA DE APOIO: nos formatos com lista (topicos, cards, indicadores, comparacao, jornada),
+inclua um subtitle de apoio sob o título (8 a 12 palavras, tom de contexto) na MAIORIA dos
+slides: é o parágrafo cinza que respira entre o título e o conteúdo, como no deck oficial.
 
 VARIEDADE ESTRUTURAL (obrigatória; o estrategista planeja e a geradora obedece):
 - Dois slides vizinhos NUNCA têm o mesmo formato.
@@ -167,21 +186,30 @@ TAMANHO DE CADA PEÇA (o design reserva o espaço exato, respeite):
   compare.label   1 a 4 palavras
   compare.point   3 a 10 palavras
 
-REGRA DO DESTAQUE (run com "highlight": true), seja CIRÚRGICO. O sistema corta o excesso:
-- No máximo UM trecho marcado por slide inteiro, e de 1 a 3 palavras. A MAIORIA dos slides
-  sai SEM destaque nenhum. Destaque é exceção, não enfeite de cada slide.
-- Só marque o CORAÇÃO do slide: um número ("R$ 40 mil", "3x"), um nome próprio, ou o termo
-  âncora da tese ("sem fila", "em 48h"). Nunca uma frase inteira, nunca duas ou mais coisas.
-- NUNCA marque verbo de ligação, artigo, ou palavra genérica ("qualidade", "sucesso", "melhor").
-- Na dúvida, NÃO marque. Poucos destaques certeiros parecem caros; texto todo verde parece aleatório.
+REGRA DO DESTAQUE (run com "highlight": true). Existem DOIS destaques, e o sistema corta o excesso:
+
+1. DESTAQUE DE TÍTULO (a assinatura da marca): TODO título de slide de conteúdo termina com
+   ponto final e marca o SEGMENTO-CHAVE com highlight, de 2 a 5 palavras, incluindo o ponto.
+   É a parte do título que sai na cor da marca. Exemplos da forma:
+     [{"text":"Três fases. "},{"text":"Seis semanas.","highlight":true}]
+     [{"text":"A dor real, "},{"text":"em duas camadas.","highlight":true}]
+     [{"text":"Por que o "},{"text":"Discovery?","highlight":true}]
+   UM segmento por título, sempre no trecho de maior peso (geralmente o final).
+
+2. DESTAQUE DE CORPO, seja CIRÚRGICO: no máximo UM trecho por slide, de 1 a 3 palavras.
+   Só o CORAÇÃO da mensagem: um número ("R$ 40 mil", "3x"), um nome próprio, o termo âncora
+   ("sem fila", "em 48h"). Nunca frase inteira. NUNCA verbo de ligação, artigo ou palavra
+   genérica ("qualidade", "sucesso"). Na dúvida, não marque: a maioria dos corpos sai sem.
 
 BULLETS PARALELOS: itens da mesma lista têm a mesma estrutura sintática e comprimento parecido
 entre si (variação de no máximo 20%). Nada de um item de 3 palavras ao lado de um de 8.
 `.trim();
 
-/** O prompt base completo: quem somos, o quanto escrevemos, quais formatos existem, como escrevemos. */
+/** O prompt base completo: quem somos, o que sabemos da casa, o quanto escrevemos,
+ * quais formatos existem, como escrevemos. */
 export const BASE_SYSTEM_INSTRUCTION = [
   PLATFORM_IDENTITY,
+  CITI_KNOWLEDGE,
   DENSITY_RULE,
   FORMAT_CATALOG,
   WRITING_PRINCIPLES,

@@ -1,7 +1,7 @@
 import { createId } from '@/lib/id';
 import { fromPlain } from '@/lib/richText';
 import type { RichText } from '@/lib/richText';
-import type { Block, CardItem, CompareSide, Slide, SlideLayout, StatItem } from '@/types/slide';
+import type { Block, CardItem, CompareSide, Slide, SlideIconName, SlideLayout, StatItem } from '@/types/slide';
 
 /**
  * O DECK DE PROVA.
@@ -25,9 +25,24 @@ function hl(before: string, mark: string, after: string): RichText {
   return [{ text: before }, { text: mark, highlight: true }, { text: after }];
 }
 
-const card = (title: string, body: string): CardItem => ({ id: createId(), title: t(title), body: t(body) });
-const stat = (value: string, label: string): StatItem => ({ id: createId(), value: t(value), label: t(label) });
-const side = (label: string, ...points: string[]): CompareSide => ({ id: createId(), label: t(label), points: points.map(t) });
+const card = (title: string, body: string, icon?: SlideIconName): CardItem => ({
+  id: createId(),
+  title: t(title),
+  body: t(body),
+  ...(icon ? { icon } : {}),
+});
+const stat = (value: string, label: string, icon?: SlideIconName): StatItem => ({
+  id: createId(),
+  value: t(value),
+  label: t(label),
+  ...(icon ? { icon } : {}),
+});
+const side = (label: string, icon: SlideIconName | undefined, ...points: string[]): CompareSide => ({
+  id: createId(),
+  label: t(label),
+  points: points.map(t),
+  ...(icon ? { icon } : {}),
+});
 
 function slide(layout: SlideLayout, blocks: Block[]): Slide {
   return { id: createId(), layout, blocks };
@@ -36,7 +51,10 @@ function slide(layout: SlideLayout, blocks: Block[]): Slide {
 const B = {
   label: (s: string): Block => ({ id: createId(), kind: 'section-label', align: 'left', content: t(s) }),
   t1: (s: string): Block => ({ id: createId(), kind: 'title-1', align: 'left', content: t(s) }),
+  /** Título com o SEGMENTO-CHAVE em destaque (a assinatura da referência). */
+  t1Hl: (a: string, m: string): Block => ({ id: createId(), kind: 'title-1', align: 'left', content: [{ text: a }, { text: m, highlight: true }] }),
   t2: (s: string): Block => ({ id: createId(), kind: 'title-2', align: 'left', content: t(s) }),
+  t2Hl: (a: string, m: string): Block => ({ id: createId(), kind: 'title-2', align: 'left', content: [{ text: a }, { text: m, highlight: true }] }),
   sub: (s: string): Block => ({ id: createId(), kind: 'subtitle', align: 'left', content: t(s) }),
   body: (s: string): Block => ({ id: createId(), kind: 'body', align: 'left', content: t(s) }),
   bodyHl: (a: string, m: string, z: string): Block => ({ id: createId(), kind: 'body', align: 'left', content: hl(a, m, z) }),
@@ -78,92 +96,97 @@ export function buildTestDeck(): Slide[] {
 
   const media = slide('content', [
     B.label('Prova de campo'),
-    B.t2('O que o piloto mostrou'),
+    B.t2Hl('O que o piloto ', 'mostrou.'),
     B.body('Seis semanas, dois times reais. O ganho veio da conferência, não da digitação.'),
     B.sub('Conduzido entre março e abril, com acompanhamento diário.'),
   ]);
   media.image = { src: photo, width: 1200, height: 900 };
 
   return [
+    // CAPA (ref. p.1): kicker + título com segmento em destaque + subtítulo.
     slide('cover', [
-      B.label('Proposta comercial'),
-      B.t1('Menos fila, mais margem'),
-      B.sub('Como a CITi reduz o tempo de atendimento sem aumentar o time.'),
+      B.label('Apresentação de proposta'),
+      B.t1Hl('Dor mapeada, diagnóstico ', 'estratégico.'),
+      B.sub('Como o CITi transforma a operação da Sympla em margem.'),
     ]),
 
-    // AFIRMAÇÃO: o respiro. Body curto (1 frase) + destaque. O texto denso saiu.
+    // KPIs PÔSTER (ref. p.2): os números do CITi, gigantes, sem caixa.
     slide('content', [
-      B.label('O problema'),
-      B.t2('A fila não é o gargalo. É o sintoma.'),
-      B.body('Ela é o que sobra de três decisões tomadas antes dela.'),
-      B.high('Contratar sem reordenar o processo é comprar mais fila.'),
-    ]),
-
-    // CARDS: título + uma frase de apoio. Nada de parágrafo dentro do card.
-    slide('content', [
-      B.label('A proposta'),
-      B.t2('Três frentes, na ordem que importa'),
-      B.cards(
-        card('Validação na entrada', 'O pedido não entra se estiver incompleto.'),
-        card('Conferência contínua', 'Sai do fim e vira etapa curta em cada passo.'),
-        card('Automação do repetitivo', 'Entra só depois que as duas primeiras rodam.'),
-      ),
-    ]),
-
-    // TÓPICOS: linhas curtas, escaneáveis.
-    slide('content', [
-      B.label('Como funciona'),
-      B.t2('O que muda na rotina'),
-      B.body('Sem treinamento novo: muda a ordem, não a ferramenta.'),
-      B.topics(
-        'O pedido chega já validado',
-        'A conferência acontece durante, não depois',
-        'O retrabalho vira exceção rastreada',
-        'O supervisor vê o gargalo antes da fila',
-        'A automação entra onde o processo é estável',
-      ),
-    ]),
-
-    // JORNADA: etapas numeradas com conector (formato novo, arquétipo timeline).
-    slide('content', [
-      B.label('Método'),
-      B.t2('Como o projeto anda'),
-      B.steps(
-        'Diagnóstico do fluxo atual',
-        'Validação desenhada com o time',
-        'Piloto em duas frentes',
-        'Medição e ajuste fino',
-      ),
-    ]),
-
-    slide('section', [B.label('Capítulo dois'), B.t1('O que a operação ganha')]),
-
-    // COMPARAÇÃO: dois painéis frente a frente (formato novo, arquétipo compare).
-    slide('content', [
-      B.label('Antes e depois'),
-      B.t2('A mesma equipe, outro processo'),
-      B.compare(
-        side('Hoje', 'Pedido entra incompleto', 'Conferência só no fim', 'Retrabalho invisível'),
-        side('Com a CITi', 'Validação na entrada', 'Conferência em cada etapa', 'Gargalo visível antes da fila'),
-      ),
-    ]),
-
-    // INDICADORES: painel de métricas (formato novo, arquétipo kpis).
-    slide('content', [
-      B.label('Resultados do piloto'),
-      B.t2('O que os números mostraram'),
+      B.t2Hl('O CITi em ', 'números.'),
       B.stats(
-        stat('42%', 'menos tempo de fila'),
-        stat('3x', 'menos retrabalho'),
-        stat('6 sem', 'do início à medição'),
+        stat('30', 'anos de mercado'),
+        stat('1ª', 'e maior EJ de tecnologia do Brasil'),
+        stat('60', 'membros multidisciplinares'),
+        stat('88', 'de NPS em 2025'),
       ),
     ]),
 
-    // NÚMERO (novo): stats de 1 item vira o número gigante do investimento.
+    // CARDS GRID (ref. p.5): número + ícone + título + filete + corpo, com apoio.
     slide('content', [
-      B.label('Investimento'),
-      B.t2('Projeto fechado, sem custo recorrente'),
-      B.stats(stat('R$ 29.900', 'em três parcelas por entrega')),
+      B.label('Diagnóstico'),
+      B.t2Hl('Três pontos que ', 'ficaram.'),
+      B.sub('O ponto de partida que veio da última conversa, sem reinterpretar.'),
+      B.cards(
+        card('A dor está na qualidade do cadastro', 'Padronização e revisão manual crescendo com a base.', 'documento'),
+        card('O time está esticado', 'A sobrecarga forçou a jornada de 8 para 10 horas.', 'usuarios'),
+        card('O volume cresce com a migração', 'A origem do retrabalho aumenta a cada semana.', 'grafico'),
+      ),
+    ]),
+
+    // COMPARAÇÃO (ref. p.6): ícone + rótulo verde + afirmação + sustentação.
+    slide('content', [
+      B.label('O problema real'),
+      B.t2Hl('A dor real, ', 'em duas camadas.'),
+      B.sub('A formulação inicial era a ponta visível. O problema tem camada mais profunda.'),
+      B.compare(
+        side('Dor declarada', 'documento', 'Padronização e qualidade de cadastros.', 'Revisão manual sobrando apesar da estrutura.'),
+        side('Dor descoberta', 'dados', 'Conversão entre dois modelos de dados.', 'Volume cresce com o sucesso, contratar não resolve.'),
+      ),
+    ]),
+
+    // STATEMENT central (ref. p.7): pergunta + traço + apoio.
+    slide('content', [
+      B.t2Hl('Por que o ', 'Discovery?'),
+      B.body('Tecnologia em cima de processo que ninguém mapeou escala o erro, não o resultado.'),
+      B.sub('Antes da tecnologia, a gente mergulha na operação e mapeia a raiz do problema.'),
+    ]),
+
+    // TIMELINE / cards de fase (ref. p.8).
+    slide('content', [
+      B.label('O plano'),
+      B.t2Hl('Três fases. ', 'Seis semanas.'),
+      B.steps('Diagnóstico operacional', 'Desenho da solução', 'Business case e plano'),
+    ]),
+
+    // CARDS de entrega (podem sair como FAIXAS, ref. p.9, conforme o arranjo).
+    slide('content', [
+      B.label('Entregas'),
+      B.t2Hl('O que fica ', 'ao fim.'),
+      B.sub('Cada fase fecha com material pronto pra mesa de decisão.'),
+      B.cards(
+        card('A dor quantificada em números reais', 'Sai do feeling e vira dado: tempo, reais, impacto.', 'busca'),
+        card('A solução projetada pro problema', 'Arquitetura, protótipo funcional e dependências mapeadas.', 'cubo'),
+        card('Business case com ROI projetado', 'Cronograma, riscos e retorno esperado.', 'grafico'),
+      ),
+    ]),
+
+    // INDICADORES painel (ref. p.10 embaixo): card largo com divisores.
+    slide('content', [
+      B.label('Condições'),
+      B.t2Hl('O formato da ', 'proposta.'),
+      B.stats(
+        stat('6 semanas', 'duração', 'calendario'),
+        stat('3 etapas', 'fases', 'lista'),
+        stat('Plano + case', 'entrega final', 'documento'),
+      ),
+    ]),
+
+    // NÚMERO / investimento (ref. p.10): a pill de vidro.
+    slide('content', [
+      B.label('Discovery Enterprise'),
+      B.t2Hl('Investi', 'mento.'),
+      B.stats(stat('R$ 29.900', 'em três parcelas por entrega', 'cifrao')),
+      B.sub('Condições válidas por 7 dias a partir desta apresentação.'),
     ]),
 
     // NÚMERO (LEGADO): dois títulos com métrica curta — decks antigos continuam de pé.
@@ -174,29 +197,32 @@ export function buildTestDeck(): Slide[] {
       B.sub('Em três parcelas, atreladas às entregas de cada frente.'),
     ]),
 
-    // CITAÇÃO: manchete + frase de impacto, sem prosa nem lista (arquétipo quote).
+    // CITAÇÃO: manchete + frase de impacto (arquétipo quote).
     slide('content', [
       B.label('A tese'),
-      B.t2('Processo antes de ferramenta'),
+      B.t2Hl('Processo antes de ', 'ferramenta.'),
       B.high('Quem automatiza a desordem só produz desordem mais rápido.'),
+    ]),
+
+    // TÓPICOS: a lista leve, maior.
+    slide('content', [
+      B.label('Como funciona'),
+      B.t2Hl('O que muda ', 'na rotina.'),
+      B.body('Sem treinamento novo: muda a ordem, não a ferramenta.'),
+      B.topics(
+        'O pedido chega já validado',
+        'A conferência acontece durante, não depois',
+        'O retrabalho vira exceção rastreada',
+        'O gargalo aparece antes da fila',
+      ),
     ]),
 
     media,
 
-    // TÓPICOS de benefício.
-    slide('content', [
-      B.label('A decisão'),
-      B.t2('Por que agora'),
-      B.body('Cada mês de espera cobra juros em retrabalho acumulado.'),
-      B.topics(
-        'A validação fica pronta antes do pico de fim de ano',
-        'O time aprende no ritmo baixo, não no pico',
-        'O retrabalho para de crescer a partir do mês um',
-      ),
-    ]),
+    slide('section', [B.label('Capítulo dois'), B.t1Hl('O que a operação ', 'ganha.')]),
 
     slide('closing', [
-      B.t1('Vamos começar?'),
+      B.t1Hl('Vamos ', 'começar?'),
       B.sub('Próximo passo: uma reunião de uma hora com o time.'),
       B.high('Aprovando esta semana, a validação entra antes do pico.'),
     ]),
