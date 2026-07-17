@@ -20,26 +20,33 @@ export interface ElementAsset {
   src: string;
 }
 
+/** Rótulos CURTOS: "Degradê Roxo-Azul-Verde" era um nome de imposto de renda. */
 const COLOR_LABELS: Record<string, string> = {
   azul: 'Azul',
   preto: 'Preto',
   roxo: 'Roxo',
   rosa: 'Rosa',
   verde: 'Verde',
-  'gradiente-azul-verde': 'Degradê Azul-Verde',
-  'gradiente-roxo-azul-verde': 'Degradê Roxo-Azul-Verde',
+  'gradiente-azul-verde': 'Degradê Verde',
+  'gradiente-roxo-azul-verde': 'Degradê Roxo',
 };
 
+/**
+ * As OITO formas da coleção, com o mesmo nome em TODAS as cores. A limpeza que
+ * isto encerrou: a mesma forma se chamava "ameba" em seis cores e "patinho" na
+ * sétima, e existia uma forma chamada só "c". Agora: fluido, anelar, arco,
+ * concha, coração, espiral, fenda, parafuso — padronizado (ver LEGACY_KEYS pros
+ * decks salvos com os nomes antigos).
+ */
 const SHAPE_LABELS: Record<string, string> = {
-  ameba: 'Ameba',
+  fluido: 'Fluido',
   anelar: 'Anelar',
-  c: 'C',
+  arco: 'Arco',
   concha: 'Concha',
   coracao: 'Coração',
   espiral: 'Espiral',
   fenda: 'Fenda',
   parafuso: 'Parafuso',
-  patinho: 'Patinho',
 };
 
 function titleCase(slug: string): string {
@@ -76,8 +83,21 @@ export function elementLabel(asset: ElementAsset): string {
   return `${elementShapeLabel(asset.shape)} ${elementColorLabel(asset.color)}`;
 }
 
+/**
+ * Chaves ANTIGAS que continuam vivas em decks salvos no localStorage. A
+ * padronização de nomes (ameba/patinho -> fluido, c -> arco) não pode fazer uma
+ * decoração já colocada sumir do slide de ninguém.
+ */
+function legacyKey(key: string): string {
+  const [color, shape] = key.split('/');
+  if (!color || !shape) return key;
+  if (shape === 'ameba' || shape === 'patinho') return `${color}/fluido`;
+  if (shape === 'c') return `${color}/arco`;
+  return key;
+}
+
 export function elementByKey(key: string): ElementAsset | undefined {
-  return ELEMENTS.find((e) => e.key === key);
+  return ELEMENTS.find((e) => e.key === key) ?? ELEMENTS.find((e) => e.key === legacyKey(key));
 }
 
 /** True quando existe pelo menos um elemento disponível (a pasta pode estar vazia). */

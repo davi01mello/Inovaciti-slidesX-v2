@@ -27,9 +27,9 @@ interface InsertDockProps {
   onInsertImage: (image: LoadedImage) => void;
 }
 
-type DockTab = 'text' | 'elements' | 'icons' | 'images';
+type DockTab = 'text' | 'brand' | 'images';
 
-const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', elements: 'Elementos', icons: 'Ícones', images: 'Imagens' };
+const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', brand: 'Marca CITi', images: 'Imagens' };
 
 export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: InsertDockProps) {
   const [tab, setTab] = useState<DockTab | null>(null);
@@ -62,20 +62,12 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
       <div ref={rootRef} className="flex items-center">
         <div className="glass-deep flex flex-col gap-1 rounded-2xl p-1.5">
           <RailButton icon="text" label="Texto" active={tab === 'text'} onClick={() => setTab((t) => (t === 'text' ? null : 'text'))} />
-          {showElements && (
+          {(showElements || showIcons) && (
             <RailButton
               icon="sparkle-design"
-              label="Elementos"
-              active={tab === 'elements'}
-              onClick={() => setTab((t) => (t === 'elements' ? null : 'elements'))}
-            />
-          )}
-          {showIcons && (
-            <RailButton
-              icon="grid"
-              label="Ícones"
-              active={tab === 'icons'}
-              onClick={() => setTab((t) => (t === 'icons' ? null : 'icons'))}
+              label="Marca"
+              active={tab === 'brand'}
+              onClick={() => setTab((t) => (t === 'brand' ? null : 'brand'))}
             />
           )}
           <RailButton
@@ -104,8 +96,7 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
               {tab === 'text' && <TextTab onInsert={onInsertText} />}
-              {tab === 'elements' && <ElementsTab onInsert={onInsertElement} />}
-              {tab === 'icons' && <IconsTab onInsert={onInsertElement} />}
+              {tab === 'brand' && <BrandTab onInsert={onInsertElement} />}
               {tab === 'images' && <ImagesTab onInsert={onInsertImage} />}
             </div>
           </div>
@@ -176,8 +167,38 @@ function TextTab({ onInsert }: { onInsert: (kind: FloatingTextKind) => void }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Elementos — biblioteca 3D da marca, filtrável por cor                       */
+/* Marca CITi — TUDO da identidade num painel só, em duas seções:              */
+/*   ELEMENTOS 3D (as bolhas) e ÍCONES (os pictogramas oficiais).             */
 /* -------------------------------------------------------------------------- */
+
+/** Cabeçalho de seção do painel: o traço da marca + título, como nos slides. */
+function SectionHeading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 px-0.5 pb-1.5 pt-1">
+      <span aria-hidden="true" className="h-[3px] w-5 rounded-full bg-gradient-to-r from-brand to-brand/30" />
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-secondary">{label}</span>
+    </div>
+  );
+}
+
+function BrandTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {hasElements() && (
+        <div>
+          <SectionHeading label="Elementos 3D" />
+          <ElementsTab onInsert={onInsert} />
+        </div>
+      )}
+      {hasIcons() && (
+        <div>
+          <SectionHeading label="Ícones CITi" />
+          <IconsTab onInsert={onInsert} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ElementsTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
   const [colorFilter, setColorFilter] = useState<string | null>(null);

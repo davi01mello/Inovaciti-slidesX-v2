@@ -604,7 +604,9 @@ function EditableZone({
   const rect = override ?? { x: zone.x, y: zone.y, width: zone.width, height: zone.height };
 
   if (!ctx.zonesEditable) {
-    // Leitura/export: um contêiner posicionado e nada mais.
+    // Leitura/export: um contêiner posicionado e nada mais. Os filhos entram
+    // DIRETO (sem wrapper): zonas com layout flex próprio (a faixa do fecho, a
+    // foto emoldurada) dependem de serem o pai imediato dos filhos delas.
     return (
       <div
         className={cn('absolute', className)}
@@ -616,7 +618,7 @@ function EditableZone({
           ...style,
         }}
       >
-        <div className="relative h-full w-full">{children}</div>
+        {children}
       </div>
     );
   }
@@ -658,7 +660,7 @@ function EditableZone({
         ) : null
       }
     >
-      <div className="relative h-full w-full">{children}</div>
+      {children}
     </TransformBox>
   );
 }
