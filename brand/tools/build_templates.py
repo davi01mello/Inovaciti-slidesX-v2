@@ -395,6 +395,7 @@ class ArtRecord:
     family: str
     file: str
     m: ArtMeasurement
+    animated: bool = False
 
 
 def render_grid_ascii(grid: list[int]) -> list[str]:
@@ -428,6 +429,7 @@ def emit_ts(records: list[ArtRecord]) -> str:
     vividness: {r.m.vividness},
     tone: {r.m.tone},
     light: {'true' if r.m.light else 'false'},
+    animated: {'true' if r.animated else 'false'},
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -468,6 +470,8 @@ export interface TemplateArt {{
   tone: number;
   /** Arte de fundo claro: a tinta do slide vira escura e o acento vira o profundo. */
   light: boolean;
+  /** Fundo com movimento (WebP animado, de um MP4 fonte) em vez de imagem parada. */
+  animated: boolean;
   /** Ocupação visual, 16 colunas x 9 linhas, em ordem de leitura (0..99). */
   grid: number[];
 }}
@@ -497,13 +501,14 @@ def emit_md(records: list[ArtRecord]) -> str:
         "",
         f"**{len(records)} artes.**",
         "",
-        "| id | família | tone | matiz | lum | croma | clara |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| id | família | tone | matiz | lum | croma | clara | animada |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in records:
         lines.append(
             f"| `{r.id}` | {r.family} | {r.m.tone:.2f} | {r.m.hue:.0f}° | "
-            f"{r.m.luminance:.2f} | {r.m.vividness:.2f} | {'sim' if r.m.light else '–'} |"
+            f"{r.m.luminance:.2f} | {r.m.vividness:.2f} | {'sim' if r.m.light else '–'} | "
+            f"{'sim' if r.animated else '–'} |"
         )
     lines += ["", "---", ""]
     for r in records:
@@ -561,7 +566,13 @@ def collect() -> list[ArtRecord]:
         for path in sorted_sources(src):
             art = measured_still(path)
             records.append(
-                ArtRecord(id=slugify(path.stem), family=family, file=path.name, m=measure(art))
+                ArtRecord(
+                    id=slugify(path.stem),
+                    family=family,
+                    file=path.name,
+                    m=measure(art),
+                    animated=path.suffix.lower() in VIDEO_EXTS,
+                )
             )
     return records
 
@@ -596,7 +607,7 @@ def build(report_only: bool) -> int:
                     art.save(out, "WEBP", quality=WEBP_QUALITY, method=6)
                 total_bytes += out.stat().st_size
 
-            records.append(ArtRecord(id=art_id, family=family, file=path.name, m=m))
+            records.append(ArtRecord(id=art_id, family=family, file=path.name, m=m, animated=is_video))
             print(
                 f"  {art_id:<20} {family:<8} tone {m.tone:.2f} ({tone_band(m.tone):<8}) "
                 f"matiz {m.hue:5.1f}°  lum {m.luminance:.2f}  croma {m.vividness:.2f}"

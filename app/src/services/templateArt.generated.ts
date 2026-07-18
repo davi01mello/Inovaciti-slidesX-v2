@@ -44,11 +44,15 @@ import art_canva_both_01 from '@/assets/templates/canvas/canva-both-01.webp';
 import art_canva_both_02 from '@/assets/templates/canvas/canva-both-02.webp';
 import art_canva_down_01 from '@/assets/templates/canvas/canva-down-01.webp';
 import art_canva_down_02 from '@/assets/templates/canvas/canva-down-02.webp';
+import art_canva_down_03 from '@/assets/templates/canvas/canva-down-03.webp';
+import art_canva_down_04 from '@/assets/templates/canvas/canva-down-04.webp';
 import art_canva_left_01 from '@/assets/templates/canvas/canva-left-01.webp';
 import art_canva_left_02 from '@/assets/templates/canvas/canva-left-02.webp';
 import art_canva_left_03 from '@/assets/templates/canvas/canva-left-03.webp';
 import art_canva_left_04 from '@/assets/templates/canvas/canva-left-04.webp';
 import art_canva_right_01 from '@/assets/templates/canvas/canva-right-01.webp';
+import art_canva_right_02 from '@/assets/templates/canvas/canva-right-02.webp';
+import art_canva_right_03 from '@/assets/templates/canvas/canva-right-03.webp';
 import art_espiral_branco_01 from '@/assets/templates/espiral/espiral-branco-01.webp';
 import art_espiral_preto_01 from '@/assets/templates/espiral/espiral-preto-01.webp';
 import art_espiral_preto_02 from '@/assets/templates/espiral/espiral-preto-02.webp';
@@ -69,6 +73,8 @@ export interface TemplateArt {
   tone: number;
   /** Arte de fundo claro: a tinta do slide vira escura e o acento vira o profundo. */
   light: boolean;
+  /** Fundo com movimento (WebP animado, de um MP4 fonte) em vez de imagem parada. */
+  animated: boolean;
   /** Ocupação visual, 16 colunas x 9 linhas, em ordem de leitura (0..99). */
   grid: number[];
 }
@@ -86,6 +92,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.058,
     tone: 0.94,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -109,6 +116,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.042,
     tone: 0.957,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -132,6 +140,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.065,
     tone: 0.963,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -155,6 +164,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.055,
     tone: 0.856,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -178,6 +188,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.055,
     tone: 1.0,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -201,6 +212,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.048,
     tone: 0.974,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -224,6 +236,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.044,
     tone: 0.958,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -247,6 +260,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.029,
     tone: 0.94,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -270,6 +284,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.063,
     tone: 0.953,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -293,6 +308,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.031,
     tone: 0.922,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -316,6 +332,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.038,
     tone: 0.885,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -339,6 +356,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.067,
     tone: 0.923,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -362,6 +380,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.059,
     tone: 0.86,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -385,6 +404,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.032,
     tone: 0.856,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -408,6 +428,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.087,
     tone: 0.661,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -431,6 +452,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.093,
     tone: 0.628,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -454,6 +476,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.117,
     tone: 0.642,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -477,6 +500,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.118,
     tone: 0.576,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -500,6 +524,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.17,
     tone: 0.511,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -523,6 +548,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.138,
     tone: 0.601,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -546,6 +572,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.141,
     tone: 0.577,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -569,6 +596,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.156,
     tone: 0.478,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -592,6 +620,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.116,
     tone: 0.975,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -615,6 +644,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.084,
     tone: 0.871,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -638,6 +668,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.088,
     tone: 0.865,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -661,6 +692,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.093,
     tone: 0.925,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -684,6 +716,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.051,
     tone: 0.805,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -707,6 +740,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.101,
     tone: 0.956,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -730,6 +764,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.028,
     tone: 0.752,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -753,6 +788,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.074,
     tone: 0.641,
     light: false,
+    animated: true,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -776,6 +812,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.023,
     tone: 0.818,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -799,6 +836,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.048,
     tone: 0.909,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -814,6 +852,54 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     ],
   },
   {
+    id: 'canva-down-03',
+    family: 'canvas',
+    src: art_canva_down_03,
+    hue: 168.1,
+    luminance: 0.108,
+    vividness: 0.086,
+    tone: 0.891,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      12,  2,  3,  2,  2,  2,  2,  4,  4,  4,  4,  3,  3,  3,  2,  2,
+      35, 76, 91,  5,  3,  3,  3,  8,  7,  6,  5, 12, 78, 50, 30, 28,
+       7, 22, 68, 80,  4,  4,  4, 13, 11,  9, 13, 78, 51,  9,  4, 10,
+      11, 36, 42, 78, 79,  8,  8, 24, 31, 25, 57, 27, 18, 37,  9, 10,
+       8,  4, 19, 22, 64, 24, 27, 53, 22, 10, 67, 14, 11, 36, 20, 15,
+      20, 20, 13, 22, 46, 50, 41, 33, 49, 83, 71, 49, 56, 32, 65, 41,
+       5, 22, 27, 28, 35, 49, 63, 67, 87, 76, 58, 54, 57, 39, 30,  9,
+       6,  6,  8, 21, 44, 48, 55, 63, 54, 87, 56, 46, 25,  2, 19, 14,
+      17, 13, 17, 32, 19, 19, 23, 17, 10,  6,  4,  3,  1,  1,  3, 11,
+    ],
+  },
+  {
+    id: 'canva-down-04',
+    family: 'canvas',
+    src: art_canva_down_04,
+    hue: 165.2,
+    luminance: 0.112,
+    vividness: 0.082,
+    tone: 0.93,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       0,  1,  0,  0,  1,  1,  1,  2,  3,  3,  4, 14, 65, 14,  7,  4,
+       1,  0,  1,  1,  1,  1,  2, 15,  8, 43, 17, 61, 49, 32, 29,  5,
+       1,  1,  1,  1,  2, 16, 11, 13, 21, 56, 47, 51, 58, 33, 66,  8,
+       1,  1,  1,  1, 11, 19, 19, 18, 23, 16, 44, 25, 57, 29, 46,  9,
+       2,  2,  3,  3,  3, 20, 13, 15, 17, 27, 26, 36, 54, 25, 11, 30,
+       9, 11,  4,  2,  2, 16, 16, 20, 36, 67, 24, 60, 71, 15, 16, 20,
+      63, 35, 38,  4,  9, 22, 39, 18, 49, 61, 31, 68, 58, 18, 13, 10,
+      10,  6, 17, 25, 32, 26, 75, 13, 15, 23, 47, 51, 55, 48, 22, 17,
+      23, 21, 17, 24, 23, 29, 40, 24, 32, 42, 39, 59, 66, 75, 33, 16,
+    ],
+  },
+  {
     id: 'canva-left-01',
     family: 'canvas',
     src: art_canva_left_01,
@@ -822,6 +908,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.041,
     tone: 0.886,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -845,6 +932,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.055,
     tone: 0.803,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -868,6 +956,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.065,
     tone: 0.833,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -891,6 +980,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.089,
     tone: 0.636,
     light: false,
+    animated: true,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -914,6 +1004,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.056,
     tone: 0.844,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -929,6 +1020,54 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     ],
   },
   {
+    id: 'canva-right-02',
+    family: 'canvas',
+    src: art_canva_right_02,
+    hue: 177.2,
+    luminance: 0.158,
+    vividness: 0.16,
+    tone: 0.768,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      17, 10, 23, 70, 28, 15, 11,  2,  2,  2,  1,  0,  0,  0,  0,  0,
+      23, 30, 32, 76, 32, 22, 23, 62, 13, 39, 13, 14,  9,  2,  2,  1,
+      29, 62, 43, 90, 24, 22, 21, 44, 79, 50, 18, 12, 18, 54, 53,  5,
+      56, 30, 58, 89, 27, 24, 29, 23, 54, 82, 41, 21, 10, 10, 47, 68,
+      24, 19, 82, 92, 15, 44, 51, 31, 14, 69, 44, 31, 12,  9, 17, 45,
+       9, 32, 91, 31, 11, 52, 59, 32, 20, 51, 49, 39, 14,  9, 12, 27,
+      17, 62, 81, 22, 56, 85, 68, 22, 23, 56, 59, 41, 16,  8,  8, 19,
+      35, 73, 42, 56, 70, 52, 22, 15, 54, 56, 51, 30, 12,  6, 10, 18,
+      83, 67, 62, 42, 26, 17, 11, 23, 84, 49, 54, 19,  7,  6,  7, 17,
+    ],
+  },
+  {
+    id: 'canva-right-03',
+    family: 'canvas',
+    src: art_canva_right_03,
+    hue: 184.7,
+    luminance: 0.095,
+    vividness: 0.116,
+    tone: 0.666,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  4,
+       0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  3,  5,  6,  6, 29, 21,
+       0,  0,  0,  0,  0,  0,  0,  1,  2,  5, 19, 78, 75, 90, 44, 44,
+       0,  0,  0,  0,  0,  0,  1,  2,  7, 16, 71, 69, 39, 30, 37, 29,
+       0,  0,  0,  0,  0,  0,  1,  6, 20, 38, 64, 24, 36, 87, 47, 64,
+       0,  0,  0,  0,  0,  1,  3, 16, 50, 81, 53, 38, 51, 95, 32, 41,
+       0,  0,  0,  0,  0,  9, 37, 85, 98, 83, 44, 40, 50, 89, 10,  4,
+       0,  0,  1, 12, 14, 63, 36, 28, 98, 80, 37, 79, 90, 92, 15,  2,
+      26, 21, 33, 40, 52, 60, 43, 48, 39, 30, 54, 72, 99, 54,  7,  1,
+    ],
+  },
+  {
     id: 'espiral-branco-01',
     family: 'espiral',
     src: art_espiral_branco_01,
@@ -937,6 +1076,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.24,
     tone: 0.0,
     light: true,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -960,6 +1100,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.092,
     tone: 0.891,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [
@@ -983,6 +1124,7 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     vividness: 0.08,
     tone: 0.87,
     light: false,
+    animated: false,
     // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
     // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
     grid: [

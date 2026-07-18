@@ -36,8 +36,9 @@ const COLOR_LABELS: Record<string, string> = {
  * isto encerrou: a mesma forma se chamava "ameba" em seis cores e "patinho" na
  * sétima, e existia uma forma chamada só "c". Agora: fluido, anelar, arco,
  * concha, coração, espiral, fenda, parafuso — padronizado (ver LEGACY_KEYS pros
- * decks salvos com os nomes antigos). As últimas quatro (crescente, emaranhado,
- * hélice, redemoinho) são as animadas, só na cor verde por enquanto.
+ * decks salvos com os nomes antigos). As sete últimas (crescente, emaranhado,
+ * garra, hélice, novelo, redemoinho, voluta) são as animadas, só na cor verde
+ * por enquanto.
  */
 const SHAPE_LABELS: Record<string, string> = {
   fluido: 'Fluido',
@@ -50,8 +51,11 @@ const SHAPE_LABELS: Record<string, string> = {
   parafuso: 'Parafuso',
   crescente: 'Crescente',
   emaranhado: 'Emaranhado',
+  garra: 'Garra',
   helice: 'Hélice',
+  novelo: 'Novelo',
   redemoinho: 'Redemoinho',
+  voluta: 'Voluta',
 };
 
 function titleCase(slug: string): string {
