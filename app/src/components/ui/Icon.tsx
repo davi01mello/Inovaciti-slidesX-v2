@@ -42,7 +42,8 @@ export type IconName =
   | 'x'
   | 'undo'
   | 'redo'
-  | 'mic';
+  | 'mic'
+  | 'image';
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -95,6 +96,11 @@ const STROKE_PATHS: Record<string, string[]> = {
   x: ['M6 6l12 12', 'M18 6 6 18'],
   undo: ['M8.5 5 4 9.5 8.5 14', 'M4 9.5h10a6 6 0 0 1 0 12h-3'],
   redo: ['m15.5 5 4.5 4.5-4.5 4.5', 'M20 9.5H10a6 6 0 0 0 0 12h3'],
+  image: [
+    'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',
+    'M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+    'm21 15-5-5L5 21',
+  ],
 };
 
 function StrokeIcon({ name, size = 18, ...rest }: IconProps) {

@@ -118,8 +118,15 @@ export function PresentPage() {
         goPrev();
       }}
     >
-      {/* O slide no maior 16:9 que cabe na tela: em monitores 16:9 é a tela inteira. */}
-      <div className="relative aspect-[16/9]" style={{ width: 'min(100vw, calc(100dvh * 1.7778))' }}>
+      {/* O slide no maior 16:9 que cabe na tela: em monitores 16:9 é a tela inteira.
+       * key={slide.id} força um remount a cada troca — é isso que faz o
+       * animate-reveal (fade + leve zoom de assentamento) disparar de novo em
+       * cada slide, a transição entre eles no modo Apresentar. */}
+      <div
+        key={slide.id}
+        className="relative aspect-[16/9] animate-reveal"
+        style={{ width: 'min(100vw, calc(100dvh * 1.7778))' }}
+      >
         <SlideComposition slide={slide} tone={deckPlan.tone} art={deckPlan.art.get(slide.id)} />
       </div>
     </div>

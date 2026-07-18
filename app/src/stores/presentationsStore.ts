@@ -489,6 +489,8 @@ export interface PresentationsApi {
   setContentZone(id: string, slideId: string, rect: BlockRect): void;
   resetContentZone(id: string, slideId: string): void;
   setBrandMark(id: string, slideId: string, mark: SlideBrandMark | undefined): void;
+  /** Escolha manual do fundo deste slide (id de TemplateArt). undefined = volta ao automático. */
+  setSlideArt(id: string, slideId: string, artId: string | undefined): void;
   appendChatMessage(id: string, message: Omit<ChatMessage, 'id' | 'createdAt'>): ChatMessage;
   setStatus(id: string, status: PresentationStatus): void;
   duplicate(id: string): string | null;
@@ -852,6 +854,21 @@ export const presentationsStore = {
       updateSlideInPresentation(p, slideId, (s) => ({
         ...s,
         brandMark: mark ? { ...mark, ...(mark.rect ? { rect: clampRect(mark.rect) } : {}) } : undefined,
+      })),
+    );
+  },
+
+  /**
+   * Escolha manual do fundo deste slide, tirada da galeria "Fundos". undefined
+   * (ou um id que sumiu do catálogo) devolve o slide pro diretor de arte automático.
+   */
+  setSlideArt(id, slideId, artId) {
+    const resolved = artId && artById(artId) ? artId : undefined;
+    recordHistory(id, `art:${slideId}`);
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        artOverride: resolved,
       })),
     );
   },

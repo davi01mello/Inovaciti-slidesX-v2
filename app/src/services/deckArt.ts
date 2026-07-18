@@ -123,6 +123,8 @@ function eligibleArts(tone: number, archetype: Archetype, need: number): Templat
 export interface DeckSlideRole {
   id: string;
   archetype: Archetype;
+  /** Escolha manual do fundo (Slide.artOverride). Presente = pula o sorteio pra este slide. */
+  artOverride?: string;
 }
 
 export interface ArtChoice {
@@ -209,7 +211,11 @@ export function planDeckArt(
   let prevFamily: ArtFamily | '' = '';
 
   for (const slide of slides) {
-    const pool = eligibleArts(tone, slide.archetype, need);
+    // Escolha MANUAL: pula o sorteio, mas o motor ainda escolhe o melhor ARRANJO
+    // pra ela (como o texto encaixa) e ela ainda entra em usedArts/usedArrangements
+    // pra baixo, então o resto do deck continua fugindo dela normalmente.
+    const overrideArt = slide.artOverride ? BY_ID.get(slide.artOverride) : undefined;
+    const pool = overrideArt ? [overrideArt] : eligibleArts(tone, slide.archetype, need);
 
     const scored: Candidate[] = [];
 

@@ -152,6 +152,14 @@ export function WorkspacePage() {
     [presentation, currentSlide],
   );
 
+  const handleSelectArt = useCallback(
+    (artId: string | undefined) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.setSlideArt(presentation.id, currentSlide.id, artId);
+    },
+    [presentation, currentSlide],
+  );
+
   const handleInsertImage = useCallback(
     (image: LoadedImage, at?: { x: number; y: number }) => {
       if (!presentation || !currentSlide) return;
@@ -396,6 +404,9 @@ export function WorkspacePage() {
               onInsertText={handleInsertText}
               onInsertElement={handleInsertElement}
               onInsertImage={(image) => handleInsertImage(image)}
+              onSelectArt={handleSelectArt}
+              currentArtId={deckPlan.art.get(currentSlide.id)?.artId}
+              artOverride={currentSlide.artOverride}
             />
           )}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center">

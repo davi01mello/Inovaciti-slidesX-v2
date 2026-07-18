@@ -3,6 +3,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ELEMENTS, ELEMENT_COLORS, elementColorLabel, elementShapeLabel, hasElements } from '@/services/elementsManifest';
 import { ICONS, ICON_CATEGORIES, iconCategoryLabel, iconNameLabel, hasIcons } from '@/services/iconsManifest';
+import { TEMPLATE_ARTS, type ArtFamily } from '@/services/templateArt.generated';
 import { addSessionUpload, listSessionUploads, type SessionUpload } from '@/services/sessionUploads';
 import { writeInsertPayload } from '@/services/insertDnd';
 import { generateAiImage } from '@/services/imageGenClient';
@@ -25,13 +26,26 @@ interface InsertDockProps {
   onInsertText: (kind: FloatingTextKind) => void;
   onInsertElement: (assetKey: string) => void;
   onInsertImage: (image: LoadedImage) => void;
+  /** Escolha manual do fundo do slide atual. undefined = devolve pro diretor de arte automático. */
+  onSelectArt: (artId: string | undefined) => void;
+  /** Id da arte que está de fato no palco agora (automática ou escolhida). */
+  currentArtId?: string;
+  /** A escolha MANUAL do slide atual (Slide.artOverride) — se ausente, o fundo é automático. */
+  artOverride?: string;
 }
 
-type DockTab = 'text' | 'brand' | 'images';
+type DockTab = 'text' | 'brand' | 'art' | 'images';
 
-const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', brand: 'Marca CITi', images: 'Imagens' };
+const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', brand: 'Marca CITi', art: 'Fundos', images: 'Imagens' };
 
-export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: InsertDockProps) {
+export function InsertDock({
+  onInsertText,
+  onInsertElement,
+  onInsertImage,
+  onSelectArt,
+  currentArtId,
+  artOverride,
+}: InsertDockProps) {
   const [tab, setTab] = useState<DockTab | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +85,12 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
             />
           )}
           <RailButton
+            icon="image"
+            label="Fundos"
+            active={tab === 'art'}
+            onClick={() => setTab((t) => (t === 'art' ? null : 'art'))}
+          />
+          <RailButton
             icon="file-image"
             label="Imagens"
             active={tab === 'images'}
@@ -92,11 +112,14 @@ export function InsertDock({ onInsertText, onInsertElement, onInsertImage }: Ins
               </button>
             </div>
             <p className="flex-none px-4 pb-2.5 text-[11px] leading-snug text-ink-muted">
-              Clique pra inserir no centro, ou arraste pro slide.
+              {tab === 'art'
+                ? 'Escolha o fundo deste slide entre todas as artes da marca.'
+                : 'Clique pra inserir no centro, ou arraste pro slide.'}
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
               {tab === 'text' && <TextTab onInsert={onInsertText} />}
               {tab === 'brand' && <BrandTab onInsert={onInsertElement} />}
+              {tab === 'art' && <ArtTab onSelect={onSelectArt} currentArtId={currentArtId} artOverride={artOverride} />}
               {tab === 'images' && <ImagesTab onInsert={onInsertImage} />}
             </div>
           </div>
@@ -295,6 +318,114 @@ function IconsTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
             </span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fundos — a galeria INTEIRA de artes da marca (Capas/Canvas/Espiral), fixas   */
+/* e com movimento juntas. Diferente de Elementos/Ícones: aqui não solta nada  */
+/* no slide, TROCA o fundo dele inteiro — por isso só clica, não arrasta, e    */
+/* tem a opção "Automático" pra devolver a escolha pro diretor de arte.        */
+/* -------------------------------------------------------------------------- */
+
+const FAMILY_LABEL: Record<ArtFamily, string> = { capa: 'Capas', canvas: 'Canvas', espiral: 'Espiral' };
+
+function ArtTab({
+  onSelect,
+  currentArtId,
+  artOverride,
+}: {
+  onSelect: (artId: string | undefined) => void;
+  currentArtId?: string;
+  artOverride?: string;
+}) {
+  const [familyFilter, setFamilyFilter] = useState<ArtFamily | null>(null);
+  const [animatedOnly, setAnimatedOnly] = useState(false);
+  const families = useMemo(() => Array.from(new Set(TEMPLATE_ARTS.map((a) => a.family))), []);
+  const visible = useMemo(
+    () =>
+      TEMPLATE_ARTS.filter(
+        (art) => (familyFilter === null || art.family === familyFilter) && (!animatedOnly || art.animated),
+      ),
+    [familyFilter, animatedOnly],
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-1">
+        <ColorChip active={familyFilter === null} onClick={() => setFamilyFilter(null)} label="Todas" />
+        {families.map((family) => (
+          <ColorChip
+            key={family}
+            active={familyFilter === family}
+            onClick={() => setFamilyFilter((f) => (f === family ? null : family))}
+            label={FAMILY_LABEL[family] ?? family}
+          />
+        ))}
+        <ColorChip active={animatedOnly} onClick={() => setAnimatedOnly((v) => !v)} label="Com movimento" />
+      </div>
+
+      {/* "Automático": devolve o slide pro sorteio do diretor de arte — some da
+          rotação manual, mas o motor continua fugindo de repetição normalmente. */}
+      <button
+        type="button"
+        onClick={() => onSelect(undefined)}
+        className={cn(
+          'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all duration-150',
+          !artOverride
+            ? 'border-brand/45 bg-brand/[0.1]'
+            : 'border-white/[0.07] bg-white/[0.03] hover:border-brand/30 hover:bg-brand/[0.05]',
+        )}
+      >
+        <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-brand/30 bg-brand/[0.12] text-brand">
+          <Icon name="sparkles" size={13} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12px] font-semibold text-ink">Automático</span>
+          <span className="block text-[10.5px] leading-snug text-ink-muted">O diretor de arte escolhe pra você</span>
+        </span>
+        {!artOverride && <Icon name="check" size={13} className="flex-none text-brand" />}
+      </button>
+
+      <div className="grid grid-cols-2 gap-1.5">
+        {visible.map((art) => {
+          const picked = artOverride === art.id;
+          const isAutoShowing = !artOverride && currentArtId === art.id;
+          return (
+            <button
+              key={art.id}
+              type="button"
+              onClick={() => onSelect(art.id)}
+              title={`${FAMILY_LABEL[art.family] ?? art.family}${art.animated ? ' · com movimento' : ''}`}
+              className={cn(
+                'group relative aspect-video overflow-hidden rounded-lg border transition-all duration-150',
+                picked
+                  ? 'border-brand/60 ring-1 ring-brand/40'
+                  : 'border-white/[0.07] hover:border-brand/40',
+              )}
+            >
+              <img src={art.src} alt="" draggable={false} className="h-full w-full object-cover" />
+              {art.animated && (
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-black/55 text-[8px] text-white backdrop-blur-sm"
+                >
+                  ▶
+                </span>
+              )}
+              {picked && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[#07130b]">
+                  <Icon name="check" size={9} strokeWidth={3} />
+                </span>
+              )}
+              {isAutoShowing && (
+                <span aria-hidden="true" className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-brand" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

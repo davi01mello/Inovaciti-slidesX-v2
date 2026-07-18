@@ -163,6 +163,10 @@ export function composeSlide(slide: Slide): ComposedSlide {
 }
 
 /** O papel de cada slide do deck, na ordem — é o que o diretor de arte recebe. */
-export function deckRoles(slides: Slide[]): { id: string; archetype: Archetype }[] {
-  return slides.map((slide) => ({ id: slide.id, archetype: composeSlide(slide).archetype }));
+export function deckRoles(slides: Slide[]): { id: string; archetype: Archetype; artOverride?: string }[] {
+  return slides.map((slide) => ({
+    id: slide.id,
+    archetype: composeSlide(slide).archetype,
+    artOverride: slide.artOverride,
+  }));
 }

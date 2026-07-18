@@ -241,4 +241,12 @@ export interface Slide {
   zoneOverrides?: Partial<Record<ZoneKey, BlockRect>>;
   /** Sobrescreve a marca CITi do canto (mover/redimensionar/apagar). */
   brandMark?: SlideBrandMark;
+  /**
+   * Escolha MANUAL do fundo deste slide (id de TemplateArt, ver templateArt.generated.ts).
+   * Ausente = o diretor de arte do deck decide (services/deckArt.ts), como sempre foi.
+   * Presente = este slide sai da rotação automática: ninguém mais herda essa arte
+   * por acaso, e ela não é filtrada por tom nem por "arte clara só em hero" — é
+   * escolha explícita, o motor só decide o ARRANJO (como o texto encaixa nela).
+   */
+  artOverride?: string;
 }

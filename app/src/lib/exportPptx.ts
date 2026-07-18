@@ -1,4 +1,5 @@
 import PptxGenJS from 'pptxgenjs';
+import JSZip from 'jszip';
 import { renderSlidesForExport, RASTER_WIDTH, type ExportText } from '@/lib/slideRaster';
 import type { Presentation } from '@/types/presentation';
 
@@ -102,14 +103,70 @@ async function buildPptx(presentation: Presentation): Promise<PptxGenJS> {
   return pptx;
 }
 
-/** Monta um .pptx com arte + textos reais por slide e baixa no navegador. */
+/* -------------------------------------------------------------------------- */
+/* Transição entre slides — o pptxgenjs não tem essa API (versão 3.x não expõe
+ * nada de <p:transition>), então o jeito é gerar o .pptx normal e remendar o
+ * XML de cada slide depois, dentro do próprio zip. Um fade simples, igual ao
+ * do modo Apresentar do site: mesma sensação nos dois lugares.                */
+/* -------------------------------------------------------------------------- */
+
+/** spd="med" ~0.75s, o mesmo ritmo do animate-reveal do modo Apresentar. */
+const SLIDE_TRANSITION_XML = '<p:transition spd="med"><p:fade/></p:transition>';
+
+/**
+ * `<p:transition>` entra depois de `<p:cSld>` e (se existir) depois de
+ * `<p:clrMapOvr>`, sempre antes de `<p:timing>` — é a ordem que o schema do
+ * OOXML exige; fora dela o PowerPoint recusa o arquivo como corrompido.
+ */
+function injectSlideTransition(xml: string): string {
+  if (xml.includes('<p:transition')) return xml; // idempotente, por garantia
+  const anchor = xml.includes('</p:clrMapOvr>') ? '</p:clrMapOvr>' : '</p:cSld>';
+  const at = xml.indexOf(anchor);
+  if (at === -1) return xml;
+  const insertAt = at + anchor.length;
+  return xml.slice(0, insertAt) + SLIDE_TRANSITION_XML + xml.slice(insertAt);
+}
+
+/** Gera o .pptx via pptxgenjs e reabre o zip só pra costurar a transição em cada slide. */
+async function buildPptxBlobWithTransitions(pptx: PptxGenJS): Promise<Blob> {
+  const rawBlob = (await pptx.write({ outputType: 'blob' })) as Blob;
+  const zip = await JSZip.loadAsync(rawBlob);
+  const slideFiles = Object.keys(zip.files).filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name));
+
+  await Promise.all(
+    slideFiles.map(async (name) => {
+      const file = zip.file(name);
+      if (!file) return;
+      const xml = await file.async('string');
+      zip.file(name, injectSlideTransition(xml));
+    }),
+  );
+
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  });
+}
+
+/** Monta um .pptx com arte + textos reais por slide (+ transição) e baixa no navegador. */
 export async function exportPresentationAsPptx(presentation: Presentation): Promise<void> {
   const pptx = await buildPptx(presentation);
-  await pptx.writeFile({ fileName: slugifyFilename(presentation.title) });
+  const blob = await buildPptxBlobWithTransitions(pptx);
+  const url = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = slugifyFilename(presentation.title);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /** O mesmo .pptx do download, como Blob — é o arquivo que vai pro import da Canva. */
 export async function buildPptxBlob(presentation: Presentation): Promise<Blob> {
   const pptx = await buildPptx(presentation);
-  return (await pptx.write({ outputType: 'blob' })) as Blob;
+  return buildPptxBlobWithTransitions(pptx);
 }
