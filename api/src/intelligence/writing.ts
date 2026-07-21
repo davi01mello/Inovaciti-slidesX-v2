@@ -74,11 +74,21 @@ qualquer bloco fora do formato.
                Quando o argumento pede prosa, curta. Faixa: 15 a 33.
   citacao      Frase de impacto. title-2 manchete + highlight de 6 a 14 palavras
                (+ section-label opcional). Tese, provocação, fecho de capítulo. Faixa: 9 a 28.
-  topicos      Título + 3 a 5 tópicos telegráficos (3 a 10 palavras cada). Agenda,
-               entregas, requisitos. NUNCA 2 tópicos: dois pontos soltos deixam o
-               slide vazio — com só 2 pontos, use cards ou comparacao. Faixa: 14 a 40.
+  topicos      Título + 3 a 5 tópicos telegráficos (3 a 10 palavras cada). É o formato
+               MAGRO da lista: uma lista leve, SEM caixa, que o design renderiza pequena
+               de propósito. Por isso ele serve só pro que é SECUNDÁRIO na tela: uma
+               agenda, um checklist de requisitos, entregas que a plateia confere de
+               relance. Se os itens SÃO a mensagem do slide (pilares, frentes, pontos que
+               a plateia tem que lembrar), eles NÃO são tópicos, são cards. Use topicos com
+               moderação: raramente é o melhor formato pro miolo. NUNCA 2 tópicos.
+               Faixa: 14 a 40.
   cards        Título + 2 a 3 cards (título de 2 a 4 palavras + UMA frase de 5 a 16).
-               Pilares e frentes que pedem um pingo de explicação. Faixa: 18 a 48.
+               É o formato de PESO da enumeração: cada ponto ganha uma caixa própria, com
+               número, título forte e uma linha de apoio, e o conjunto lê como COLUNAS lado
+               a lado, não como uma lista espremida. É o default sempre que o "1, 2, 3"
+               carrega o slide: pilares, frentes, diferenciais, o que fica ao fim. Na
+               dúvida entre topicos e cards pro conteúdo PRINCIPAL, escolha cards.
+               Faixa: 18 a 48.
   split        Título + body de 12 a 25 + UMA lista curta (2 a 4 tópicos OU 2 cards).
                Contexto e desdobramento dividindo o slide. Faixa: 26 a 55.
   numero       UM número carrega o slide. title-2 + stats com 1 item (value curto como
@@ -119,13 +129,26 @@ LINHA DE APOIO: nos formatos com lista (topicos, cards, indicadores, comparacao,
 inclua um subtitle de apoio sob o título (8 a 12 palavras, tom de contexto) na MAIORIA dos
 slides: é o parágrafo cinza que respira entre o título e o conteúdo, como no deck oficial.
 
+PESO VISUAL DA ENUMERAÇÃO (a regra que decide se o slide chama atenção ou passa batido).
+O conteúdo central de um slide JAMAIS sai como uma listinha fininha empilhada, do tipo "1,
+2, 3" em letra pequena. Quando o slide enumera de 2 a 3 pontos que a plateia deve LEMBRAR,
+trate-os como COLUNAS/CAIXAS (cards) ou, se houver ordem, como uma linha de FASES (jornada
+com "icons"): cada ponto ganha número ou ícone, um título forte e uma linha de apoio, e o
+conjunto ocupa a largura do slide com peso. É o desenho das apresentações de consultoria e
+das referências oficiais do CITi. O texto de apoio de cada ponto é conteúdo de primeira
+classe, não legenda: escreva-o pra ser lido, não pra caber num canto. topicos (a lista
+magra) é a EXCEÇÃO pro que é secundário, nunca o padrão do miolo.
+
 VARIEDADE ESTRUTURAL: A REGRA MAIS VISÍVEL DO DECK. Uma apresentação profissional parece
 desenhada slide a slide por um diretor de arte, nunca gerada em série. O sistema varia a
 arte de fundo e o desenho de cada formato sozinho, mas ele só consegue variar o que você
 escreve variado:
 - Dois slides vizinhos NUNCA têm o mesmo formato. Sem exceção.
 - Até 12 slides, nenhum formato aparece mais de 2 vezes; com 5 ou mais slides de conteúdo,
-  use pelo menos 5 formatos diferentes.
+  use pelo menos 5 formatos diferentes. ESTE TETO VALE EM DOBRO PRA "topicos": ele é a
+  lista magra, a exceção pro secundário, nunca deveria acumular 3+ ocorrências num deck de
+  até 12 slides. O servidor converte o excesso pra jornada automaticamente, mas isso é uma
+  rede de segurança, não uma licença: planeje o deck pra já sair sem excesso.
 - VARIE AS CONTAGENS: se um slide de cards tem 3 itens, o próximo slide com lista tem 2 ou
   4. Dois slides vizinhos nunca têm o mesmo número de itens. (Tópicos e etapas: mínimo 3.)
 - ALTERNE PESO E RESPIRO: depois de um slide denso (cards, comparacao, indicadores), vem um
@@ -182,9 +205,14 @@ CARD ≠ TÓPICO ≠ ETAPA. A distinção é obrigatória e o sistema a aplica n
   kind "compare" DOIS lados {label de 1 a 4 palavras, points de 1 a 3 itens de 3 a 10
                  palavras}. Sempre exatamente 2 lados.
 
-Como escolher entre card e tópico, uma pergunta só: "este item precisa de uma frase de
-apoio pra ser entendido?" Precisa -> card. Não precisa -> tópico. Um tópico NUNCA vira
-card. NUNCA dois tipos de lista no mesmo slide.
+Como escolher entre card e tópico, DUAS perguntas:
+1. "este item é uma das mensagens que a plateia tem que LEMBRAR (um pilar, uma frente, uma
+   fase, um diferencial)?" Se sim, é card (ou etapa, quando a ordem importa), MESMO que a
+   frase de apoio seja curta: conteúdo principal merece o peso de uma caixa/coluna, nunca uma
+   linha magra e fria.
+2. Só o que é SECUNDÁRIO na tela (uma agenda, um checklist de requisitos, itens que a plateia
+   confere de relance e esquece) fica como tópico. Na dúvida, é card.
+Um tópico NUNCA vira card no mesmo slide. NUNCA dois tipos de lista no mesmo slide.
 
 TAMANHO DE CADA PEÇA (o design reserva o espaço exato, respeite):
   section-label   2 a 3 palavras

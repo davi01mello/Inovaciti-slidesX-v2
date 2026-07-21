@@ -767,6 +767,41 @@ function dejavuBreaker(slides: GeneratedSlide[]): GeneratedSlide[] {
   return out;
 }
 
+/**
+ * TOPICOS EM EXCESSO NO DECK INTEIRO (não só entre vizinhos).
+ *
+ * O catálogo pede "topicos com moderação" e o quebra-monotonia acima só vigia
+ * PARES vizinhos: um deck tipo topicos-cards-topicos-afirmacao-topicos passa
+ * pelo dejavuBreaker inteiro sem disparar nada, e ainda assim sai com metade
+ * dos slides na lista magra, que é exatamente a monotonia que o usuário via.
+ *
+ * Aqui o teto é do DECK: a mesma régua que o prompt promete ("até 12 slides,
+ * nenhum formato mais de 2 vezes", proporcional daí em diante) vira código. A
+ * 3ª ocorrência (e além) de "topicos" converte pra jornada, timeline: a única
+ * transformação sem perda de texto disponível pro formato. Sem itens
+ * suficientes pra virar etapa (topicos->jornada exige 3+), o slide fica como
+ * está: preferir um pouco de repetição a uma conversão forçada.
+ */
+function topicosCapFor(contentSlideCount: number): number {
+  return contentSlideCount <= 12 ? 2 : Math.ceil(contentSlideCount / 6);
+}
+
+function capTopicsFrequency(slides: GeneratedSlide[]): GeneratedSlide[] {
+  const out = slides.slice();
+  const contentCount = out.filter((s) => s.layout === 'content').length;
+  const cap = topicosCapFor(contentCount);
+  let seen = 0;
+  for (let i = 0; i < out.length; i++) {
+    const slide = out[i]!;
+    if (slide.layout !== 'content' || inferFormat(slide.blocks) !== 'topicos') continue;
+    seen++;
+    if (seen <= cap) continue;
+    const converted = convertForVariety(slide, 'topicos');
+    if (converted) out[i] = converted;
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Respostas                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -791,9 +826,12 @@ export function normalizeGenerateResponse(raw: unknown): {
     ? rawSlides.map(normalizeSlide).filter((s): s is GeneratedSlide => s !== null)
     : [];
   // A gramática do FORMATO modela cada slide de conteúdo (capa/separador/fecho já
-  // saíram do normalizeSlide com o teto por bloco aplicado), e o quebra-monotonia
-  // garante que dois vizinhos não repitam o desenho.
-  const slides = dejavuBreaker(parsed.map(enforceFormat));
+  // saíram do normalizeSlide com o teto por bloco aplicado), o quebra-monotonia
+  // garante que dois vizinhos não repitam o desenho, e o teto de frequência evita
+  // que "topicos" vire o padrão do deck mesmo sem repetir vizinho (ver
+  // capTopicsFrequency). Uma segunda passada do quebra-monotonia limpa qualquer
+  // vizinhança nova que a conversão por frequência tenha criado.
+  const slides = dejavuBreaker(capTopicsFrequency(dejavuBreaker(parsed.map(enforceFormat))));
   const chat = Array.isArray(rawChat)
     ? rawChat
         .filter((c): c is string => typeof c === 'string')

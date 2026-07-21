@@ -18,9 +18,12 @@
 
 @theme {
   --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  /* Tipografia dos SLIDES: Sora (geométrica premium) em todo texto composto no
-   * template — títulos display e corpo. A UI do app continua em Inter. */
-  --font-slide: 'Sora Variable', 'Sora', 'Inter Variable', system-ui, sans-serif;
+  /* Tipografia dos SLIDES: Poppins (geométrica premium) em todo texto composto no
+   * template — títulos display e corpo. A UI do app continua em Inter.
+   * Poppins (não Sora) porque é uma fonte que o Canva reconhece na importação de
+   * PPTX: assim o texto exportado sai na fonte da marca em vez de virar Arial. A
+   * Sora continua disponível como opção manual no seletor de fontes do editor. */
+  --font-slide: 'Poppins', 'Sora Variable', 'Sora', 'Inter Variable', system-ui, sans-serif;
 
   /* Surfaces: preto de verdade, neutro (sem a tinta azul que acinzentava).
    * O fundo é #000 e as superfícies sobem bem devagar a partir dele. */

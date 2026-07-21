@@ -15,8 +15,14 @@ const PX_PER_POINT = 2;
  * o hex já resolvido pelo tom, medido do DOM em slideRaster). */
 const HIGHLIGHT_HEX = '09E880';
 
-/** A fonte dos slides. Quem não tiver a Sora instalada vê a substituta do sistema. */
-const SLIDE_FONT = 'Sora';
+/**
+ * A fonte dos slides no arquivo exportado. Poppins (não Sora) de propósito: é uma
+ * fonte que a Canva reconhece na importação de PPTX e mantém, em vez de trocar por
+ * Arial. É a MESMA fonte da marca no app (ver --font-slide), então o export sai
+ * idêntico ao palco. Quem não tiver Poppins instalada no PowerPoint vê a substituta
+ * do sistema, mas na Canva ela é preservada.
+ */
+const SLIDE_FONT = 'Poppins';
 
 function slugifyFilename(title: string): string {
   const cleaned = title

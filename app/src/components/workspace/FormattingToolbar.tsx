@@ -48,7 +48,7 @@ const EMPTY_STATE: FormatState = {
 };
 
 const COLOR_ORDER: TextColorKey[] = ['default', 'white', 'gray', 'green'];
-const FONT_ORDER: FontFamilyKey[] = ['sora', 'inter', 'poppins', 'space-grotesk', 'manrope', 'outfit'];
+const FONT_ORDER: FontFamilyKey[] = ['poppins', 'sora', 'inter', 'space-grotesk', 'manrope', 'outfit'];
 const SIZE_ORDER: FontSizeKey[] = ['sm', 'md', 'lg', 'xl'];
 
 const COLOR_LABEL: Record<TextColorKey, string> = {

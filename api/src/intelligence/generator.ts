@@ -63,6 +63,9 @@ VARIEDADE:
   então é melhor você mesmo escolher a alternância.
 - Todo slide diz UMA coisa nova. Nenhum repete a mensagem do anterior.
 - Varie a contagem de itens entre listas do deck (3 tópicos num, 4 noutro).
+- O conteúdo principal que enumera pontos de peso (pilares, frentes, fases, o que fica ao
+  fim) sai em cards ou jornada, o desenho de colunas/caixas com número e apoio, NUNCA em
+  topicos. Bare topicos é a lista magra, reservada pro secundário e usada com moderação.
 
 ALÉM DOS SLIDES, gere também:
 - "title": o nome da apresentação na plataforma. De 2 a 5 palavras, direto e específico ao tema (ex: "Pitch CITi Para Sympla"). Primeira letra de cada palavra principal em maiúscula, sem ponto final, sem aspas. É um nome, não um resumo.

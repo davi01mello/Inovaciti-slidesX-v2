@@ -49,8 +49,11 @@ O PLANO QUE VOCÊ PRODUZ contém, nesta ordem:
    responder objeção, dar respiro, convergir pra decisão, fechar.
    O FORMATO de cada slide de conteúdo vem do CATÁLOGO DE FORMATOS (acima) e nasce do que o slide
    apresenta: valor/preço/meta -> numero; painel de resultados -> indicadores; antes/depois ou
-   A vs B -> comparacao; método/cronograma -> jornada; pilares -> cards; agenda/entregas -> topicos;
-   explicação curta -> apoio; tese/provocação -> citacao; respiro -> afirmacao.
+   A vs B -> comparacao; método/cronograma/fases -> jornada; pilares, frentes ou os "1, 2, 3" que
+   CARREGAM o slide -> cards (colunas/caixas com peso, não lista fininha); agenda ou checklist
+   SECUNDÁRIO -> topicos; explicação curta -> apoio; tese/provocação -> citacao; respiro -> afirmacao.
+   topicos é o formato MAGRO: o design o renderiza pequeno, então use-o pouco e só pro que é
+   secundário. Todo miolo que enumera pontos de peso sai em cards ou jornada, nunca em lista magra.
    Além destes, os estruturais: CAPA, SEPARADOR, ENCERRAMENTO.
 
    Regras que o seu plano precisa respeitar, porque a geradora obedece o plano e o servidor garante:

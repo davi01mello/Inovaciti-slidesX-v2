@@ -1993,6 +1993,7 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
   // DOIS itens não podem parecer uma lista que murchou: viram um DUO de tiles
   // grandes lado a lado (quando a zona é larga), com texto em escala de destaque.
   const duo = items.length === 2 && zoneAspect(zone) >= 1.6;
+  const glass = glassOpacityFor(zone.cost);
 
   return (
     <EditableZone zoneKey={zoneKey} zone={zone}>
@@ -2001,8 +2002,8 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
           className="grid w-full"
           style={{
             gridTemplateColumns: duo ? '1fr 1fr' : twoCols ? '1fr 1fr' : '1fr',
-            columnGap: duo ? '2.6em' : '2.2em',
-            rowGap: 'calc(2.2 * var(--rhythm))',
+            columnGap: duo ? '1.4em' : '1.1em',
+            rowGap: duo ? '1.4em' : '0.85em',
           }}
         >
           {items.map((item, i) => (
@@ -2015,6 +2016,8 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
               chrome={chrome}
               variant={variant}
               scale={duo ? 1.25 : 1}
+              glass={glass}
+              duo={duo}
             />
           ))}
         </div>
@@ -2034,6 +2037,8 @@ function TopicRow({
   chrome,
   variant,
   scale = 1,
+  glass,
+  duo = false,
 }: {
   blockId: string;
   index: number;
@@ -2043,6 +2048,9 @@ function TopicRow({
   variant: number;
   /** O DUO (2 itens) sobe a escala do par inteiro. */
   scale?: number;
+  /** Densidade do vidro do card, medida na zona (ver CardsRow). */
+  glass: number;
+  duo?: boolean;
 }) {
   const ctx = useContext(CompositionContext);
 
@@ -2064,54 +2072,82 @@ function TopicRow({
     </div>
   );
 
+  // O SÍMBOLO agora vive dentro de um CHIP (círculo com contorno e véu do
+  // acento) em vez de número pelado + filete: é o que dá cara própria a cada
+  // tópico quando ele ganha uma caixa, no lugar do número flutuando sozinho.
+  const chipSize = duo ? '2.6em' : '2.3em';
   const bullet =
     variant === 1 ? (
-      <IconBadge name="check" color={chrome.accent} size="2em" />
+      <IconBadge name="check" color={chrome.accent} size={chipSize} glow={chrome.accentGlow} />
     ) : variant === 2 ? (
       <span
         aria-hidden="true"
-        className="flex-none"
+        className="flex flex-none items-center justify-center rounded-full"
         style={{
-          width: '0.85em',
-          height: '0.85em',
-          background: chrome.accent,
-          boxShadow: chrome.accentGlow,
-          transform: 'rotate(45deg)',
-          borderRadius: '0.14em',
+          width: chipSize,
+          height: chipSize,
+          border: `1px solid ${chrome.accent}55`,
+          background: `${chrome.accent}0d`,
         }}
-      />
+      >
+        <span
+          style={{
+            width: '0.62em',
+            height: '0.62em',
+            background: chrome.accent,
+            boxShadow: chrome.accentGlow,
+            transform: 'rotate(45deg)',
+            borderRadius: '0.14em',
+          }}
+        />
+      </span>
     ) : (
-      <>
+      <span
+        aria-hidden="false"
+        className="flex flex-none items-center justify-center rounded-full"
+        style={{
+          width: chipSize,
+          height: chipSize,
+          border: `1px solid ${chrome.accent}55`,
+          background: `${chrome.accent}0d`,
+        }}
+      >
         <MarkerField
           value={marker}
           fallback={String(index + 1).padStart(2, '0')}
           onCommit={(next) => ctx.commitListMarker(blockId, index, next)}
           ariaLabel={`Número do tópico ${index + 1}`}
           style={{
-            fontSize: '1.9em',
+            fontSize: '0.86em',
             fontWeight: 800,
-            lineHeight: 1.2,
+            lineHeight: 1,
             letterSpacing: '-0.02em',
             color: chrome.accent,
             textShadow: chrome.accentTextGlow,
-            minWidth: '1.4em',
-            flex: 'none',
+            textAlign: 'center',
           }}
         />
-        <span
-          aria-hidden="true"
-          className="flex-none rounded-full"
-          style={{ width: '1.7em', height: '0.14em', background: chrome.accent, opacity: 0.55 }}
-        />
-      </>
+      </span>
     );
 
   return (
-    <div className="flex min-w-0 items-center" style={{ gap: '1.1em', fontSize: `${scale}em` }}>
+    <div
+      data-card=""
+      className="flex min-w-0 items-center overflow-hidden rounded-[1.1em]"
+      style={{
+        border: `1px solid ${chrome.cardBorder}`,
+        background: chrome.cardBg(glass),
+        backdropFilter: 'blur(1.2cqw)',
+        boxShadow: chrome.light ? 'inset 0 1px 0 rgba(255,255,255,0.6)' : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+        gap: '1em',
+        padding: duo ? '1.15em 1.4em' : '0.95em 1.2em',
+        fontSize: `${scale}em`,
+      }}
+    >
       {bullet}
       <div
         className="min-w-0 flex-1"
-        style={{ fontSize: '1.5em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
+        style={{ fontSize: '1.65em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink }}
       >
         {text}
       </div>
