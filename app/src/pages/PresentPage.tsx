@@ -88,8 +88,22 @@ export function PresentPage() {
   }, []);
 
   // Saindo da página (voltar do navegador incluído), devolve a tela normal.
+  //
+  // A ARMADILHA DO DEV: o fullscreen é pedido AINDA no clique de "Apresentar"
+  // (WorkspacePage.handlePresent), antes desta página existir. Em produção
+  // esse efeito só roda a limpeza uma vez, na desmontagem de verdade — mas o
+  // StrictMode do dev server monta/desmonta/remonta todo efeito de propósito
+  // logo na primeira renderização, pra pegar cleanup malfeito. Sem a guarda
+  // abaixo, essa desmontagem FALSA roda a limpeza segundos depois do clique
+  // e derruba o fullscreen que acabou de ser concedido: a tela nunca fica
+  // cheia de verdade, só em produção (onde o StrictMode não dobra o efeito).
+  const strictModeProbeRef = useRef(false);
   useEffect(() => {
     return () => {
+      if (import.meta.env.DEV && !strictModeProbeRef.current) {
+        strictModeProbeRef.current = true;
+        return;
+      }
       if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     };
   }, []);

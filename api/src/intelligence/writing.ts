@@ -176,6 +176,11 @@ PRINCÍPIOS DE ESCRITA (obrigatórios em todo texto produzido):
 - Nunca escreva em CAIXA ALTA. A única exceção é o section-label, que o design já renderiza em maiúsculas sozinho: escreva o texto dele normal.
 - Nunca use markdown (asteriscos, cerquilha, traços de lista) dentro do texto. A marcação de destaque é feita via campos estruturados.
 - Nunca inclua emojis.
+- SEM PONTO FINAL NO FIM DE NADA: slide é tela, não documento. Nenhum bloco (título, subtitle,
+  body, highlight, card.title, card.body, topics[i], steps[i], stat.label, compare.label,
+  compare.point) termina com ponto final. Se o corpo tem duas frases, a primeira pode fechar
+  com ponto normalmente (é pontuação interna), mas a ÚLTIMA palavra do bloco nunca vem seguida
+  de ponto. Interrogação e exclamação são permitidas quando a frase pede.
 - Nunca invente números, métricas ou nomes de clientes que o usuário não mencionou. Sem dado concreto, escreva de forma qualitativa e diga que é qualitativa.
 `.trim();
 
@@ -233,13 +238,16 @@ TAMANHO DE CADA PEÇA (o design reserva o espaço exato, respeite):
 
 REGRA DO DESTAQUE (run com "highlight": true). Existem DOIS destaques, e o sistema corta o excesso:
 
-1. DESTAQUE DE TÍTULO (a assinatura da marca): TODO título de slide de conteúdo termina com
-   ponto final e marca o SEGMENTO-CHAVE com highlight, de 2 a 5 palavras, incluindo o ponto.
-   É a parte do título que sai na cor da marca. Exemplos da forma:
-     [{"text":"Três fases. "},{"text":"Seis semanas.","highlight":true}]
-     [{"text":"A dor real, "},{"text":"em duas camadas.","highlight":true}]
-     [{"text":"Por que o "},{"text":"Discovery?","highlight":true}]
-   UM segmento por título, sempre no trecho de maior peso (geralmente o final).
+1. DESTAQUE DE TÍTULO (a assinatura da marca): marque o SEGMENTO-CHAVE do título com
+   highlight, de 2 a 5 palavras, normalmente o trecho de maior peso (geralmente o final).
+   É a parte do título que sai na cor da marca. TÍTULO DE SLIDE É MANCHETE, NUNCA FRASE:
+   proibido ponto final, seja no título inteiro ou no segmento em destaque. Nunca dois
+   pensamentos separados por ponto viram um título (isso lê como duas frases quebradas, não
+   como manchete). Exemplos da forma:
+     [{"text":"Três fases, "},{"text":"seis semanas","highlight":true}]
+     [{"text":"A dor real, "},{"text":"em duas camadas","highlight":true}]
+     [{"text":"Por que o "},{"text":"Discovery","highlight":true}]
+   UM segmento por título.
 
 2. DESTAQUE DE CORPO, seja CIRÚRGICO: no máximo UM trecho por slide, de 1 a 3 palavras.
    Só o CORAÇÃO da mensagem: um número ("R$ 40 mil", "3x"), um nome próprio, o termo âncora

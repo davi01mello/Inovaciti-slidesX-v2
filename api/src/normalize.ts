@@ -92,7 +92,13 @@ function normalizeRichText(value: unknown): RichText {
   const first = out[0];
   if (first) first.text = first.text.replace(/^\s+/, '');
   const last = out[out.length - 1];
-  if (last) last.text = last.text.replace(/\s+$/, '');
+  if (last) {
+    last.text = last.text.replace(/\s+$/, '');
+    // NENHUM bloco de slide termina com ponto final (ver WRITING_PRINCIPLES: título é
+    // manchete, não documento). O prompt já pede; isto é a garantia de código, o mesmo
+    // eixo POR BLOCO deste arquivo. A lookbehind poupa reticências ("...").
+    last.text = last.text.replace(/(?<!\.)\.$/, '');
+  }
   return out.filter((run) => run.text.length > 0);
 }
 
@@ -809,7 +815,12 @@ function capTopicsFrequency(slides: GeneratedSlide[]): GeneratedSlide[] {
 /** Título vindo do modelo: sanitizado, limitado a 60 caracteres, primeira letra maiúscula. */
 function normalizeTitle(raw: unknown): string {
   if (typeof raw !== 'string') return '';
-  const clean = sanitizeText(raw).replace(/["“”]/g, '').trim().slice(0, 60).trim();
+  const clean = sanitizeText(raw)
+    .replace(/["“”]/g, '')
+    .trim()
+    .slice(0, 60)
+    .trim()
+    .replace(/(?<!\.)\.$/, ''); // nome da apresentação, não frase: sem ponto final
   if (clean.length === 0) return '';
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 }

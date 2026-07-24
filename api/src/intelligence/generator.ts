@@ -128,7 +128,7 @@ function structuralReminder(slideCount: number): string {
   return [
     `ESTRUTURA OBRIGATÓRIA: exatamente ${slideCount} slides. O primeiro é layout "cover" e o último é layout "closing". O miolo usa "content" (e "section" só quando as regras permitirem).`,
     'ANTES DE RESPONDER, CONFIRA CADA SLIDE "content": (1) ele tem EXATAMENTE os blocos da gramática do formato planejado; (2) nenhum bloco passa do teto de palavras (body 25, tópico/etapa/ponto 10, card.body 16); (3) dois slides vizinhos nunca têm o mesmo formato; (4) stats só com números reais (do briefing ou da base do CITi). Nem parede de texto, nem slide oco.',
-    'CONFIRA TAMBÉM: todo title-2 termina com ponto final e tem UM segmento de 2 a 5 palavras com highlight (a assinatura da marca); itens de cards/stats/compare com "icon" do vocabulário (todos os itens do slide, ou nenhum); no máximo 3 cards, 5 tópicos, 5 etapas e 4 stats; nunca dois tipos de lista no mesmo slide; compare sempre com exatamente 2 lados; e no máximo um destaque de corpo de 1 a 3 palavras por slide.',
+    'CONFIRA TAMBÉM: todo title-2 tem UM segmento de 2 a 5 palavras com highlight (a assinatura da marca) e NUNCA termina com ponto final, nem o título inteiro nem o segmento em destaque (título é manchete, não frase; nenhum bloco de nenhum slide termina com ponto final); itens de cards/stats/compare com "icon" do vocabulário (todos os itens do slide, ou nenhum); no máximo 3 cards, 5 tópicos, 5 etapas e 4 stats; nunca dois tipos de lista no mesmo slide; compare sempre com exatamente 2 lados; e no máximo um destaque de corpo de 1 a 3 palavras por slide.',
   ].join('\n');
 }
 
