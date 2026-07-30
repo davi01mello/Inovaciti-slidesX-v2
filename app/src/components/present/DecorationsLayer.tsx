@@ -3,6 +3,7 @@ import { TransformBox } from '@/components/present/TransformBox';
 import { useLayerSelection } from '@/components/present/useLayerSelection';
 import { elementByKey } from '@/services/elementsManifest';
 import { iconByKey } from '@/services/iconsManifest';
+import { companyLogoByKey } from '@/services/companyLogosManifest';
 import type { BlockRect, Decoration } from '@/types/slide';
 
 /**
@@ -32,9 +33,14 @@ export function DecorationsLayer({ decorations, editable, onMove, onDelete }: De
     // capturam o ponteiro — os textos do template abaixo continuam clicáveis.
     <div className="pointer-events-none absolute inset-0">
       {decorations.map((decoration) => {
-        // Duas famílias visuais no mesmo assetKey namespace: blob ("cor/forma") e
-        // ícone ("categoria/nome") não colidem, então tenta as duas sem prefixo.
-        const src = decoration.src ?? elementByKey(decoration.assetKey)?.src ?? iconByKey(decoration.assetKey)?.src;
+        // Três famílias visuais no mesmo assetKey namespace: blob ("cor/forma"),
+        // ícone ("categoria/nome") e logo de empresa ("cases|alumni|parceiros/slug")
+        // não colidem, então tenta as três sem prefixo.
+        const src =
+          decoration.src ??
+          elementByKey(decoration.assetKey)?.src ??
+          iconByKey(decoration.assetKey)?.src ??
+          companyLogoByKey(decoration.assetKey)?.src;
         if (!src) return null;
         return (
           <TransformBox

@@ -3,6 +3,13 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ELEMENTS, ELEMENT_COLORS, elementColorLabel, elementShapeLabel, hasElements } from '@/services/elementsManifest';
 import { ICONS, ICON_CATEGORIES, iconCategoryLabel, iconNameLabel, hasIcons } from '@/services/iconsManifest';
+import {
+  COMPANY_LOGOS,
+  COMPANY_LOGO_CATEGORIES,
+  companyLogoCategoryLabel,
+  companyLogoNameLabel,
+  hasCompanyLogos,
+} from '@/services/companyLogosManifest';
 import { TEMPLATE_ARTS, type ArtFamily } from '@/services/templateArt.generated';
 import { addSessionUpload, listSessionUploads, type SessionUpload } from '@/services/sessionUploads';
 import { writeInsertPayload } from '@/services/insertDnd';
@@ -68,6 +75,7 @@ export function InsertDock({
 
   const showElements = hasElements();
   const showIcons = hasIcons();
+  const showLogos = hasCompanyLogos();
 
   return (
     // No FLUXO do layout (não flutuando por cima): abrir um painel empurra o
@@ -76,7 +84,7 @@ export function InsertDock({
       <div ref={rootRef} className="flex items-center">
         <div className="glass-deep flex flex-col gap-1 rounded-2xl p-1.5">
           <RailButton icon="text" label="Texto" active={tab === 'text'} onClick={() => setTab((t) => (t === 'text' ? null : 'text'))} />
-          {(showElements || showIcons) && (
+          {(showElements || showIcons || showLogos) && (
             <RailButton
               icon="sparkle-design"
               label="Marca"
@@ -219,6 +227,12 @@ function BrandTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
           <IconsTab onInsert={onInsert} />
         </div>
       )}
+      {hasCompanyLogos() && (
+        <div>
+          <SectionHeading label="Logos de Empresas" />
+          <CompanyLogosTab onInsert={onInsert} />
+        </div>
+      )}
     </div>
   );
 }
@@ -315,6 +329,62 @@ function IconsTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
               aria-hidden="true"
               className="pointer-events-none absolute -top-7 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0b0d10] px-2 py-1 text-[10px] font-medium text-ink opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
               {iconNameLabel(asset.name)}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Logos de empresas — cases, alumni e parceiros do CITi, filtrável por        */
+/* categoria (mesma UX dos ícones). Logo colorido de terceiro sobre           */
+/* transparente: fundo escuro no card, igual ícones/elementos.                */
+/* -------------------------------------------------------------------------- */
+
+function CompanyLogosTab({ onInsert }: { onInsert: (assetKey: string) => void }) {
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const visible = useMemo(
+    () => (categoryFilter ? COMPANY_LOGOS.filter((l) => l.category === categoryFilter) : COMPANY_LOGOS),
+    [categoryFilter],
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-1">
+        <ColorChip active={categoryFilter === null} onClick={() => setCategoryFilter(null)} label="Todas" />
+        {COMPANY_LOGO_CATEGORIES.map((category) => (
+          <ColorChip
+            key={category}
+            active={categoryFilter === category}
+            onClick={() => setCategoryFilter(category)}
+            label={companyLogoCategoryLabel(category)}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {visible.map((asset) => (
+          <button
+            key={asset.key}
+            type="button"
+            draggable
+            onDragStart={(event: DragEvent) => writeInsertPayload(event.dataTransfer, { type: 'element', assetKey: asset.key })}
+            onClick={() => onInsert(asset.key)}
+            aria-label={companyLogoNameLabel(asset.name)}
+            className="group relative flex aspect-square cursor-grab items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-2 transition-all duration-150 hover:border-brand/40 hover:bg-brand/[0.07] active:cursor-grabbing"
+          >
+            <img
+              src={asset.src}
+              alt=""
+              draggable={false}
+              className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
+            />
+            {/* Nome da empresa: some até o hover, igual ao tooltip dos ícones. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-7 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0b0d10] px-2 py-1 text-[10px] font-medium text-ink opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+              {companyLogoNameLabel(asset.name)}
             </span>
           </button>
         ))}
