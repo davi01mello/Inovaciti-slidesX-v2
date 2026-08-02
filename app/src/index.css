@@ -410,6 +410,13 @@
   visibility: hidden !important;
 }
 
+/* Mesma lógica pras DECORAÇÕES soltas (bolhas, ícones de marca, logos de
+ * empresa): saem do raster de fundo porque viram imagem própria e editável
+ * no PPTX (ver slideRaster.tsx / exportPptx.ts), em vez de pixel do fundo. */
+[data-slide-export='art'] [data-export-decoration] {
+  visibility: hidden !important;
+}
+
 html,
 body {
   background: var(--color-app-bg);

@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import type { BlockRect } from '@/types/slide';
 
@@ -107,6 +107,24 @@ export function TransformBox({
   const movedRef = useRef(false);
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const hoverHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // O grip e o botão de restaurar posição flutuam ACIMA da caixa (fora do
+  // retângulo dela) — pra alcançá-los o ponteiro cruza um vão sem nenhum
+  // elemento embaixo, o que dispara um pointerleave real da caixa no meio do
+  // caminho. Sem esse atraso, a caixa some (revealOnHover vira false) antes do
+  // ponteiro chegar lá, e o gesto de "mover pelo grip" fica impossível. Um
+  // pequeno atraso pra esconder (cancelado se o ponteiro voltar a entrar,
+  // inclusive no próprio grip — ele é filho desta caixa) resolve sem precisar
+  // calcular geometria.
+  function clearHoverHideTimeout() {
+    if (hoverHideTimeoutRef.current !== null) {
+      clearTimeout(hoverHideTimeoutRef.current);
+      hoverHideTimeoutRef.current = null;
+    }
+  }
+
+  useEffect(() => clearHoverHideTimeout, []);
 
   const frameStyle: CSSProperties = {
     left: `${rect.x * 100}%`,
@@ -237,8 +255,26 @@ export function TransformBox({
       }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerEnter={revealOnHover ? () => setHovered(true) : undefined}
-      onPointerLeave={revealOnHover ? () => setHovered(false) : undefined}
+      onPointerEnter={
+        revealOnHover
+          ? () => {
+              clearHoverHideTimeout();
+              setHovered(true);
+            }
+          : undefined
+      }
+      onPointerLeave={
+        revealOnHover
+          ? () => {
+              clearHoverHideTimeout();
+              // 220ms de graça: dá tempo do ponteiro atravessar o vão até o
+              // grip/botão flutuante. Se ele voltar a entrar nesta caixa (o
+              // grip é filho dela) dentro da janela, o timeout acima já foi
+              // cancelado; se realmente foi embora, some como antes.
+              hoverHideTimeoutRef.current = setTimeout(() => setHovered(false), 220);
+            }
+          : undefined
+      }
     >
       {children}
 

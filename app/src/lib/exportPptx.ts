@@ -1,6 +1,6 @@
 import PptxGenJS from 'pptxgenjs';
 import JSZip from 'jszip';
-import { renderSlidesForExport, RASTER_WIDTH, type ExportText } from '@/lib/slideRaster';
+import { renderSlidesForExport, RASTER_WIDTH, type ExportText, type ExportDecoration } from '@/lib/slideRaster';
 import type { Presentation } from '@/types/presentation';
 
 /** Widescreen padrão do PowerPoint (13.333 x 7.5 in), 16:9 exato. */
@@ -78,6 +78,28 @@ function toPptxText(text: ExportText): { runs: PptxGenJS.TextProps[]; options: P
   return { runs, options };
 }
 
+/**
+ * Converte uma decoração medida (bolha, ícone de marca ou logo de empresa) em
+ * opções de imagem do pptxgenjs — vira objeto PRÓPRIO no slide, arrastável e
+ * redimensionável na Canva/PowerPoint, em vez de pixel fixo do fundo.
+ *
+ * `data:` URL (upload do usuário) vai em `data`; caminho de asset (elemento,
+ * ícone, logo — resolvido pelo Vite) vai em `path`, que o pptxgenjs busca via
+ * fetch no próprio navegador (mesma origem do app, é o mesmo arquivo que já
+ * aparece na tela).
+ */
+function toPptxImage(decoration: ExportDecoration): PptxGenJS.ImageProps {
+  const source = decoration.src.startsWith('data:') ? { data: decoration.src } : { path: decoration.src };
+  return {
+    ...source,
+    x: decoration.x / PX_PER_INCH,
+    y: decoration.y / PX_PER_INCH,
+    w: decoration.w / PX_PER_INCH,
+    h: decoration.h / PX_PER_INCH,
+    ...(decoration.rotation ? { rotate: decoration.rotation } : {}),
+  };
+}
+
 async function buildPptx(presentation: Presentation): Promise<PptxGenJS> {
   if (presentation.slides.length === 0) {
     throw new Error('Essa apresentação não tem slides.');
@@ -101,6 +123,11 @@ async function buildPptx(presentation: Presentation): Promise<PptxGenJS> {
       w: SLIDE_WIDTH_IN,
       h: SLIDE_HEIGHT_IN,
     });
+    // Decorações (bolhas, ícones de marca, logos de empresa) depois do fundo:
+    // cada uma vira imagem própria e editável, na mesma posição/rotação de tela.
+    for (const decoration of slideExport.decorations) {
+      pptxSlide.addImage(toPptxImage(decoration));
+    }
     for (const text of slideExport.texts) {
       const { runs, options } = toPptxText(text);
       pptxSlide.addText(runs, options);

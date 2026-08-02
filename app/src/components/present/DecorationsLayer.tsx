@@ -62,6 +62,11 @@ export function DecorationsLayer({ decorations, editable, onMove, onDelete }: De
               src={src}
               alt=""
               draggable={false}
+              // data-export-decoration: marca essa arte pro export (ver
+              // lib/slideRaster.tsx). Ela some do PNG de fundo — vira imagem
+              // própria e editável no PPTX, com posição/rotação vindas
+              // diretamente de decoration.rect/.rotation (não do DOM).
+              data-export-decoration=""
               // object-fill: a arte ocupa exatamente o rect — é o que faz esticar
               // um lado ter efeito visível. Os cantos preservam a proporção, então
               // o gesto padrão nunca distorce.

@@ -3,7 +3,11 @@ import { toPng } from 'html-to-image';
 import { SlideComposition } from '@/components/present/SlideComposition';
 import { fromDom, FONT_FAMILY_OPTIONS, FONT_SIZE_SCALE } from '@/lib/richText';
 import { planForPresentation } from '@/services/deckPlan';
+import { elementByKey } from '@/services/elementsManifest';
+import { iconByKey } from '@/services/iconsManifest';
+import { companyLogoByKey } from '@/services/companyLogosManifest';
 import type { Presentation } from '@/types/presentation';
+import type { Decoration } from '@/types/slide';
 
 /**
  * Prepara os slides compostos pro export, direto no navegador — em DUAS camadas:
@@ -52,10 +56,59 @@ export interface ExportText {
   charSpacingPx: number;
 }
 
+/** Uma decoração (bolha, ícone de marca ou logo de empresa) pronta pro PPTX. */
+export interface ExportDecoration {
+  /** Retângulo em px no palco 1920x1080 (não rotacionado — a rotação é campo à parte). */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** URL da arte (data: URL de upload, ou caminho resolvido do manifest — ambos carregáveis pelo pptxgenjs). */
+  src: string;
+  /** Graus, sentido horário. Ausente/0 = sem rotação. */
+  rotation: number;
+}
+
 export interface SlideExport {
-  /** PNG (data URL) da arte sem textos. */
+  /** PNG (data URL) da arte sem textos nem decorações. */
   background: string;
   texts: ExportText[];
+  decorations: ExportDecoration[];
+}
+
+/**
+ * Resolve a arte de uma decoração pelo mesmo namespace de assetKey do
+ * DecorationsLayer (upload > elemento > ícone > logo de empresa). Lido
+ * direto do modelo (slide.decorations), não do DOM: o rect já é a fonte da
+ * verdade, e medir via getBoundingClientRect quebraria com rotação (o
+ * bounding box de um elemento rotacionado não é mais x/y/w/h/rotation).
+ */
+function resolveDecorationSrc(decoration: Decoration): string | undefined {
+  return (
+    decoration.src ??
+    elementByKey(decoration.assetKey)?.src ??
+    iconByKey(decoration.assetKey)?.src ??
+    companyLogoByKey(decoration.assetKey)?.src
+  );
+}
+
+/** Converte as decorações de UM slide (modelo) nas medidas em px do palco de export. */
+function exportDecorationsFor(decorations: Decoration[] | undefined): ExportDecoration[] {
+  if (!decorations || decorations.length === 0) return [];
+  return decorations
+    .map((decoration) => {
+      const src = resolveDecorationSrc(decoration);
+      if (!src) return null;
+      return {
+        x: decoration.rect.x * RASTER_WIDTH,
+        y: decoration.rect.y * RASTER_HEIGHT,
+        w: decoration.rect.width * RASTER_WIDTH,
+        h: decoration.rect.height * RASTER_HEIGHT,
+        src,
+        rotation: decoration.rotation ?? 0,
+      };
+    })
+    .filter((d): d is ExportDecoration => d !== null);
 }
 
 function nextFrame(): Promise<void> {
@@ -188,25 +241,32 @@ export async function renderSlidesForExport(presentation: Presentation): Promise
     await nextFrame();
 
     const results: SlideExport[] = [];
-    for (const stage of stages) {
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages[i]!;
       const stageRect = stage.getBoundingClientRect();
       const texts = Array.from(stage.querySelectorAll<HTMLElement>('[data-export-text]'))
         .map((el) => measureText(el, stageRect))
         .filter((t): t is ExportText => t !== null);
+      const decorations = exportDecorationsFor(slides[i]!.decorations);
 
-      // Esconde os textos (mantendo a geometria) e rasteriza só a arte. O CINTO
-      // é a regra CSS (visibility: hidden); a SUSPENSÓRIO é o filter, que REMOVE
-      // os nós de texto do clone rasterizado — texto no fundo é exatamente o
-      // defeito do "texto duplicado" no Canva, então aqui são duas garantias.
+      // Esconde textos E decorações (mantendo a geometria) e rasteriza só a
+      // arte de fundo. O CINTO é a regra CSS (visibility: hidden); a
+      // SUSPENSÓRIO é o filter, que REMOVE os nós do clone rasterizado — texto
+      // ou decoração duplicados no fundo é exatamente o defeito que motivou
+      // essa camada dupla (ver data-export-text e data-export-decoration).
       stage.setAttribute('data-slide-export', 'art');
       const background = await toPng(stage, {
         width: RASTER_WIDTH,
         height: RASTER_HEIGHT,
         pixelRatio: 1,
         backgroundColor: '#040605',
-        filter: (node) => !(node instanceof HTMLElement && node.hasAttribute('data-export-text')),
+        filter: (node) =>
+          !(
+            node instanceof HTMLElement &&
+            (node.hasAttribute('data-export-text') || node.hasAttribute('data-export-decoration'))
+          ),
       });
-      results.push({ background, texts });
+      results.push({ background, texts, decorations });
     }
     return results;
   } finally {
