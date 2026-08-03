@@ -54,8 +54,23 @@ import art_canva_right_01 from '@/assets/templates/canvas/canva-right-01.webp';
 import art_canva_right_02 from '@/assets/templates/canvas/canva-right-02.webp';
 import art_canva_right_03 from '@/assets/templates/canvas/canva-right-03.webp';
 import art_espiral_branco_01 from '@/assets/templates/espiral/espiral-branco-01.webp';
+import art_espiral_branco_02 from '@/assets/templates/espiral/espiral-branco-02.webp';
+import art_espiral_branco_03 from '@/assets/templates/espiral/espiral-branco-03.webp';
+import art_espiral_branco_04 from '@/assets/templates/espiral/espiral-branco-04.webp';
+import art_espiral_branco_05 from '@/assets/templates/espiral/espiral-branco-05.webp';
+import art_espiral_branco_06 from '@/assets/templates/espiral/espiral-branco-06.webp';
+import art_espiral_branco_07 from '@/assets/templates/espiral/espiral-branco-07.webp';
+import art_espiral_branco_08 from '@/assets/templates/espiral/espiral-branco-08.webp';
+import art_espiral_branco_09 from '@/assets/templates/espiral/espiral-branco-09.webp';
+import art_espiral_branco_10 from '@/assets/templates/espiral/espiral-branco-10.webp';
+import art_espiral_branco_11 from '@/assets/templates/espiral/espiral-branco-11.webp';
+import art_espiral_branco_12 from '@/assets/templates/espiral/espiral-branco-12.webp';
+import art_espiral_branco_13 from '@/assets/templates/espiral/espiral-branco-13.webp';
+import art_espiral_branco_14 from '@/assets/templates/espiral/espiral-branco-14.webp';
 import art_espiral_preto_01 from '@/assets/templates/espiral/espiral-preto-01.webp';
 import art_espiral_preto_02 from '@/assets/templates/espiral/espiral-preto-02.webp';
+import art_espiral_preto_03 from '@/assets/templates/espiral/espiral-preto-03.webp';
+import art_espiral_preto_04 from '@/assets/templates/espiral/espiral-preto-04.webp';
 
 export type ArtFamily = 'capa' | 'canvas' | 'espiral';
 
@@ -1092,6 +1107,318 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
     ],
   },
   {
+    id: 'espiral-branco-02',
+    family: 'espiral',
+    src: art_espiral_branco_02,
+    hue: 161.2,
+    luminance: 0.895,
+    vividness: 0.085,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       3,  4,  4,  4,  4,  3,  3,  3,  8,  9,  8,  7,  8,  8,  8,  8,
+       4,  4,  5,  5,  5,  5,  4,  4,  9, 10,  9,  9, 10, 12, 23, 11,
+      16, 21, 29, 20,  6,  6,  5,  5, 10,  8, 10, 12, 12, 25, 16, 39,
+       8, 13, 13, 17, 18,  7,  7,  8, 12, 12, 14, 15, 18, 28, 32, 25,
+       8, 17, 13, 10, 19,  8,  7, 13, 12, 13, 17, 21, 44, 29,  7, 23,
+      17, 23, 11, 21, 26, 10, 13, 14, 26, 34, 31, 41, 41,  4, 14, 33,
+      42, 24, 21, 18, 34, 14, 25, 35, 36, 36, 28, 36, 34, 40, 19, 18,
+      14, 23, 25, 25, 22, 27, 33, 19,  9, 40, 31, 13, 27, 49, 45, 48,
+      11, 11, 13, 28, 31, 20, 16, 16, 17, 17, 22, 49, 37, 34, 28, 23,
+    ],
+  },
+  {
+    id: 'espiral-branco-03',
+    family: 'espiral',
+    src: art_espiral_branco_03,
+    hue: 172.0,
+    luminance: 0.91,
+    vividness: 0.069,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       4,  4,  4,  4,  4,  4,  4,  4,  9,  9,  9,  8,  9,  9,  8,  7,
+       4,  4,  4,  4,  5,  4,  4,  4, 10, 10,  9, 10, 11, 10, 10,  9,
+      16, 21, 30, 20,  5,  5,  5,  4, 10,  8, 11, 12, 12, 11, 11, 11,
+       9, 13, 12, 17, 17,  6,  6,  8, 11, 11, 13, 14, 12, 11, 10, 12,
+       8, 16, 11,  9, 18,  8,  7, 13, 11, 13, 14,  8, 11, 10,  6,  4,
+      17, 23, 10, 21, 25,  9, 13, 14, 26, 30, 21, 13,  8,  5,  5,  5,
+      43, 24, 20, 17, 33, 15, 25, 35, 28,  5,  6,  8, 13,  6,  6,  6,
+      13, 23, 25, 25, 21, 26, 33, 19,  9,  8, 21, 36, 16,  8,  8,  7,
+      11, 12, 14, 28, 31, 19, 17, 17, 27, 52, 36, 14, 10,  9,  8,  7,
+    ],
+  },
+  {
+    id: 'espiral-branco-04',
+    family: 'espiral',
+    src: art_espiral_branco_04,
+    hue: 168.2,
+    luminance: 0.894,
+    vividness: 0.05,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,
+       9,  9,  3,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+      10,  7, 13,  5,  3,  3,  3,  2,  2,  1,  1,  1,  1,  1,  1,  1,
+      14,  9, 14, 10,  9,  6,  5,  4,  3,  2,  1,  1,  1,  1,  1,  1,
+      18, 10, 14, 19, 14, 11,  9,  6,  5,  3,  2,  1,  1,  1,  1,  1,
+      24, 14, 16, 25, 22, 16, 11,  8,  7,  5,  3,  2,  1,  1,  1,  1,
+      21, 19, 21, 15, 19, 19, 13, 10,  8,  6,  4,  3,  2,  1,  1,  1,
+      17, 21, 16, 15, 14, 22, 15, 12,  9,  6,  4,  3,  2,  2,  1,  1,
+      17, 18, 11, 17, 16, 24, 16, 13, 10,  7,  4,  3,  3,  2,  1,  1,
+    ],
+  },
+  {
+    id: 'espiral-branco-05',
+    family: 'espiral',
+    src: art_espiral_branco_05,
+    hue: 163.6,
+    luminance: 0.93,
+    vividness: 0.05,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  6,  6,  6,  4,
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  8,  6,  3,  2,  2,
+       2,  1,  1,  1,  1,  1,  1,  1,  2,  3,  8,  5,  3,  5,  5,  7,
+       3,  2,  1,  1,  1,  1,  2,  2,  3,  5, 12, 12, 15, 13,  9,  9,
+       2,  3,  4,  2,  2,  3,  3,  4,  6,  7, 14, 18, 14,  8,  7,  8,
+       2,  2,  4,  5,  6,  5,  6,  7,  8, 11, 14, 14, 12, 12,  8, 11,
+       6,  5,  5,  5,  7,  8,  9,  9, 12, 16, 13, 13, 14, 16, 10,  9,
+       7,  8,  8,  9, 10, 10, 11, 12, 12,  8, 11, 17, 16, 19, 17, 17,
+       9,  9, 10, 10, 10, 13, 15, 11,  8,  6,  7,  8, 13, 16, 17, 24,
+    ],
+  },
+  {
+    id: 'espiral-branco-06',
+    family: 'espiral',
+    src: art_espiral_branco_06,
+    hue: 169.3,
+    luminance: 0.912,
+    vividness: 0.033,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  3,  3,  3,
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  3,  4,  7, 10,  6,
+       1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  4,  5,  7, 12, 14, 14,
+       1,  1,  1,  1,  1,  1,  1,  1,  2,  3,  5,  6,  8, 17, 12, 13,
+       1,  1,  1,  1,  1,  2,  2,  2,  3,  4,  5,  7,  9, 17, 18,  8,
+       1,  1,  1,  2,  3,  4,  5,  6,  7,  7,  7, 14, 15, 10, 16,  9,
+       1,  2,  3,  4,  6,  8, 10, 11, 12, 11, 12, 12, 11, 16, 11, 12,
+       1,  1,  2,  3,  5,  7, 10, 12, 14, 15, 18, 19, 17, 14, 12,  8,
+    ],
+  },
+  {
+    id: 'espiral-branco-07',
+    family: 'espiral',
+    src: art_espiral_branco_07,
+    hue: 167.7,
+    luminance: 0.897,
+    vividness: 0.079,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       2,  2,  2,  2,  2,  2,  2,  2,  2,  1,  5,  5,  4,  4,  6,  5,
+       2,  2,  2,  1,  1,  1,  1,  1,  1,  4,  8,  7,  9,  8,  5, 10,
+       2,  1,  1,  1,  1,  1,  1,  1,  2, 10, 15, 18, 11, 11, 16, 15,
+       2,  1,  1,  1,  2,  2,  2,  2,  3,  9, 16, 15, 12, 10, 14, 12,
+       5,  2,  2,  3,  3,  4,  5,  6,  6,  8,  9, 11, 16, 13, 12,  7,
+       7,  8,  5,  5,  7,  7,  8,  9, 10, 11, 12, 16, 13, 13, 12, 10,
+       9, 11, 14, 12, 12, 12, 13, 17, 19, 20, 17, 15, 17, 19, 16, 10,
+      10, 12, 16, 18, 20, 20, 19, 21, 20, 16, 12, 11, 11, 14, 15, 17,
+      12, 14, 15, 16, 18, 21, 21, 27, 21, 17, 17, 17, 17, 17, 17, 18,
+    ],
+  },
+  {
+    id: 'espiral-branco-08',
+    family: 'espiral',
+    src: art_espiral_branco_08,
+    hue: 167.7,
+    luminance: 0.908,
+    vividness: 0.072,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  1,  1,  1,  1,  2,  1,  2,  5,  5,  5,  4,  4,  4,  4,  4,
+       2,  2,  2,  2,  1,  1,  1,  1,  6,  6,  6,  6,  6,  6,  6,  6,
+       8,  7,  6,  6,  2,  1,  1,  2,  7,  7,  8,  9,  9,  9,  9,  8,
+       2,  3,  6,  6,  7,  3,  3,  5,  8,  9, 11, 12, 13, 14, 13, 11,
+       3,  4,  2,  5,  7,  4,  5,  9, 11, 14, 15, 17, 16, 15, 12,  8,
+       5,  7,  4,  7, 10,  7,  9, 12, 18, 17, 17, 19, 20, 15, 12,  8,
+       7,  9, 15, 11, 11,  9, 15, 22, 15, 14, 13, 20, 20, 14, 11,  8,
+       5, 10, 14, 13, 17, 23, 22, 13, 14, 13, 16, 18, 19, 14, 10,  7,
+       5,  9, 14, 19, 24, 22, 18, 19, 19, 19, 15, 18, 17, 13, 10,  7,
+    ],
+  },
+  {
+    id: 'espiral-branco-09',
+    family: 'espiral',
+    src: art_espiral_branco_09,
+    hue: 166.6,
+    luminance: 0.914,
+    vividness: 0.045,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
+       1,  2,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  3,  5,  3,  3,
+       2,  1,  1,  1,  1,  1,  1,  1,  3,  4,  6, 11, 12,  8,  6,  6,
+       5,  2,  2,  2,  2,  2,  2,  5,  7, 12, 11, 11, 14, 16,  8,  7,
+       7,  6,  4,  4,  4,  5,  6,  8, 10, 10, 11, 13, 13, 20, 13,  8,
+       9,  8,  8,  9,  9, 10, 10,  9,  9, 15, 17, 15, 16, 21, 11,  9,
+      12, 15, 13, 12, 12, 11, 13, 13, 12, 19, 10, 16, 15, 18, 12, 11,
+      16, 12, 12, 12, 11,  8,  9, 15, 20, 19, 14,  9, 19, 20, 13, 17,
+       7,  7,  5,  5,  6,  7,  9, 17, 14, 14, 15, 13, 18, 17, 16, 16,
+    ],
+  },
+  {
+    id: 'espiral-branco-10',
+    family: 'espiral',
+    src: art_espiral_branco_10,
+    hue: 161.1,
+    luminance: 0.848,
+    vividness: 0.055,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       0,  0,  1,  1,  1,  1,  2,  5, 10,  1,  2,  4,  9,  8, 17,  5,
+      14,  5,  2,  2,  1,  1,  1,  3, 14,  7,  4,  7, 16, 18, 10, 10,
+       4,  5,  6,  3,  2,  2,  2,  3, 17, 17, 13, 13, 14, 17, 17, 16,
+       7,  5,  5, 10,  7,  3,  3,  4,  5,  5, 15, 14, 13, 12, 14, 11,
+      23, 10,  9, 11, 12,  8,  5,  5,  9, 15, 13, 12, 14, 16, 16, 15,
+       7,  9, 10, 12, 16, 16, 14,  8, 24, 14, 14, 20, 15, 17, 20, 26,
+      15,  8,  8, 10, 14, 14, 14, 17, 19, 18, 17, 18, 23, 20, 19, 23,
+       6,  6,  7,  7,  9, 14, 14, 17, 22, 18, 23, 18, 20, 22, 16, 18,
+       8,  9,  9,  9, 10, 10, 10, 14, 30, 18, 19, 20, 26, 21, 21, 20,
+    ],
+  },
+  {
+    id: 'espiral-branco-11',
+    family: 'espiral',
+    src: art_espiral_branco_11,
+    hue: 158.4,
+    luminance: 0.768,
+    vividness: 0.083,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  2,  1,  1,  1,  1,  3,  7, 15,  3,  4,  8, 14, 12, 23,  8,
+      19,  9,  2,  1,  2,  2,  2,  4, 21, 11,  7, 11, 23, 23, 15, 15,
+       6,  6, 10,  6,  2,  3,  4,  3, 23, 29, 24, 22, 20, 24, 26, 24,
+       9,  7,  8, 14,  9,  4,  5,  6,  6, 20, 24, 20, 19, 18, 20, 15,
+      30, 14, 14, 17, 15, 10,  6,  6, 33, 34, 32, 21, 22, 23, 22, 22,
+       9, 13, 14, 17, 22, 22, 20, 12, 39, 45, 45, 34, 21, 25, 28, 34,
+      21, 11, 13, 16, 22, 20, 20, 24, 27, 25, 24, 27, 30, 29, 27, 31,
+      10, 10, 10, 10, 14, 21, 21, 25, 30, 24, 31, 25, 27, 30, 19, 26,
+      11, 12, 13, 13, 14, 14, 14, 20, 39, 25, 25, 27, 35, 27, 28, 27,
+    ],
+  },
+  {
+    id: 'espiral-branco-12',
+    family: 'espiral',
+    src: art_espiral_branco_12,
+    hue: 165.8,
+    luminance: 0.81,
+    vividness: 0.059,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       3,  3,  4,  3,  3,  3,  3,  4,  8,  8,  8,  7,  8,  8,  8,  7,
+       5, 38, 43, 35,  4,  4,  4,  4,  9,  9,  8,  9,  9,  9,  9,  8,
+      43, 24, 14, 23, 27, 10,  4,  5, 10,  8, 10, 11, 11, 11, 11, 10,
+      15,  9,  6,  6, 12, 30,  5,  7, 11, 10, 12, 15, 13, 12, 11, 12,
+      19,  8,  7,  9, 16, 34, 11, 12, 11, 14, 24, 23, 14, 10,  7,  3,
+      23, 22, 14, 17, 17, 15, 15, 24, 23, 26, 27, 17, 16, 19,  5,  5,
+      21, 24, 22, 23, 22, 27, 21, 19, 28, 30, 22, 23, 24, 16, 23,  6,
+      28, 28, 24, 16, 16, 17, 26, 27, 27, 21,  7,  7,  7, 11, 11,  7,
+      30, 26, 24, 20, 27, 48, 29, 18,  8,  8,  8,  8,  8,  8, 19,  7,
+    ],
+  },
+  {
+    id: 'espiral-branco-13',
+    family: 'espiral',
+    src: art_espiral_branco_13,
+    hue: 168.9,
+    luminance: 0.841,
+    vividness: 0.054,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  1,  1,  1,  1,  1,  2,  2,  1,  1,  1,  2, 22,  6,  5,  8,
+       2,  2,  1,  2,  1,  1,  1,  1,  2,  2,  2, 21, 16, 12,  6,  4,
+       3,  4,  2,  2,  1,  1,  2,  2,  2, 18, 15, 24, 26, 23,  9,  9,
+       3,  1,  5,  5,  3,  3,  3,  3, 15, 19,  6,  6, 10, 32, 15, 12,
+      13,  9,  7,  3,  5,  5,  4,  5, 16, 10,  7,  8, 29, 21, 31, 18,
+       5, 10, 10, 10,  6,  7,  7,  6, 20, 25, 18, 13, 19, 25, 29, 21,
+       7,  7,  7, 12, 13,  9,  9, 11, 25, 16, 10, 18, 22, 22, 25, 26,
+       6,  7,  7,  9, 13, 14, 14, 13, 21, 18, 20, 23, 21, 19, 14, 14,
+       8,  8,  8,  9, 10, 13, 26, 23, 21, 27, 25, 23, 21, 18, 14, 17,
+    ],
+  },
+  {
+    id: 'espiral-branco-14',
+    family: 'espiral',
+    src: art_espiral_branco_14,
+    hue: 167.6,
+    luminance: 0.809,
+    vividness: 0.043,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       0,  1,  1,  2,  1,  2,  1,  3,  2,  3,  3,  3,  3,  7,  7,  3,
+       0,  1,  2,  0,  2,  2,  2,  3,  3,  5,  6,  8, 24, 33, 27, 22,
+       1,  2,  1,  2,  2,  3,  3,  3,  4,  5, 19, 26, 18, 15, 22, 18,
+       2,  1,  1,  2,  3,  2,  3,  4,  8, 20, 24, 22, 12, 14, 19, 23,
+       1,  1,  2,  3,  2,  2,  4,  3, 20, 20, 24, 22, 24, 22, 27, 20,
+       2,  3,  3,  2,  2,  3,  4,  7, 14, 11, 14, 25, 11, 23, 32, 23,
+       2,  3,  2,  3,  3,  3,  4,  4, 18, 11, 20, 28, 22, 30, 19, 22,
+       2,  2,  3,  2,  3,  3,  4,  4, 11, 17, 23, 27, 33, 21, 21, 21,
+       2,  3,  2,  3,  3,  2,  4,  4,  5, 17, 13, 11, 15, 25, 25, 29,
+    ],
+  },
+  {
     id: 'espiral-preto-01',
     family: 'espiral',
     src: art_espiral_preto_01,
@@ -1137,6 +1464,54 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
        5, 54, 78, 10, 65, 99, 57, 15, 22, 55, 24,  4,  4,  3,  3,  9,
       15, 50,  8, 41, 65, 35, 28, 33, 33, 50, 16,  4,  3,  2,  2,  6,
       15,  5, 10, 18, 25, 47, 69, 76, 63, 43, 10,  5,  1,  1,  2,  4,
+    ],
+  },
+  {
+    id: 'espiral-preto-03',
+    family: 'espiral',
+    src: art_espiral_preto_03,
+    hue: 155.8,
+    luminance: 0.168,
+    vividness: 0.129,
+    tone: 1.0,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      42, 35, 28, 40, 16, 11, 14, 23, 33, 45, 41, 35, 50, 57, 53, 39,
+      37, 28, 43, 34, 31, 20, 20,  8,  3,  3,  3, 27, 42, 47, 43, 55,
+      32, 24, 36, 35, 37, 10,  5,  4,  3,  3,  4,  4,  5,  5, 58, 70,
+      27, 22, 25, 32, 36, 10,  5,  5,  5,  5,  5,  6,  7, 63, 42, 41,
+      24, 23, 23, 28, 42, 10,  5,  5,  5,  6, 10, 13, 20, 63, 15, 23,
+      19, 18, 24, 27, 43, 19,  5,  5,  5, 10, 15, 20, 49, 64, 58, 59,
+      14, 16, 24, 28, 39, 30,  5,  5,  7, 12, 53, 65, 56, 38, 57, 49,
+      16, 27, 35, 31, 34, 30, 34, 59, 56, 63, 71, 52, 48, 54, 41, 55,
+      26, 32, 32, 25, 33, 14, 50, 24, 17, 56, 45, 47, 55, 45, 24, 59,
+    ],
+  },
+  {
+    id: 'espiral-preto-04',
+    family: 'espiral',
+    src: art_espiral_preto_04,
+    hue: 187.3,
+    luminance: 0.106,
+    vividness: 0.083,
+    tone: 0.631,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       2,  3,  3,  3, 27, 25, 12,  9,  7,  8, 11, 16, 71, 74, 46, 52,
+       3,  3, 20, 39, 34,  1,  1,  1,  6,  6,  8, 13, 41, 23, 80, 43,
+       5, 17, 19,  3,  3,  2,  2,  1,  2,  3,  5, 42, 50, 37, 33, 30,
+      29, 14,  5,  5,  4,  3,  2,  2,  2,  3,  4, 19, 59, 39, 41, 44,
+      26, 34, 43, 50, 13,  6,  3,  2,  2,  3,  4,  8, 58, 22, 57, 63,
+      63, 64, 41, 59, 76, 24,  6,  3,  2,  3,  3,  4,  9, 33, 30, 37,
+      48, 49, 48, 73, 59, 62, 11,  3,  2,  2,  3,  3,  4,  7, 18, 18,
+      65, 55, 20, 44, 68, 67, 21, 14,  8,  7,  7,  8, 23, 29, 18, 11,
+      53, 41, 50, 63, 63, 46,  6, 13, 16, 22, 34, 21, 14,  8,  8,  3,
     ],
   },
 ];

@@ -458,6 +458,8 @@ async function runGeneration(id: string): Promise<void> {
 
 export interface PresentationsApi {
   createFromDraft(draft: CreationDraft): string;
+  /** Ver lib/pptxImport.ts — cria a apresentação já pronta, sem passar pela IA. */
+  createFromImportedPptx(title: string, slides: Slide[], skippedSlides: number): string;
   /** Arrasta a barra de cor: repinta o deck inteiro (artes + cromo) sem tocar no texto. */
   setTone(id: string, tone: number): void;
   markNotionSynced(id: string): void;
@@ -551,6 +553,49 @@ export const presentationsStore = {
 
     void runGeneration(id);
 
+    return id;
+  },
+
+  /**
+   * Apresentação vinda de um .pptx importado (ver lib/pptxImport.ts): os slides já
+   * chegam PRONTOS (fundo + texto solto, extraídos do arquivo original), sem
+   * passar pela geração via IA — status nasce direto em 'ready'.
+   */
+  createFromImportedPptx(title, slides, skippedSlides) {
+    const id = createId();
+    const now = Date.now();
+    const chat: ChatMessage[] =
+      skippedSlides > 0
+        ? [
+            {
+              id: createId(),
+              author: 'ai',
+              text: `Importei o arquivo, mas ${skippedSlides} ${skippedSlides === 1 ? 'slide não pôde' : 'slides não puderam'} ser lidos e ${skippedSlides === 1 ? 'ficou de fora' : 'ficaram de fora'}.`,
+              createdAt: now,
+            },
+          ]
+        : [];
+    const presentation: Presentation = {
+      id,
+      title: sanitizeTitle(title) || PLACEHOLDER_TITLE,
+      status: 'ready',
+      createdAt: now,
+      updatedAt: now,
+      tone: DEFAULT_TONE,
+      meta: {
+        idea: `Importado de "${title}"`,
+        slideCount: slides.length,
+        goal: 'inform',
+        audience: '',
+        style: 'balanced',
+        assets: [],
+      },
+      slides,
+      chat,
+    };
+    state = { ...state, presentations: [presentation, ...state.presentations] };
+    emit();
+    enforceActiveLimit();
     return id;
   },
 

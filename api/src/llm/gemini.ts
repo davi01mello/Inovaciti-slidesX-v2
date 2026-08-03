@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { LlmError } from './errors.js';
 import { callWithRetry } from './retry.js';
 
-export const MODEL = 'gemini-3.6-flash';
+export const MODEL = 'gemini-2.5-flash';
 
 const client = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
 

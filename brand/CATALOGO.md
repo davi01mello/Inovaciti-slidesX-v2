@@ -10,7 +10,7 @@ zonas usa essa grade pra escolher, em runtime, onde o texto cabe naquela arte
 O desenho ao lado de cada arte É a grade medida: os blocos escuros são o vazio
 onde o texto cabe, os claros são a escultura.
 
-**44 artes.**
+**59 artes.**
 
 | id | família | tone | matiz | lum | croma | clara | animada |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,8 +56,23 @@ onde o texto cabe, os claros são a escultura.
 | `canva-right-02` | canvas | 0.77 | 177° | 0.16 | 0.16 | – | sim |
 | `canva-right-03` | canvas | 0.67 | 185° | 0.10 | 0.12 | – | sim |
 | `espiral-branco-01` | espiral | 0.00 | 174° | 0.82 | 0.24 | sim | – |
+| `espiral-branco-02` | espiral | 0.00 | 161° | 0.90 | 0.09 | sim | – |
+| `espiral-branco-03` | espiral | 0.00 | 172° | 0.91 | 0.07 | sim | – |
+| `espiral-branco-04` | espiral | 0.00 | 168° | 0.89 | 0.05 | sim | – |
+| `espiral-branco-05` | espiral | 0.00 | 164° | 0.93 | 0.05 | sim | – |
+| `espiral-branco-06` | espiral | 0.00 | 169° | 0.91 | 0.03 | sim | – |
+| `espiral-branco-07` | espiral | 0.00 | 168° | 0.90 | 0.08 | sim | – |
+| `espiral-branco-08` | espiral | 0.00 | 168° | 0.91 | 0.07 | sim | – |
+| `espiral-branco-09` | espiral | 0.00 | 167° | 0.91 | 0.04 | sim | – |
+| `espiral-branco-10` | espiral | 0.00 | 161° | 0.85 | 0.06 | sim | sim |
+| `espiral-branco-11` | espiral | 0.00 | 158° | 0.77 | 0.08 | sim | sim |
+| `espiral-branco-12` | espiral | 0.00 | 166° | 0.81 | 0.06 | sim | sim |
+| `espiral-branco-13` | espiral | 0.00 | 169° | 0.84 | 0.05 | sim | sim |
+| `espiral-branco-14` | espiral | 0.00 | 168° | 0.81 | 0.04 | sim | sim |
 | `espiral-preto-01` | espiral | 0.89 | 168° | 0.08 | 0.09 | – | – |
 | `espiral-preto-02` | espiral | 0.87 | 170° | 0.07 | 0.08 | – | – |
+| `espiral-preto-03` | espiral | 1.00 | 156° | 0.17 | 0.13 | – | sim |
+| `espiral-preto-04` | espiral | 0.63 | 187° | 0.11 | 0.08 | – | sim |
 
 ---
 
@@ -733,6 +748,214 @@ fundEspiralBranco01.png · família **espiral** · tone **0.00** (Névoa) · mat
 ::........::--==++++****++==--::
 ```
 
+### `espiral-branco-02`
+
+fundEspiralBranco02.png · família **espiral** · tone **0.00** (Névoa) · matiz 161° · luminância 0.90 · **arte clara**
+
+```
+                                
+                  ..    ....::..
+..::::::        ..  ......::..--
+  ........      ..........::--::
+  ........    ........::==::  ::
+..::..::::......::----====  ..--
+==::::..--..::------::----==....
+..::::::::::--..  ==--..::======
+......::--::........::==----::::
+```
+
+### `espiral-branco-03`
+
+fundEspiralBranco03.png · família **espiral** · tone **0.00** (Névoa) · matiz 172° · luminância 0.91 · **arte clara**
+
+```
+                                
+                ....  ........  
+..::--::        ..  ............
+  ........      ................
+  ....  ..    ........  ....    
+..::..::::  ....::--::..        
+==::::..--..::--::      ..      
+..::::::::::--..    ::--..      
+......::--......::++--....      
+```
+
+### `espiral-branco-04`
+
+fundEspiralBranco04.png · família **espiral** · tone **0.00** (Névoa) · matiz 168° · luminância 0.89 · **arte clara**
+
+```
+                                
+                                
+..  ..                          
+..  ....                        
+............                    
+::....::::....                  
+::..::..........                
+..::......::....                
+..........::......              
+```
+
+### `espiral-branco-05`
+
+fundEspiralBranco05.png · família **espiral** · tone **0.00** (Névoa) · matiz 164° · luminância 0.93 · **arte clara**
+
+```
+                                
+                                
+                                
+                    ........    
+                    ......      
+                  ..........  ..
+                ..............  
+        ..........  ............
+    ............        ......::
+```
+
+### `espiral-branco-06`
+
+fundEspiralBranco06.png · família **espiral** · tone **0.00** (Névoa) · matiz 169° · luminância 0.91 · **arte clara**
+
+```
+                                
+                                
+                            ..  
+                          ......
+                          ......
+                          ....  
+                      ........  
+            ....................
+            ..................  
+```
+
+### `espiral-branco-07`
+
+fundEspiralBranco07.png · família **espiral** · tone **0.00** (Névoa) · matiz 168° · luminância 0.90 · **arte clara**
+
+```
+                                
+                              ..
+                  ..............
+                    ............
+                      ........  
+                ................
+  ................::............
+........::::..::::..............
+..........::::::::..............
+```
+
+### `espiral-branco-08`
+
+fundEspiralBranco08.png · família **espiral** · tone **0.00** (Névoa) · matiz 168° · luminância 0.91 · **arte clara**
+
+```
+                                
+                                
+                                
+                    ............
+                ..............  
+        ..    ..........::....  
+    ......  ..::......::::....  
+  ........::::................  
+    ....::::..................  
+```
+
+### `espiral-branco-09`
+
+fundEspiralBranco09.png · família **espiral** · tone **0.00** (Névoa) · matiz 167° · luminância 0.91 · **arte clara**
+
+```
+                                
+                                
+                      ....      
+                  ..........    
+                ..........::..  
+          ....    ........::..  
+................................
+..........    ..::....  ..::....
+              ..................
+```
+
+### `espiral-branco-10`
+
+fundEspiralBranco10.mp4 · família **espiral** · tone **0.00** (Névoa) · matiz 161° · luminância 0.85 · **arte clara**
+
+```
+                ..          ..  
+..              ..      ........
+                ................
+      ..            ............
+::..  ....        ..............
+    ..........  ::....::....::::
+..    ..................::::..::
+          ......::..::..::::....
+        ........--....::::::::::
+```
+
+### `espiral-branco-11`
+
+fundEspiralBranco11.mp4 · família **espiral** · tone **0.00** (Névoa) · matiz 158° · luminância 0.77 · **arte clara**
+
+```
+                ..      ....::  
+..              ::..  ..::::....
+    ..          ::::::::::::::::
+      ..          ::::::....::..
+--..........    ------::::::::::
+  ......::::::..--====--::::::--
+::......::::::::::::::::--::::--
+..........::::::--::--::::--..::
+..............::--::::::--::::::
+```
+
+### `espiral-branco-12`
+
+fundEspiralBranco12.mp4 · família **espiral** · tone **0.00** (Névoa) · matiz 166° · luminância 0.81 · **arte clara**
+
+```
+                                
+  --==--                        
+==::..::::..    ..  ............
+..      ..--    ................
+..      ..--........::::....    
+::::..........::::::::......    
+::::::::::::::..::--::::::..::  
+::::::......::::::::      ....  
+--::::::::==::..            ..  
+```
+
+### `espiral-branco-13`
+
+fundEspiralBranco13.mp4 · família **espiral** · tone **0.00** (Névoa) · matiz 169° · luminância 0.84 · **arte clara**
+
+```
+                        ::      
+                      ::....    
+                  ....::::::    
+                ....    ..--....
+..              ....    ::::--..
+  ......        ::::......::::::
+      ....    ..::......::::::::
+        ........::..::::::......
+        ....::::::::::::::......
+```
+
+### `espiral-branco-14`
+
+fundEspiralBranco14.mp4 · família **espiral** · tone **0.00** (Névoa) · matiz 168° · luminância 0.81 · **arte clara**
+
+```
+                                
+                        ::--::::
+                    ..::....::..
+                  ::::::......::
+                ::::::::::::::::
+                ......::..::--::
+                ....::::::--..::
+                ....::::--::::::
+                  ........::::::
+```
+
 ### `espiral-preto-01`
 
 fundEspiralPreto01.png · família **espiral** · tone **0.89** (Floresta) · matiz 168° · luminância 0.08
@@ -763,4 +986,36 @@ fundEspiralPreto02.png · família **espiral** · tone **0.87** (Floresta) · ma
   ++##..**@@++..::++::          
 ..++  ==**--::----++..          
 ..  ....::==**##**==..          
+```
+
+### `espiral-preto-03`
+
+fundEspiralPreto03.mp4 · família **espiral** · tone **1.00** (Floresta) · matiz 156° · luminância 0.17
+
+```
+==--::==......::--====--++++++--
+--::==----::::        ::======++
+--::------..                ++##
+::::::----..              **====
+::::::::==..        ....::**..::
+....::::==..      ....::==**++++
+....::::----      ..++**++--++==
+..::----------++++**##++==++==++
+::----::--..++::..++====++==::++
+```
+
+### `espiral-preto-04`
+
+fundEspiralPreto04.mp4 · família **espiral** · tone **0.63** (Oceano) · matiz 187° · luminância 0.11
+
+```
+        ::::..      ....####==++
+    ::----            ..==::%%==
+  ....                ==++------
+::..                  ..++--====
+::--==++..              ++::++**
+****==++##::              ------
+======##++**..              ....
+**++::==****::..        ::::....
+++==++****==  ....::--::..      
 ```
