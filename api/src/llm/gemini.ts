@@ -22,6 +22,8 @@ interface GenerateJsonParams {
   systemInstruction: string;
   prompt: string;
   responseSchema: object;
+  /** Teto por tentativa. Default: config.llmTimeoutMs. Decks grandes devem mandar um valor maior (ver routes/generate.ts). */
+  timeoutMs?: number;
 }
 
 /** Chama o Gemini pedindo saída estruturada (JSON) validada contra responseSchema. */
@@ -44,6 +46,7 @@ export async function generateJson<T>(params: GenerateJsonParams): Promise<T> {
       return result.text;
     },
     'Falha ao falar com o Gemini.',
+    { timeoutMs: params.timeoutMs },
   );
 
   try {
@@ -58,6 +61,8 @@ interface GenerateTextParams {
   prompt: string;
   /** Imagens anexadas pelo usuário (chat multimodal): vão inline junto do prompt. */
   images?: { mimeType: string; dataBase64: string }[];
+  /** Teto por tentativa. Default: config.llmTimeoutMs. Ver routes/generate.ts pro caso do estrategista em decks grandes. */
+  timeoutMs?: number;
 }
 
 /** Chama o Gemini pedindo texto livre (usado pelo chat, que não precisa de JSON). */
@@ -96,5 +101,6 @@ export async function generateText(params: GenerateTextParams): Promise<string> 
       return result.text;
     },
     'Falha ao falar com o Gemini.',
+    { timeoutMs: params.timeoutMs },
   );
 }

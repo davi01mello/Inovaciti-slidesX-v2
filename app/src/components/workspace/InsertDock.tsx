@@ -400,7 +400,7 @@ function CompanyLogosTab({ onInsert }: { onInsert: (assetKey: string) => void })
 /* tem a opção "Automático" pra devolver a escolha pro diretor de arte.        */
 /* -------------------------------------------------------------------------- */
 
-const FAMILY_LABEL: Record<ArtFamily, string> = { capa: 'Capas', canvas: 'Canvas', espiral: 'Espiral' };
+const FAMILY_LABEL: Record<ArtFamily, string> = { capa: 'Capas', canvas: 'Canvas', espiral: 'Espiral', diva: 'Diva' };
 
 function ArtTab({
   onSelect,

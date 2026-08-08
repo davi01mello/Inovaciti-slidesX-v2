@@ -71,8 +71,18 @@ import art_espiral_preto_01 from '@/assets/templates/espiral/espiral-preto-01.we
 import art_espiral_preto_02 from '@/assets/templates/espiral/espiral-preto-02.webp';
 import art_espiral_preto_03 from '@/assets/templates/espiral/espiral-preto-03.webp';
 import art_espiral_preto_04 from '@/assets/templates/espiral/espiral-preto-04.webp';
+import art_diva_01 from '@/assets/templates/diva/diva-01.webp';
+import art_diva_02 from '@/assets/templates/diva/diva-02.webp';
+import art_diva_03 from '@/assets/templates/diva/diva-03.webp';
+import art_diva_04 from '@/assets/templates/diva/diva-04.webp';
+import art_diva_05 from '@/assets/templates/diva/diva-05.webp';
+import art_diva_06 from '@/assets/templates/diva/diva-06.webp';
+import art_diva_07 from '@/assets/templates/diva/diva-07.webp';
+import art_diva_08 from '@/assets/templates/diva/diva-08.webp';
+import art_diva_09 from '@/assets/templates/diva/diva-09.webp';
+import art_diva_10 from '@/assets/templates/diva/diva-10.webp';
 
-export type ArtFamily = 'capa' | 'canvas' | 'espiral';
+export type ArtFamily = 'capa' | 'canvas' | 'espiral' | 'diva';
 
 export interface TemplateArt {
   id: string;
@@ -1512,6 +1522,246 @@ export const TEMPLATE_ARTS: TemplateArt[] = [
       48, 49, 48, 73, 59, 62, 11,  3,  2,  2,  3,  3,  4,  7, 18, 18,
       65, 55, 20, 44, 68, 67, 21, 14,  8,  7,  7,  8, 23, 29, 18, 11,
       53, 41, 50, 63, 63, 46,  6, 13, 16, 22, 34, 21, 14,  8,  8,  3,
+    ],
+  },
+  {
+    id: 'diva-01',
+    family: 'diva',
+    src: art_diva_01,
+    hue: 341.2,
+    luminance: 0.906,
+    vividness: 0.136,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       2,  1,  1,  1,  1,  1,  2,  3,  4,  6,  9, 12, 14, 16, 18, 18,
+       3,  2,  2,  2,  1,  2,  2,  3,  5,  8, 11, 12, 14, 15, 16, 17,
+       5,  4,  3,  2,  2,  2,  3,  4,  7, 11, 11, 12, 10, 11, 10,  9,
+       8,  6,  4,  4,  3,  2,  3,  6,  9, 11, 11, 10,  7, 38, 44, 20,
+       9,  8,  7,  5,  4,  4,  5,  8, 11, 12, 12,  9,  6, 48, 37, 42,
+      12, 11, 10, 10,  9,  9, 10, 13, 15, 16, 14, 11, 12, 45, 36, 41,
+      14, 15, 15, 15, 15, 14, 13, 14, 17, 18, 18, 46, 60, 45, 47, 43,
+      14, 14, 15, 14, 13, 11,  9,  7,  8, 10, 19, 45, 47, 58, 44, 44,
+      14, 14, 14, 14, 15, 16, 18, 22, 25, 26, 32, 60, 60, 46, 32, 30,
+    ],
+  },
+  {
+    id: 'diva-02',
+    family: 'diva',
+    src: art_diva_02,
+    hue: 342.3,
+    luminance: 0.902,
+    vividness: 0.138,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       1,  1,  1,  1,  1,  1,  1,  2,  3,  5,  6,  8,  9, 11, 12, 13,
+       2,  1,  1,  1,  1,  2,  2,  3,  4,  6,  8,  9, 11, 12, 13, 14,
+       3,  2,  2,  2,  2,  3,  4,  5,  6,  8, 10, 12, 13, 13, 15, 16,
+       5,  5,  4,  4,  4,  5,  6,  7,  9, 10, 12, 12, 13, 14, 16, 17,
+       8,  7,  7,  7,  7,  8,  9, 10, 11, 12, 12, 12, 13, 14, 17, 18,
+      12, 11, 11, 10, 10, 10, 12, 12, 12, 12, 12, 12, 12, 13, 16, 19,
+      16, 15, 15, 22, 28, 25, 32, 31, 22, 43, 50, 25,  9, 11, 16, 20,
+      20, 19, 18, 35, 15, 40, 34, 44, 39, 34, 36, 49, 36,  7, 15, 23,
+      23, 23, 22, 37, 43, 50, 38, 36, 35, 27, 25, 27, 37, 28, 21, 29,
+    ],
+  },
+  {
+    id: 'diva-03',
+    family: 'diva',
+    src: art_diva_03,
+    hue: 341.6,
+    luminance: 0.889,
+    vividness: 0.156,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      10,  9,  8,  9,  8,  9,  9,  9, 10, 12, 13, 14, 15, 16, 18, 21,
+      16, 16, 14,  9,  8,  8,  8,  9, 10, 10, 11, 12, 13, 13, 16, 20,
+      21, 20, 19, 14, 10,  7,  7,  7,  8,  9, 10, 11, 10, 12, 15, 19,
+      18, 19, 14, 13, 14,  6,  5,  6,  6,  8,  7, 13, 15, 17, 20, 22,
+      19, 25, 13, 12, 21,  4,  4,  4, 12, 30, 22, 22, 19, 19, 22, 24,
+      36, 23, 26, 39, 34, 18, 15, 28, 36, 14, 11, 17, 33, 19, 22, 24,
+      25, 32, 38, 31, 16, 23, 38, 31, 12, 10, 11, 27, 29, 19, 23, 25,
+      22, 21, 22, 38, 45, 43, 20,  8, 18, 27, 30, 25, 20, 20, 24, 26,
+      22, 25, 26, 21, 19, 21, 24, 27, 25, 22, 19, 18, 19, 23, 25, 26,
+    ],
+  },
+  {
+    id: 'diva-04',
+    family: 'diva',
+    src: art_diva_04,
+    hue: 343.4,
+    luminance: 0.835,
+    vividness: 0.238,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      14, 14, 13, 13, 14, 13, 15, 17, 23, 30, 22, 23, 24, 26, 27, 29,
+      13, 12, 11, 10, 11, 11, 19, 27, 19, 20, 21, 23, 24, 26, 27, 29,
+      12, 10,  9, 10,  8, 20, 22, 18, 19, 20, 21, 22, 24, 26, 27, 29,
+      12, 10,  8, 10, 16, 18, 16, 17, 18, 20, 21, 23, 24, 26, 27, 29,
+      13, 11,  9, 11, 22, 14, 15, 16, 18, 19, 21, 23, 24, 26, 28, 30,
+      14, 13, 11, 12, 17, 14, 15, 16, 18, 19, 21, 23, 25, 27, 29, 31,
+      16, 15, 14, 14, 13, 14, 15, 17, 22, 26, 30, 34, 34, 35, 35, 36,
+      29, 27, 24, 22, 15, 12, 18, 21, 25, 32, 34, 49, 47, 44, 47, 49,
+      27, 25, 24, 22, 18, 21, 23, 25, 29, 27, 32, 38, 46, 39, 36, 38,
+    ],
+  },
+  {
+    id: 'diva-05',
+    family: 'diva',
+    src: art_diva_05,
+    hue: 344.7,
+    luminance: 0.892,
+    vividness: 0.154,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       5,  4,  4,  4,  4,  4,  4,  6,  7, 10, 12, 14, 19, 26, 29, 34,
+       6,  5,  4,  4,  4,  4,  4,  6,  8,  9, 11, 13, 19, 20, 25, 30,
+       7,  6,  5,  4,  4,  4,  5,  6,  7,  9, 12, 29, 16, 23, 29, 29,
+       9,  8,  7,  6,  6,  6,  6,  6,  7,  8, 25, 31, 24, 23, 25, 31,
+      12, 11, 10,  9,  8,  8,  7,  6,  6, 11, 31, 26, 22, 20, 27, 29,
+      15, 14, 13, 12, 11, 10, 10,  8, 34, 32, 17, 23, 25, 22, 24, 23,
+      17, 16, 15, 15, 14, 12, 12, 15, 27,  9,  8,  8, 13, 18, 21, 25,
+      18, 17, 22, 27, 28, 25, 30, 28, 15, 14, 18, 20, 22, 24, 26, 28,
+      30, 35, 31, 32, 33, 39, 28, 22, 22, 24, 25, 26, 26, 27, 28, 29,
+    ],
+  },
+  {
+    id: 'diva-06',
+    family: 'diva',
+    src: art_diva_06,
+    hue: 342.3,
+    luminance: 0.884,
+    vividness: 0.165,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       8,  8,  8,  9,  9, 10, 11, 12, 13, 14, 16, 19, 24, 29, 28, 28,
+       8,  8,  8,  8,  8,  9,  9, 10, 11, 11, 14, 28, 28, 27, 26, 25,
+       9,  8,  8,  7,  6,  7,  8,  8,  9,  9, 18, 21, 29, 23, 22, 22,
+      12, 10,  8,  6,  6,  6,  7,  8,  7, 14, 32, 31, 27, 33, 31, 24,
+      15, 13, 10,  7,  6,  6,  7,  7, 20, 27, 16, 18, 30, 36, 30, 36,
+      19, 17, 13, 10,  7,  6,  6, 22, 35, 14, 16, 17, 22, 38, 40, 38,
+      25, 22, 16, 12,  9,  5, 14, 31, 15, 14, 21, 23, 24, 23, 25, 29,
+      24, 25, 20, 14,  7, 17, 32, 19, 18, 18, 16, 27, 24, 23, 22, 31,
+      21, 20, 16, 15, 18, 21, 23, 23, 18, 23, 23, 22, 23, 24, 25, 26,
+    ],
+  },
+  {
+    id: 'diva-07',
+    family: 'diva',
+    src: art_diva_07,
+    hue: 343.8,
+    luminance: 0.89,
+    vividness: 0.156,
+    tone: 0.0,
+    light: true,
+    animated: false,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+       4,  4,  4,  5,  5,  8, 12, 12,  8,  8, 10, 11, 12, 13, 14, 21,
+       4,  4,  5,  5,  8, 16, 20, 21, 22, 16, 14, 19, 14, 13, 14, 24,
+       4,  9,  9,  5,  7, 16, 21, 23, 28, 26, 23, 27, 24, 12, 17, 32,
+       8, 10,  9,  7,  6, 14, 21, 26, 31, 29, 28, 28, 34, 16, 21, 41,
+      14, 10,  9,  9,  7, 10, 17, 26, 37, 34, 34, 38, 38, 24, 28, 36,
+      20, 13, 12, 13,  9,  9, 15, 28, 37, 36, 36, 42, 43, 30, 33, 26,
+      18, 16, 18, 17, 13, 13, 20, 26, 26, 29, 32, 46, 44, 33, 33, 21,
+      24, 22, 22, 23, 12, 12, 16, 19, 20, 23, 28, 44, 42, 37, 29, 24,
+      24, 17,  5,  5,  8, 10, 12, 15, 18, 18, 27, 34, 40, 35, 26, 26,
+    ],
+  },
+  {
+    id: 'diva-08',
+    family: 'diva',
+    src: art_diva_08,
+    hue: 354.6,
+    luminance: 0.6,
+    vividness: 0.237,
+    tone: 0.067,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      22, 26, 26, 22, 47, 27, 29, 24, 33, 34, 32, 43, 53, 44, 34, 34,
+      24, 25, 26, 27, 32, 22, 30, 27, 27, 31, 38, 38, 27, 33, 29, 37,
+      31, 38, 37, 38, 32, 37, 40, 36, 43, 36, 25, 29, 33, 27, 36, 35,
+      19, 37, 36, 44, 46, 45, 41, 43, 47, 36, 35, 33, 43, 46, 33, 16,
+      34, 36, 30, 57, 43, 23, 44, 46, 45, 42, 40, 34, 37, 43, 36, 36,
+      31, 27, 35, 50, 34, 41, 33, 43, 41, 39, 29, 39, 36, 35, 41, 35,
+      26, 31, 33, 33, 33, 38, 34, 24, 37, 35, 34, 35, 34, 33, 30, 40,
+      30, 32, 33, 32, 43, 29, 33, 24, 34, 32, 46, 46, 34, 41, 36, 36,
+      22, 22, 23, 36, 31, 30, 21, 20, 35, 27, 36, 61, 70, 63, 48, 42,
+    ],
+  },
+  {
+    id: 'diva-09',
+    family: 'diva',
+    src: art_diva_09,
+    hue: 353.1,
+    luminance: 0.512,
+    vividness: 0.236,
+    tone: 0.184,
+    light: false,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      20, 39, 43, 15, 15, 15, 15, 14, 32, 35, 40, 44, 44, 43, 30, 20,
+      24, 41, 38, 32, 16, 16, 26, 39, 37, 46, 52, 55, 51, 46, 48, 40,
+      35, 40, 40, 31, 18, 16, 36, 31, 35, 52, 65, 63, 57, 50, 44, 48,
+      44, 43, 42, 48, 32, 33, 38, 35, 39, 53, 72, 66, 62, 57, 49, 47,
+      40, 46, 25, 32, 49, 47, 44, 50, 61, 71, 54, 66, 60, 52, 48, 44,
+      48, 48, 41, 31, 30, 47, 51, 58, 65, 71, 67, 46, 55, 41, 40, 39,
+      38, 37, 38, 45, 44, 44, 51, 58, 62, 62, 56, 38, 34, 39, 33, 27,
+      31, 35, 35, 31, 32, 32, 33, 49, 46, 25, 29, 27, 34, 35, 31, 37,
+      32, 29, 28, 25, 24, 24, 26, 31, 31, 25, 31, 37, 33, 35, 29, 29,
+    ],
+  },
+  {
+    id: 'diva-10',
+    family: 'diva',
+    src: art_diva_10,
+    hue: 352.8,
+    luminance: 0.733,
+    vividness: 0.221,
+    tone: 0.0,
+    light: true,
+    animated: true,
+    // A escultura desta arte, medida. Cada linha é uma faixa do slide, de cima
+    // pra baixo; cada número é o quão ocupada a célula está (0 = vazio liso).
+    grid: [
+      19, 19, 15, 13, 19, 13, 16, 17, 25, 27, 22, 22, 28, 31, 27, 26,
+      18, 17, 19, 13, 17, 14, 19, 28, 20, 19, 31, 29, 23, 23, 25, 25,
+      18, 17, 17, 17, 13, 27, 21, 18, 28, 27, 21, 23, 24, 17, 19, 21,
+      18, 18, 17, 23, 26, 21, 16, 23, 24, 22, 24, 23, 22, 18, 20, 22,
+      18, 19, 18, 28, 37, 17, 18, 20, 28, 30, 24, 24, 32, 33, 22, 23,
+      19, 19, 18, 33, 28, 18, 19, 18, 24, 25, 24, 22, 25, 32, 42, 31,
+      20, 19, 18, 24, 30, 19, 20, 24, 30, 22, 37, 35, 34, 32, 36, 43,
+      27, 26, 26, 27, 30, 27, 26, 30, 37, 28, 45, 44, 34, 42, 41, 40,
+      25, 23, 21, 26, 24, 20, 20, 19, 23, 25, 35, 62, 72, 66, 50, 47,
     ],
   },
 ];

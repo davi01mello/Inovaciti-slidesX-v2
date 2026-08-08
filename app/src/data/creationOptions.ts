@@ -83,6 +83,6 @@ export const STYLE_OPTIONS: StyleOption[] = [
 export const AUDIENCE_EXAMPLES: string[] = [
   'Diretoria Executiva',
   'Time Técnico Do Cliente',
-  'Novos Membros Da CITi',
+  'Novos Membros Do CITi',
   'Cliente Corporativo',
 ];

@@ -58,6 +58,7 @@ FAMILIES = {
     "Capas": "capa",       # peça de herói: cheia, dramática, feita pra UM bloco de texto grande
     "Canvas": "canvas",    # peça de miolo: escultura numa borda, vazio de sobra pro conteúdo denso
     "Espiral": "espiral",  # peça de virada: textura geométrica, ótima pra separador
+    "Diva": "diva",        # peça de virada, paleta rosa/glam — mesmo papel do Espiral
 }
 
 # ---------------------------------------------------------------------------
@@ -83,10 +84,16 @@ GRID_COLS, GRID_ROWS = 16, 9
 # só: o motor de zonas precisa de UMA leitura estável, não de 80.
 VIDEO_EXTS = {".mp4"}
 VIDEO_FPS = 8
-VIDEO_QUALITY = 72
-# Nível 3: o ponto de equilíbrio medido. Nível 0 sai maior; nível 6 (o mais
-# compacto) pode levar minutos num clipe gradiente como estes blobs de vidro.
-VIDEO_COMPRESSION_LEVEL = 3
+# 72 gerava bloco/xadrez visível nos degradês suaves destes vidros translúcidos
+# (a compressão lossy do WebP é muito mais agressiva em gradiente liso do que
+# em textura com ruído). 90 elimina o blocking a olho nu — testado lado a lado,
+# ver conversa. Custo: ~2x o tamanho do arquivo (de ~1.8MB pra ~4MB por clipe
+# de 10s), ainda dentro da faixa dos outros fundos animados já em produção
+# (2-3.4MB).
+VIDEO_QUALITY = 90
+# Nível 4: leve ganho sobre o nível 3 sem escalar pra minutos por clipe (nível 6,
+# o mais compacto, pode levar minutos num clipe gradiente como estes blobs de vidro).
+VIDEO_COMPRESSION_LEVEL = 4
 
 # ---------------------------------------------------------------------------
 # Eixo de cor (SYNC_WITH: app/src/services/tone.ts)
@@ -438,6 +445,9 @@ def emit_ts(records: list[ArtRecord]) -> str:
   }},"""
         )
     body = "\n".join(entries)
+    # Derivado de FAMILIES, não hardcoded: uma família nova (pasta nova em
+    # templates-src/) entra automaticamente no tipo sem precisar editar aqui.
+    family_union = " | ".join(f"'{fam}'" for fam in FAMILIES.values())
     return f"""/* eslint-disable */
 /**
  * CATÁLOGO DE ARTES DA MARCA — GERADO. NÃO EDITE À MÃO.
@@ -454,7 +464,7 @@ def emit_ts(records: list[ArtRecord]) -> str:
  */
 {imports}
 
-export type ArtFamily = 'capa' | 'canvas' | 'espiral';
+export type ArtFamily = {family_union};
 
 export interface TemplateArt {{
   id: string;

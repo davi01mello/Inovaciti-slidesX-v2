@@ -17,6 +17,22 @@ import { generateBodySchema, parseBody, warnIfInjectionAttempt } from '../valida
 export const generateRouter = Router();
 
 /**
+ * Teto por tentativa escalado pela quantidade de slides pedida — um deck de 24
+ * ou 50 slides exige bem mais tokens de saída do que um de 8, então o mesmo
+ * timeout fixo que serve pro caso comum estoura sozinho nos decks grandes
+ * (era exatamente isso: LLM_TIMEOUT_MS default de 60s valendo igual pra
+ * qualquer tamanho). GERADORA escala mais forte que ESTRATEGISTA porque é ela
+ * quem produz o storyboard inteiro; ambas têm teto pra não deixar uma falha
+ * real (rede fora, API fora do ar) pendurar a resposta por tempo indefinido.
+ */
+function strategistTimeoutMs(slideCount: number): number {
+  return Math.min(120_000, 45_000 + slideCount * 2_000);
+}
+function generatorTimeoutMs(slideCount: number): number {
+  return Math.min(240_000, 60_000 + slideCount * 5_000);
+}
+
+/**
  * Geração em duas etapas:
  *   1. ESTRATEGISTA: recebe o briefing completo (a rota só é chamada quando o
  *      wizard termina, então aqui estão todas as respostas do usuário) e produz
@@ -46,6 +62,7 @@ generateRouter.post('/', async (req, res) => {
     const rawPlan = await generateText({
       systemInstruction: STRATEGIST_SYSTEM_INSTRUCTION,
       prompt: buildStrategistPrompt(briefing),
+      timeoutMs: strategistTimeoutMs(body.slideCount),
     });
     plan = sanitizeStrategistPlan(rawPlan);
     logger.debug({ request_id: req.requestId, plan_chars: plan?.length ?? 0 }, 'estrategista concluído');
@@ -58,6 +75,7 @@ generateRouter.post('/', async (req, res) => {
       systemInstruction: GENERATOR_SYSTEM_INSTRUCTION,
       prompt: buildGeneratorPrompt({ plan, ...briefing }),
       responseSchema: generateResponseSchema,
+      timeoutMs: generatorTimeoutMs(body.slideCount),
     });
     const result = normalizeGenerateResponse(raw);
     if (result.slides.length === 0) {

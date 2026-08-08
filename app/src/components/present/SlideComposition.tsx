@@ -110,6 +110,9 @@ interface CompositionContextValue {
   addStat: (blockId: string) => void;
   addStep: (blockId: string) => void;
   addComparePoint: (blockId: string, sideIndex: number) => void;
+  /** Remove o item pelo índice (nunca deixa a lista vazia — o botão some no último). */
+  removeTopic: (blockId: string, index: number) => void;
+  removeStep: (blockId: string, index: number) => void;
   /** Overrides de posição das ZONAS do slide (todas móveis no editor). */
   zoneOverrides: Partial<Record<ZoneKey, BlockRect>>;
   zonesEditable: boolean;
@@ -141,6 +144,8 @@ const CompositionContext = createContext<CompositionContextValue>({
   addStat: () => {},
   addStep: () => {},
   addComparePoint: () => {},
+  removeTopic: () => {},
+  removeStep: () => {},
   zoneOverrides: {},
   zonesEditable: false,
   commitZone: () => {},
@@ -281,6 +286,16 @@ export function SlideComposition({
         if (!block || block.kind !== 'topics' || block.items.length >= MAX_TOPICS) return;
         onBlockChange?.(blockId, { items: [...block.items, fromPlain('Novo tópico')] } as Partial<Block>);
       },
+      removeTopic: (blockId, index) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        // Nunca deixa a lista vazia: com 1 item só, o botão de remover some (ver render).
+        if (!block || block.kind !== 'topics' || block.items.length <= 1) return;
+        const items = block.items.filter((_, i) => i !== index);
+        // markers é indexado em paralelo a items — sem filtrar junto, o número
+        // sobrescrito de um tópico "vaza" pro vizinho depois da remoção.
+        const markers = block.markers ? block.markers.filter((_, i) => i !== index) : undefined;
+        onBlockChange?.(blockId, { items, markers } as Partial<Block>);
+      },
       addCard: (blockId) => {
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'cards' || block.items.length >= MAX_CARDS) return;
@@ -297,6 +312,17 @@ export function SlideComposition({
         const block = slide.blocks.find((b) => b.id === blockId);
         if (!block || block.kind !== 'steps' || block.items.length >= MAX_STEPS) return;
         onBlockChange?.(blockId, { items: [...block.items, fromPlain('Nova etapa')] } as Partial<Block>);
+      },
+      removeStep: (blockId, index) => {
+        const block = slide.blocks.find((b) => b.id === blockId);
+        if (!block || block.kind !== 'steps' || block.items.length <= 1) return;
+        const items = block.items.filter((_, i) => i !== index);
+        // markers/icons/iconAssets são indexados em paralelo a items — sem filtrar
+        // os três junto, o ícone/número de uma etapa "vaza" pra vizinha errada.
+        const markers = block.markers ? block.markers.filter((_, i) => i !== index) : undefined;
+        const icons = block.icons ? block.icons.filter((_, i) => i !== index) : undefined;
+        const iconAssets = block.iconAssets ? block.iconAssets.filter((_, i) => i !== index) : undefined;
+        onBlockChange?.(blockId, { items, markers, icons, iconAssets } as Partial<Block>);
       },
       addComparePoint: (blockId, sideIndex) => {
         const block = slide.blocks.find((b) => b.id === blockId);
@@ -2018,6 +2044,7 @@ function TopicsList({ plan, zone, zoneKey = 'content' }: { plan: ComposedSlide; 
               scale={duo ? 1.25 : 1}
               glass={glass}
               duo={duo}
+              canRemove={items.length > 1}
             />
           ))}
         </div>
@@ -2039,6 +2066,7 @@ function TopicRow({
   scale = 1,
   glass,
   duo = false,
+  canRemove = true,
 }: {
   blockId: string;
   index: number;
@@ -2051,6 +2079,8 @@ function TopicRow({
   /** Densidade do vidro do card, medida na zona (ver CardsRow). */
   glass: number;
   duo?: boolean;
+  /** Falso com 1 item só na lista — nunca deixa esvaziar de vez. */
+  canRemove?: boolean;
 }) {
   const ctx = useContext(CompositionContext);
 
@@ -2151,6 +2181,9 @@ function TopicRow({
       >
         {text}
       </div>
+      {ctx.editable && canRemove && (
+        <RemoveItemButton onClick={() => ctx.removeTopic(blockId, index)} ariaLabel={`Remover tópico ${index + 1}`} />
+      )}
     </div>
   );
 }
@@ -2475,9 +2508,14 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
               <div
                 key={`${steps.id}-${i}`}
                 data-card=""
-                className="flex min-w-0 flex-col overflow-hidden rounded-[1.8em]"
+                className="relative flex min-w-0 flex-col overflow-hidden rounded-[1.8em]"
                 style={{ ...shell, padding: '1.5em 1.5em 1.4em', rowGap: '0.7em' }}
               >
+                {ctx.editable && items.length > 1 && (
+                  <div className="absolute right-[0.5em] top-[0.5em] z-10">
+                    <RemoveItemButton onClick={() => ctx.removeStep(steps.id, i)} ariaLabel={`Remover etapa ${i + 1}`} />
+                  </div>
+                )}
                 <IconControl
                   icon={steps.icons?.[i] ?? undefined}
                   iconAsset={steps.iconAssets?.[i] ?? undefined}
@@ -2582,6 +2620,9 @@ function TimelineSteps({ plan, zone }: { plan: ComposedSlide; zone: PlacedZone }
                   clamp={2}
                   style={{ fontSize: '1.45em', fontWeight: 500, lineHeight: 1.4, color: chrome.ink, flex: 1, minWidth: 0 }}
                 />
+                {ctx.editable && items.length > 1 && (
+                  <RemoveItemButton onClick={() => ctx.removeStep(steps.id, i)} ariaLabel={`Remover etapa ${i + 1}`} />
+                )}
               </div>
             </li>
           ))}
@@ -2800,6 +2841,43 @@ function Banner({ block, zone }: { block: TextBlock; zone: PlacedZone }) {
  * O botão de adicionar. Ele SOME no teto — passar de 3 cards ou 5 tópicos precisa
  * ser IMPOSSÍVEL, não desencorajado. Esta é a camada 3 da aplicação da regra.
  */
+/**
+ * O "×" que remove um item de lista (tópico/etapa) sem precisar do truque de
+ * esvaziar o texto e sair do campo. Sempre visível em edição — nada de
+ * revelar-no-hover aqui (foi exatamente esse padrão que sumia com o grip de
+ * mover caixa antes de dar tempo do ponteiro chegar; ver TransformBox).
+ */
+function RemoveItemButton({ onClick, ariaLabel }: { onClick: () => void; ariaLabel: string }) {
+  return (
+    <button
+      type="button"
+      title="Remover"
+      aria-label={ariaLabel}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className="flex-none cursor-pointer rounded-full text-white/35 transition-colors duration-150 hover:bg-red-500/15 hover:text-red-400"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '1.7em',
+        height: '1.7em',
+        fontSize: '1em',
+        lineHeight: 1,
+        border: 'none',
+        background: 'none',
+      }}
+    >
+      <span aria-hidden="true" style={{ fontSize: '1.1em', fontWeight: 600 }}>
+        ×
+      </span>
+    </button>
+  );
+}
+
 function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button

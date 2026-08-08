@@ -27,7 +27,7 @@ import { TEMPLATE_ARTS, type ArtFamily, type TemplateArt } from '@/services/temp
 
 const W_COLOR = 1.15; // afinidade de cor: a coerência do deck
 const W_FIT = 1.7; //   encaixe medido: a legibilidade
-const W_FAMILY = 0.75; // aptidão da família: capa=herói, canvas=miolo, espiral=virada
+const W_FAMILY = 0.75; // aptidão da família: capa=herói, canvas=miolo, espiral/diva=virada
 const W_NOISE = 0.14; // desempate estável
 
 const P_SAME_ARRANGEMENT = 0.3; // vizinho com o mesmo desenho: o que mais salta aos olhos
@@ -42,22 +42,27 @@ const P_REUSED = 0.85; // arte já usada neste deck
  * serve pra nada, e um slide legível um tom fora ninguém percebe.
  */
 
-/** Aptidão de cada família pra cada papel. É o que impede uma capa dramática de virar canvas. */
+/**
+ * Aptidão de cada família pra cada papel. É o que impede uma capa dramática de
+ * virar canvas. DIVA entra com o mesmo perfil de ESPIRAL — mesma natureza
+ * visual (render 3D abstrato de página inteira, sem miolo vazio pra conteúdo
+ * denso), só que na paleta rosa em vez da verde/teal.
+ */
 const FAMILY_FIT: Record<Archetype, Record<ArtFamily, number>> = {
-  cover: { capa: 1, espiral: 0.55, canvas: 0.2 },
-  closing: { capa: 0.95, espiral: 0.6, canvas: 0.25 },
-  section: { espiral: 1, capa: 0.72, canvas: 0.35 },
-  statement: { capa: 0.85, espiral: 0.75, canvas: 0.6 },
+  cover: { capa: 1, espiral: 0.55, diva: 0.55, canvas: 0.2 },
+  closing: { capa: 0.95, espiral: 0.6, diva: 0.6, canvas: 0.25 },
+  section: { espiral: 1, diva: 1, capa: 0.72, canvas: 0.35 },
+  statement: { capa: 0.85, espiral: 0.75, diva: 0.75, canvas: 0.6 },
   // Citação é um statement de impacto: UM bloco de texto grande, arte dramática serve.
-  quote: { capa: 0.85, espiral: 0.8, canvas: 0.6 },
-  bignumber: { canvas: 0.9, capa: 0.7, espiral: 0.7 },
-  kpis: { canvas: 1, espiral: 0.5, capa: 0.35 },
-  cards: { canvas: 1, espiral: 0.45, capa: 0.3 },
-  topics: { canvas: 1, espiral: 0.5, capa: 0.35 },
-  compare: { canvas: 1, espiral: 0.45, capa: 0.3 },
-  timeline: { canvas: 1, espiral: 0.5, capa: 0.35 },
-  split: { canvas: 1, espiral: 0.45, capa: 0.3 },
-  media: { canvas: 1, espiral: 0.4, capa: 0.3 },
+  quote: { capa: 0.85, espiral: 0.8, diva: 0.8, canvas: 0.6 },
+  bignumber: { canvas: 0.9, capa: 0.7, espiral: 0.7, diva: 0.7 },
+  kpis: { canvas: 1, espiral: 0.5, diva: 0.5, capa: 0.35 },
+  cards: { canvas: 1, espiral: 0.45, diva: 0.45, capa: 0.3 },
+  topics: { canvas: 1, espiral: 0.5, diva: 0.5, capa: 0.35 },
+  compare: { canvas: 1, espiral: 0.45, diva: 0.45, capa: 0.3 },
+  timeline: { canvas: 1, espiral: 0.5, diva: 0.5, capa: 0.35 },
+  split: { canvas: 1, espiral: 0.45, diva: 0.45, capa: 0.3 },
+  media: { canvas: 1, espiral: 0.4, diva: 0.4, capa: 0.3 },
 };
 
 /**
