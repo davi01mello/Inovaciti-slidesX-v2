@@ -51,14 +51,23 @@ exportCanvaRouter.post('/:id/export-canva', pptxBody, async (req, res) => {
 
     const deadline = Date.now() + WAIT_INLINE_MS;
     while (Date.now() < deadline) {
-      const result = await getDesignImportJob(jobId);
-      if (result.status === 'success') {
-        res.json({ status: 'success', editUrl: result.editUrl, jobId });
-        return;
-      }
-      if (result.status === 'failed') {
-        res.status(502).json({ error: result.errorMessage ?? 'Falha ao importar na Canva.', status: 'failed', jobId });
-        return;
+      try {
+        const result = await getDesignImportJob(jobId);
+        if (result.status === 'success') {
+          res.json({ status: 'success', editUrl: result.editUrl, jobId });
+          return;
+        }
+        if (result.status === 'failed') {
+          res.status(502).json({ error: result.errorMessage ?? 'Falha ao importar na Canva.', status: 'failed', jobId });
+          return;
+        }
+      } catch (err) {
+        // Falha ao CONSULTAR o job (ex: 500 passageiro da Canva) não significa que
+        // o job em si falhou -- ele continua rodando do lado de lá. Só propaga se
+        // for algo persistente (token não conectado); o resto tenta de novo até o
+        // teto de espera, em vez de cancelar a exportação por um hiccup.
+        if (err instanceof CanvaError && err.code === 'not_connected') throw err;
+        logger.warn({ err, jobId }, 'export-canva: falha transitória ao consultar job, tentando de novo');
       }
       await sleep(POLL_INTERVAL_MS);
     }
@@ -87,9 +96,14 @@ exportCanvaRouter.get('/:id/export-canva/:jobId/status', async (req, res) => {
     }
     res.json(result.status === 'success' ? { status: 'success', editUrl: result.editUrl } : { status: 'in_progress' });
   } catch (err) {
-    logger.error({ err, jobId }, 'export-canva/status: falha ao consultar');
-    const status = canvaErrorStatus(err);
-    const message = err instanceof CanvaError ? err.message : 'Falha ao consultar o status na Canva.';
-    res.status(status).json({ error: message });
+    // Mesma lógica do loop inline: um erro transitório ao consultar não é o job
+    // tendo falhado -- devolve in_progress e deixa o front tentar de novo no
+    // próximo poll, dentro do teto de 90s que ele já tem (canvaClient.ts).
+    if (err instanceof CanvaError && err.code === 'not_connected') {
+      res.status(409).json({ error: err.message });
+      return;
+    }
+    logger.warn({ err, jobId }, 'export-canva/status: falha transitória ao consultar, devolvendo in_progress');
+    res.json({ status: 'in_progress' });
   }
 });
