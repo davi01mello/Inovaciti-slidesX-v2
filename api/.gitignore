@@ -4,8 +4,5 @@ dist
 *.local
 npm-debug.log*
 
-# PNGs gerados por slide (routes/renderImage.ts) -- nao faz sentido versionar.
-generated/
-
 # Tokens da integração Canva (refresh token rotativo) -- nunca versionar.
 .canva-tokens.json

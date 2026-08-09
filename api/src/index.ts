@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -36,7 +39,12 @@ const app = express();
 app.disable('x-powered-by');
 if (config.trustProxy) app.set('trust proxy', 1);
 
-app.use(helmet());
+// contentSecurityPolicy desligada de propósito: a CSP default do helmet nunca foi
+// testada contra o front de verdade (a API só passou a servir HTML/JS quando ganhou
+// o static-serving de app/dist, ver embaixo) -- os outros headers do helmet (nosniff,
+// frameguard, hsts...) continuam ativos. Ajustar uma CSP fina pro app é trabalho
+// separado, não bloqueia o primeiro deploy.
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // CORS restrito: origem desconhecida recebe 403 (via errorHandler). Requests sem header
 // Origin (curl, health checks, proxy do Vite em dev) passam, o navegador é quem precisa de CORS.
@@ -115,6 +123,23 @@ app.use('/api/transcribe', transcribeLimits, transcribeRouter);
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada.', request_id: req.requestId });
 });
+
+// Serve o front buildado (app/dist) no MESMO domínio da API, quando o build existe --
+// é o que deixa `fetch('/api/...')` funcionar em produção sem CORS nem reverse proxy
+// externo (deploy single-service, ex: Railway). Em dev isso não existe (o Vite serve
+// o front na 5173) e o bloco vira um no-op silencioso.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontDist = path.resolve(__dirname, '..', '..', 'app', 'dist');
+if (fs.existsSync(frontDist)) {
+  app.use(express.static(frontDist));
+  // SPA: qualquer rota que não seja /api (já tratada acima) cai no index.html,
+  // e o react-router-dom decide o resto no navegador.
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontDist, 'index.html'));
+  });
+} else {
+  logger.info('app/dist não existe -- rodando só como API (dev normal, ou build do front ainda não rodou)');
+}
 
 app.use(errorHandler);
 
