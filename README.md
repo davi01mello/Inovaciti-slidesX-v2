@@ -101,24 +101,23 @@ start (`node api/dist/index.js`) e o healthcheck (`/api/health`). Passo a passo:
 1. No Railway, **New Project → Deploy from GitHub repo**, aponte pra este repositório.
    Ele detecta o `railway.json` sozinho — não precisa mexer em Root Directory nem
    builder.
-2. Em **Variables**, preencha (pelo menos): `GEMINI_API_KEY`, `SITE_USERNAME`,
-   `SITE_PASSWORD`. `NODE_ENV=production` o Railway já seta sozinho.
-3. Depois do primeiro deploy, o Railway te dá um domínio (`algumacoisa.up.railway.app`,
-   ou um domínio próprio se você configurar um). Copie essa URL e preencha
-   `ALLOWED_ORIGINS` com ela (ex: `https://algumacoisa.up.railway.app`) — é a config
-   crítica que falta no primeiro boot, então o primeiro deploy sobe mas a API se
-   recusa a servir requisição de origem nenhuma até isso ser preenchido. Redeploy
-   depois de preencher.
-4. `TRUST_PROXY=1` — o Railway já roda atrás de proxy, isso é necessário pro rate
-   limit enxergar o IP real do usuário em vez do IP do proxy.
+2. **Antes** de depender de um boot bem-sucedido, gere o domínio público em
+   **Settings → Networking → Generate Domain** — isso cria a URL
+   (`algumacoisa.up.railway.app`) na hora, independente do app estar rodando.
+3. Em **Variables**, preencha as 4 obrigatórias de uma vez: `GEMINI_API_KEY`,
+   `SITE_USERNAME`, `SITE_PASSWORD` e `ALLOWED_ORIGINS` (com a URL do passo 2, ex:
+   `https://algumacoisa.up.railway.app`). O boot da API **aborta o processo**
+   (`process.exit(1)`) se qualquer uma das 4 estiver ausente com
+   `NODE_ENV=production` — não é aviso, é bloqueante — por isso a ordem importa:
+   sem o domínio gerado antes, é preenche-deploy-crasha-preenche de novo.
+   `NODE_ENV=production` o Railway já seta sozinho.
+4. `TRUST_PROXY=1` — não é obrigatória (o boot não trava sem ela), mas sem ela o
+   rate limit por IP enxerga o IP do proxy do Railway em vez do IP real do usuário.
 5. Canva, Notion, OpenAI (geração de imagem) e transcrição de voz continuam
    opcionais — sem a chave de cada uma, o recurso correspondente some ou devolve erro
    claro na UI, o resto do app funciona normal.
 
-O boot da API aborta (não sobe metade funcionando) se `GEMINI_API_KEY`,
-`ALLOWED_ORIGINS`, `SITE_USERNAME` ou `SITE_PASSWORD` estiverem ausentes com
-`NODE_ENV=production` — configuração crítica faltando tem que aparecer no deploy,
-nunca silenciosamente por request. Todas as variáveis estão documentadas em
+Todas as variáveis (obrigatórias e opcionais) estão documentadas em
 `api/.env.example`.
 
 Coisas que continuam valendo depois do deploy, porque são decisão de produto, não
