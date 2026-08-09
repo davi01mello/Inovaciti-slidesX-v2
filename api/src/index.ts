@@ -96,7 +96,12 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/auth/login', authLimits);
 app.use('/api/auth', authRouter);
-app.use(requireAuth);
+// Escopado em /api: sem o prefixo, esse middleware também interceptava a
+// própria página (o bloco de static-serving do front vem DEPOIS dele no
+// arquivo) -- em produção isso bloqueava até o HTML/JS do app carregar,
+// impedindo a pessoa de sequer VER a tela de login. Nunca apareceu em dev
+// porque lá o Vite serve o front, esse trecho é no-op.
+app.use('/api', requireAuth);
 
 app.use('/api/presentations/generate', generateLimits, generateRouter);
 app.use('/api/chat', chatLimits, chatRouter);
