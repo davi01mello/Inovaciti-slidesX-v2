@@ -47,7 +47,18 @@ const EMPTY_STATE: FormatState = {
   size: 'md',
 };
 
-const COLOR_ORDER: TextColorKey[] = ['default', 'white', 'gray', 'green'];
+const COLOR_ORDER: TextColorKey[] = [
+  'default',
+  'white',
+  'gray',
+  'green',
+  'black',
+  'blue',
+  'red',
+  'orange',
+  'yellow',
+  'purple',
+];
 const FONT_ORDER: FontFamilyKey[] = ['poppins', 'sora', 'inter', 'space-grotesk', 'manrope', 'outfit'];
 const SIZE_ORDER: FontSizeKey[] = ['sm', 'md', 'lg', 'xl'];
 
@@ -56,6 +67,12 @@ const COLOR_LABEL: Record<TextColorKey, string> = {
   white: 'Branco',
   gray: 'Cinza',
   green: 'Verde CITi',
+  black: 'Preto',
+  blue: 'Azul',
+  red: 'Vermelho',
+  orange: 'Laranja',
+  yellow: 'Amarelo',
+  purple: 'Roxo',
 };
 
 function swatchFor(color: TextColorKey): string {
@@ -73,6 +90,7 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
   const [state, setState] = useState<FormatState>(EMPTY_STATE);
   const [ctx, setCtx] = useState<Context | null>(null);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const editableRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -142,7 +160,10 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
   }, [presentationId, slideId]);
 
   useEffect(() => {
-    if (!pos) setFontMenuOpen(false);
+    if (!pos) {
+      setFontMenuOpen(false);
+      setColorMenuOpen(false);
+    }
   }, [pos]);
 
   if (!pos) return null;
@@ -286,28 +307,16 @@ export function FormattingToolbar({ presentationId, slideId }: { presentationId:
 
       <Divider />
 
-      <div className="flex items-center gap-1 px-1">
-        {COLOR_ORDER.map((color) => (
-          <button
-            key={color}
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => applyColor(color)}
-            aria-label={COLOR_LABEL[color]}
-            title={COLOR_LABEL[color]}
-            className={cn(
-              'flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-150 hover:scale-110',
-              (color === 'green' ? state.highlight : !state.highlight && state.color === color) &&
-                'ring-2 ring-brand/70 ring-offset-2 ring-offset-surface-3',
-            )}
-          >
-            <span
-              className="h-4 w-4 rounded-full ring-1 ring-inset ring-white/25"
-              style={{ background: swatchFor(color) }}
-            />
-          </button>
-        ))}
-      </div>
+      <ColorDropdown
+        open={colorMenuOpen}
+        onToggle={() => setColorMenuOpen((v) => !v)}
+        onClose={() => setColorMenuOpen(false)}
+        state={state}
+        onSelect={(color) => {
+          applyColor(color);
+          setColorMenuOpen(false);
+        }}
+      />
 
       <Divider />
 
@@ -446,6 +455,76 @@ function FontDropdown({ open, onToggle, onClose, value, onSelect }: FontDropdown
                   <path d="m5 12.5 4.5 4.5L19 7" />
                 </svg>
               )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ColorDropdownProps {
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  state: FormatState;
+  onSelect: (color: TextColorKey) => void;
+}
+
+/** Grade de swatches num popover — a paleta cresceu (marca + neutros + vibrantes,
+ * pra dar contraste em fundos fora do eixo verde, ex: a família Diva) e não cabe
+ * mais numa fileira inline como antes. */
+function ColorDropdown({ open, onToggle, onClose, state, onSelect }: ColorDropdownProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: PointerEvent) {
+      if (!ref.current?.contains(event.target as Node)) onClose();
+    }
+    document.addEventListener('pointerdown', onPointer);
+    return () => document.removeEventListener('pointerdown', onPointer);
+  }, [open, onClose]);
+
+  const activeColor: TextColorKey = state.highlight ? 'green' : state.color;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={onToggle}
+        aria-label="Cor do texto"
+        title="Cor do texto"
+        className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 transition-colors duration-150 hover:bg-white/[0.05]"
+      >
+        <span
+          className="h-4 w-4 rounded-full ring-1 ring-inset ring-white/25"
+          style={{ background: swatchFor(activeColor) }}
+        />
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="glass-deep absolute left-0 top-[calc(100%+6px)] z-[80] grid w-[168px] animate-menu-in grid-cols-5 gap-1.5 rounded-lg p-2">
+          {COLOR_ORDER.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onSelect(color)}
+              aria-label={COLOR_LABEL[color]}
+              title={COLOR_LABEL[color]}
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-full transition-transform duration-150 hover:scale-110',
+                activeColor === color && 'ring-2 ring-brand/70 ring-offset-2 ring-offset-surface-3',
+              )}
+            >
+              <span
+                className="h-5 w-5 rounded-full ring-1 ring-inset ring-white/25"
+                style={{ background: swatchFor(color) }}
+              />
             </button>
           ))}
         </div>

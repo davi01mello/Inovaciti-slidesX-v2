@@ -18,15 +18,24 @@
 
 import type { ReactNode } from 'react';
 
-export type TextColorKey = 'default' | 'white' | 'gray' | 'green';
+export type TextColorKey = 'default' | 'white' | 'gray' | 'green' | 'black' | 'blue' | 'red' | 'orange' | 'yellow' | 'purple';
 export type FontFamilyKey = 'sora' | 'inter' | 'poppins' | 'space-grotesk' | 'manrope' | 'outfit';
 export type FontSizeKey = 'sm' | 'md' | 'lg' | 'xl';
 
-/** Paleta fixa — as únicas cores que um trecho de texto pode assumir. */
+/** Paleta fixa — as únicas cores que um trecho de texto pode assumir. Além das
+ * cores de marca (white/gray/green), um conjunto neutro+vibrante pra dar contraste
+ * em fundos fora do eixo verde (ex: a família Diva, rosa) onde o texto padrão
+ * quase some. */
 export const TEXT_COLOR_PALETTE: Record<Exclude<TextColorKey, 'default'>, string> = {
   white: '#F7F7F7',
   gray: 'rgba(247,247,247,0.62)',
   green: 'var(--color-slide-hl)',
+  black: '#0A0A0A',
+  blue: '#3B82F6',
+  red: '#EF4444',
+  orange: '#F97316',
+  yellow: '#FACC15',
+  purple: '#A855F7',
 };
 
 /** Fontes oferecidas no editor — Sora/Inter são as da marca; as demais foram
@@ -73,7 +82,18 @@ export function isEmpty(rich: RichText): boolean {
   return rich.every((r) => r.text.length === 0);
 }
 
-const VALID_COLORS = new Set<TextColorKey>(['default', 'white', 'gray', 'green']);
+const VALID_COLORS = new Set<TextColorKey>([
+  'default',
+  'white',
+  'gray',
+  'green',
+  'black',
+  'blue',
+  'red',
+  'orange',
+  'yellow',
+  'purple',
+]);
 const VALID_FONTS = new Set<FontFamilyKey>(['sora', 'inter', 'poppins', 'space-grotesk', 'manrope', 'outfit']);
 const VALID_SIZES = new Set<FontSizeKey>(['sm', 'md', 'lg', 'xl']);
 

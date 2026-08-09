@@ -139,10 +139,16 @@ function toHex(color: string): string {
 }
 
 /** Hex de exportação para a paleta fixa — sem depender de CSS vars, que o pptx não resolve. */
-const EXPORT_COLOR_HEX: Record<'white' | 'gray' | 'green', string> = {
+const EXPORT_COLOR_HEX: Record<'white' | 'gray' | 'green' | 'black' | 'blue' | 'red' | 'orange' | 'yellow' | 'purple', string> = {
   white: 'F7F7F7',
   gray: 'B3B3B3',
   green: '09E880',
+  black: '0A0A0A',
+  blue: '3B82F6',
+  red: 'EF4444',
+  orange: 'F97316',
+  yellow: 'FACC15',
+  purple: 'A855F7',
 };
 
 function normalizeAlign(value: string): ExportText['align'] {
