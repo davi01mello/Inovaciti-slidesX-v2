@@ -96,6 +96,15 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/auth/login', authLimits);
 app.use('/api/auth', authRouter);
+
+// Handshake OAuth da integração Canva -- aberto manualmente no navegador, uma vez,
+// não é chamado pelo front do CITi Slides. Fica ANTES do requireAuth de propósito:
+// é a própria Canva quem redireciona o navegador de volta pra /callback, e não dá
+// pra garantir que quem está fazendo esse handshake tem sessão do CITi Slides
+// aberta nesse momento -- o fluxo já se protege sozinho via PKCE + state (OAuth
+// padrão), não depende do nosso cookie de sessão. Ver routes/canvaAuth.ts.
+app.use('/api/canva/oauth', canvaAuthRouter);
+
 // Escopado em /api: sem o prefixo, esse middleware também interceptava a
 // própria página (o bloco de static-serving do front vem DEPOIS dele no
 // arquivo) -- em produção isso bloqueava até o HTML/JS do app carregar,
@@ -111,10 +120,6 @@ app.use('/api/slides/improve', improveLimits, improveRouter);
 // o rate limit dedicado; o GET de status só observa o job.
 app.post('/api/presentations/:id/export-canva', imageLimits);
 app.use('/api/presentations', exportCanvaRouter);
-
-// Handshake OAuth da integração Canva -- aberto manualmente no navegador, uma vez,
-// não é chamado pelo front do CITi Slides. Ver routes/canvaAuth.ts.
-app.use('/api/canva/oauth', canvaAuthRouter);
 
 // Geração de imagem com IA: ação mais cara do app, rate limit dedicado e bem apertado.
 app.use('/api/images', imageGenLimits, imagesRouter);
