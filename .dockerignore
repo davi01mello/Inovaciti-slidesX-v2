@@ -1,0 +1,9 @@
+.git
+node_modules
+api/node_modules
+app/node_modules
+api/dist
+app/dist
+api/.env
+.env
+brand/templates-src
