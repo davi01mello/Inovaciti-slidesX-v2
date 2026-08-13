@@ -7,7 +7,11 @@ import { config } from '../config.js';
 import { LlmError } from './errors.js';
 import { callWithRetry } from './retry.js';
 
-export const MODEL = 'gemini-2.5-flash';
+// gemini-2.5-flash sai do ar a partir de 16/out/2026 (aviso da Google). Trocado pro
+// substituto GA de mesmo preço ($0,30/1M entrada, $2,50/1M saída) -- não é preview,
+// não tem prazo de expiração anunciado. Mesma GEMINI_API_KEY continua valendo, a
+// chave não é presa a um modelo específico.
+export const MODEL = 'gemini-3.5-flash-lite';
 
 const client = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
 
