@@ -31,6 +31,8 @@ interface ChatPanelProps {
   slides: Slide[];
   /** Geração inicial em andamento — a orb pensa antes mesmo da primeira mensagem. */
   busy?: boolean;
+  /** id do slide aberto no editor — resolve "esse slide"/"aqui" no chat sem precisar dizer o número. */
+  currentSlideId?: string | null;
 }
 
 const SUGGESTIONS = ['Deixa mais direto', 'Adiciona uma métrica', 'Puxa outra abordagem'];
@@ -41,7 +43,16 @@ const MAX_ATTACHMENTS = 4;
 /** O que a API recebe quando o usuário manda só imagem, sem texto (message é obrigatório lá). */
 const IMAGE_ONLY_MESSAGE = '(anexei imagem como referência)';
 
-export function ChatPanel({ presentationId, messages, idea, goal, style, slides, busy = false }: ChatPanelProps) {
+export function ChatPanel({
+  presentationId,
+  messages,
+  idea,
+  goal,
+  style,
+  slides,
+  busy = false,
+  currentSlideId = null,
+}: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachments, setAttachments] = useState<ChatImageAttachment[]>([]);
@@ -111,8 +122,9 @@ export function ChatPanel({ presentationId, messages, idea, goal, style, slides,
     setInput('');
     setAttachments([]);
     setIsTyping(true);
+    const currentSlideIndex = currentSlideId ? slides.findIndex((s) => s.id === currentSlideId) + 1 || undefined : undefined;
     try {
-      const replyText = await sendChatMessage({
+      const { reply: replyText, edit } = await sendChatMessage({
         idea,
         goal,
         style,
@@ -120,9 +132,25 @@ export function ChatPanel({ presentationId, messages, idea, goal, style, slides,
         history,
         message: text.length > 0 ? text : IMAGE_ONLY_MESSAGE,
         attachments: outgoing.map((a) => ({ name: a.name, mimeType: a.mimeType, dataBase64: a.dataBase64 })),
+        currentSlideIndex,
       });
       const saved = presentationsStore.appendChatMessage(presentationId, { author: 'ai', text: replyText });
       setFreshMessageId(saved.id);
+
+      // O reply já confirma a mudança em texto -- aqui só aplica de verdade no slide.
+      // Falha na edição não invalida a resposta do chat: só avisa que essa parte não
+      // colou (o texto da mensagem já ficou "prometendo" a mudança, então é importante
+      // a pessoa saber se ela não aconteceu de fato).
+      const targetSlide = edit ? slides[edit.slideIndex - 1] : undefined;
+      if (edit && targetSlide) {
+        try {
+          await presentationsStore.improveSlide(presentationId, targetSlide.id, edit.instruction);
+          pushToast(`Slide ${edit.slideIndex} atualizado.`);
+        } catch (err) {
+          const message = err instanceof AiClientError ? err.message : 'Disse que ia mudar o slide, mas não consegui aplicar. Tenta de novo.';
+          pushToast(message);
+        }
+      }
     } catch (err) {
       const message = err instanceof AiClientError ? err.message : 'Deu erro ao responder. Tenta de novo.';
       const saved = presentationsStore.appendChatMessage(presentationId, { author: 'ai', text: message });

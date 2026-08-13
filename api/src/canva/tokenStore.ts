@@ -8,10 +8,16 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { config } from '../config.js';
 import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TOKEN_FILE = path.resolve(__dirname, '..', '..', '.canva-tokens.json');
+// Com DATA_DIR setado (deploy com Volume no Railway), o arquivo sobrevive a um
+// redeploy -- sem ela, cai no caminho de sempre dentro do próprio repo (dev, ou
+// produção sem volume, onde reautorizar depois de um redeploy é esperado).
+const TOKEN_FILE = config.dataDir
+  ? path.join(config.dataDir, 'canva-tokens.json')
+  : path.resolve(__dirname, '..', '..', '.canva-tokens.json');
 
 export interface CanvaTokens {
   accessToken: string;

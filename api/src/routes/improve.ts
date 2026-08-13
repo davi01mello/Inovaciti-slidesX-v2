@@ -34,7 +34,14 @@ improveRouter.post('/', async (req, res) => {
   try {
     const raw = await generateJson<unknown>({
       systemInstruction: IMPROVE_SYSTEM_INSTRUCTION,
-      prompt: buildImprovePrompt({ idea: body.idea, goal: body.goal, style: body.style, slide, otherSlides }),
+      prompt: buildImprovePrompt({
+        idea: body.idea,
+        goal: body.goal,
+        style: body.style,
+        slide,
+        otherSlides,
+        instruction: body.instruction,
+      }),
       responseSchema: improveResponseSchema,
     });
     const result = normalizeImproveResponse(raw);

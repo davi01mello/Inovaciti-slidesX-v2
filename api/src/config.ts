@@ -50,6 +50,13 @@ export const config = {
   canvaClientSecret: process.env.CANVA_CLIENT_SECRET ?? '',
   canvaRedirectUri: process.env.CANVA_REDIRECT_URI ?? '',
 
+  // Onde persistir arquivos que precisam sobreviver a um redeploy (hoje só o token
+  // da Canva). Sem essa variável, cai no caminho relativo de sempre -- que em
+  // produção sem volume monta um disco NOVO a cada deploy, perdendo o arquivo (é
+  // por isso que essa variável existe: aponte pro mount point de um Volume do
+  // Railway em produção). Opcional em dev.
+  dataDir: process.env.DATA_DIR || undefined,
+
   // Geração de imagem sob demanda no editor (OpenAI Images). Ação cara e opcional --
   // sem a chave, o botão continua na UI mas a rota devolve 503 (ver routes/images.ts).
   openaiApiKey: process.env.OPENAI_API_KEY ?? '',

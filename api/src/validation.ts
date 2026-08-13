@@ -109,6 +109,10 @@ export const chatBodySchema = z.object({
     .max(20, 'histórico com mensagens demais (máximo 20)')
     .default([]),
   attachments: z.array(chatAttachmentSchema).max(4, 'máximo de 4 imagens por mensagem').default([]),
+  // Slide aberto no editor (1-based) -- resolve "esse slide"/"aqui" sem o usuário
+  // precisar dizer o número. Opcional: nem toda chamada do chat acontece com um
+  // slide aberto (ex: geração inicial ainda em andamento).
+  currentSlideIndex: z.number().int().positive().optional(),
 });
 
 export const improveBodySchema = z.object({
@@ -117,6 +121,9 @@ export const improveBodySchema = z.object({
   goal: goalSchema.default('inform'),
   style: styleSchema.default('balanced'),
   otherSlides: slidesArraySchema.default([]),
+  // Presente quando o pedido veio do chat (uma instrução concreta do usuário) em vez
+  // do botão genérico "Melhorar Slide".
+  instruction: z.string().max(4_000).optional(),
 });
 
 export const loginBodySchema = z.object({

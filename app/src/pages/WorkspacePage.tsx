@@ -14,13 +14,13 @@ import { Spinner } from '@/components/ui/Spinner';
 import { presentationsStore, usePresentation } from '@/stores/presentationsStore';
 import { AiClientError } from '@/services/aiClient';
 import { canExportPresentation, exportPresentationAsPptx } from '@/lib/exportPptx';
-import { exportPresentationToCanva } from '@/services/canvaClient';
+import { exportPresentationToCanva, type CanvaExportStage } from '@/services/canvaClient';
 import { writeBackToNotion } from '@/services/notionClient';
 import { fileToSlideImage, pickImageFiles, type LoadedImage } from '@/lib/imageFile';
 import { isInsertDrag, readInsertPayload } from '@/services/insertDnd';
 import { addSessionUpload, getSessionUpload } from '@/services/sessionUploads';
 import { pushToast } from '@/lib/toast';
-import type { FloatingTextKind } from '@/lib/blocks';
+import type { FloatingTextKind, ListBlockKind } from '@/lib/blocks';
 import type { Block, BlockRect, Slide, SlideBrandMark, ZoneKey } from '@/types/slide';
 
 /**
@@ -29,6 +29,60 @@ import type { Block, BlockRect, Slide, SlideBrandMark, ZoneKey } from '@/types/s
  * de miniaturas ~150); o fator 1.7778 converte a altura restante em largura 16:9.
  */
 const SLIDE_STAGE_WIDTH = 'min(920px, 100%, calc((100vh - 310px) * 1.7778))';
+
+/**
+ * A aba do Canva nasce com ISSO em vez de about:blank puro.
+ *
+ * O bug original reportado ("fica nessa tela pra sempre") era literalmente essa
+ * ausência: um about:blank sem NENHUM sinal de vida por até minutos (rasterizar +
+ * subir o pptx + a Canva processar do lado dela) parece travado mesmo quando está
+ * funcionando. Como a aba nasce síncrona ao clique (pra não cair no bloqueio de
+ * pop-up), ela já pode receber um HTML de verdade antes da resposta do servidor —
+ * o texto de cada etapa é atualizado depois via updateCanvaPopupStage.
+ */
+const CANVA_LOADING_HTML = `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8" /><title>Abrindo no Canva…</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0b0d10; color:#eaeaea; font-family: system-ui, -apple-system, sans-serif; }
+  .box { text-align:center; max-width: 360px; padding: 24px; }
+  .spinner { width:32px; height:32px; margin:0 auto 18px; border-radius:50%; border:3px solid rgba(255,255,255,0.14); border-top-color:#2DDB60; animation:spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size:15px; font-weight:600; margin:0 0 6px; }
+  p { font-size:13px; opacity:0.6; margin:0; line-height:1.5; }
+</style></head>
+<body><div class="box"><div class="spinner"></div>
+  <h1 id="stage-title">Preparando os slides…</h1>
+  <p id="stage-hint">Isso pode levar alguns minutos em apresentações grandes. Não feche esta aba.</p>
+</div></body></html>`;
+
+const CANVA_STAGE_COPY: Record<CanvaExportStage, { title: string; hint: string }> = {
+  rendering: {
+    title: 'Preparando os slides…',
+    hint: 'Renderizando cada slide no formato que a Canva importa. Não feche esta aba.',
+  },
+  uploading: {
+    title: 'Enviando pro Canva…',
+    hint: 'Subindo o arquivo montado. Não feche esta aba.',
+  },
+  processing: {
+    title: 'A Canva está montando o design…',
+    hint: 'Essa parte roda do lado da Canva e pode levar alguns minutos num deck grande. Não feche esta aba.',
+  },
+};
+
+/** Reescreve o texto da aba já aberta -- ela é a MESMA referência de Window o tempo todo. */
+function updateCanvaPopupStage(popup: Window | null, stage: CanvaExportStage) {
+  if (!popup || popup.closed) return;
+  try {
+    const copy = CANVA_STAGE_COPY[stage];
+    const titleEl = popup.document.getElementById('stage-title');
+    const hintEl = popup.document.getElementById('stage-hint');
+    if (titleEl) titleEl.textContent = copy.title;
+    if (hintEl) hintEl.textContent = copy.hint;
+  } catch {
+    // Aba fechada pelo usuário no meio do processo -- não é um erro do export.
+  }
+}
 
 /**
  * Workspace WYSIWYG: o palco é a PRÓPRIA composição no template oficial —
@@ -132,6 +186,14 @@ export function WorkspacePage() {
     (kind: FloatingTextKind) => {
       if (!presentation || !currentSlide) return;
       presentationsStore.addFloatingText(presentation.id, currentSlide.id, kind);
+    },
+    [presentation, currentSlide],
+  );
+
+  const handleInsertList = useCallback(
+    (kind: ListBlockKind) => {
+      if (!presentation || !currentSlide) return;
+      presentationsStore.insertListBlock(presentation.id, currentSlide.id, kind);
     },
     [presentation, currentSlide],
   );
@@ -312,9 +374,16 @@ export function WorkspacePage() {
     // da API (pode levar vários segundos) pra chamar window.open, o navegador não reconhece
     // mais isso como ação do usuário e bloqueia o pop-up silenciosamente (sem erro nenhum).
     const popup = window.open('', '_blank');
+    // Escreve o HTML de carregamento na hora: sem isso a aba fica about:blank pelo
+    // tempo INTEIRO do export (podem ser minutos), o que é indistinguível de travado.
+    if (popup) {
+      popup.document.open();
+      popup.document.write(CANVA_LOADING_HTML);
+      popup.document.close();
+    }
     setCanvaExporting(true);
     try {
-      const editUrl = await exportPresentationToCanva(presentation);
+      const editUrl = await exportPresentationToCanva(presentation, (stage) => updateCanvaPopupStage(popup, stage));
       if (popup) {
         popup.location.href = editUrl;
       } else {
@@ -394,6 +463,7 @@ export function WorkspacePage() {
           style={presentation.meta.style}
           slides={presentation.slides}
           busy={presentation.status === 'generating'}
+          currentSlideId={currentSlideId}
         />
         {/* Palco central: dimensionado pra viver INTEIRO na viewport, sem rolagem —
          * nada de botão ou aviso escondido abaixo da dobra. O dock de inserção
@@ -402,6 +472,7 @@ export function WorkspacePage() {
           {currentSlide && (
             <InsertDock
               onInsertText={handleInsertText}
+              onInsertList={handleInsertList}
               onInsertElement={handleInsertElement}
               onInsertImage={(image) => handleInsertImage(image)}
               onSelectArt={handleSelectArt}

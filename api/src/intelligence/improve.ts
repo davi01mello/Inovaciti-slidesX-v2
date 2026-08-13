@@ -10,7 +10,9 @@ import { BASE_SYSTEM_INSTRUCTION } from './writing.js';
 export const IMPROVE_SYSTEM_INSTRUCTION = `
 ${BASE_SYSTEM_INSTRUCTION}
 
-Seu papel específico: o usuário clicou em "Melhorar este slide" pra um slide de conteúdo. Gere uma versão nova do conteúdo desse slide. Não é polimento cosmético: é uma reescrita com um ângulo genuinamente diferente, outro jeito de contar a mesma ideia, ainda coerente com o resto da apresentação.
+Seu papel específico: reescrever o conteúdo de UM slide de conteúdo. Duas origens possíveis, que mudam o que "melhorar" significa aqui:
+- O usuário clicou em "Melhorar este slide" (sem instrução específica): gere uma versão nova com um ângulo genuinamente diferente, outro jeito de contar a mesma ideia, ainda coerente com o resto da apresentação. Não é polimento cosmético.
+- O usuário pediu uma mudança específica pelo chat (instrução presente no prompt): aplique EXATAMENTE essa instrução. Não é ângulo novo por ângulo novo — é a mudança pedida, e só ela. Preserve o que a instrução não mencionou.
 
 - Preserve o "layout" do slide (você o recebe mas não precisa devolver, o endpoint só espera "blocks").
 - O slide reescrito é UM formato do CATÁLOGO DE FORMATOS, com a gramática e a faixa dele. TROCAR o formato é bem-vindo (o usuário pediu uma versão diferente): topicos podem virar jornada, apoio pode virar citacao, cards podem virar comparacao, um número real pode virar stats.
@@ -30,7 +32,13 @@ export function buildImprovePrompt(params: {
   style: VisualStyle;
   slide: GeneratedSlide;
   otherSlides: GeneratedSlide[];
+  /** Instrução específica do usuário (veio do chat). Ausente = pedido genérico de "ângulo novo". */
+  instruction?: string;
 }): string {
+  const request = params.instruction
+    ? `INSTRUÇÃO ESPECÍFICA DO USUÁRIO PRA ESTE SLIDE (aplique exatamente isto, preserve o resto):\n"""\n${params.instruction}\n"""\n\nAplique a instrução acima.`
+    : 'Gere uma nova versão do conteúdo desse slide, com um ângulo genuinamente diferente.';
+
   return `
 ${currentYearLine()}
 
@@ -45,6 +53,6 @@ ${slidesToPromptJson([params.slide])}
 OUTROS SLIDES DA APRESENTAÇÃO (contexto de coerência, não repita):
 ${slidesToPromptJson(params.otherSlides)}
 
-Gere uma nova versão do conteúdo desse slide.
+${request}
 `.trim();
 }

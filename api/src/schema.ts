@@ -129,3 +129,21 @@ export const improveResponseSchema = {
   },
   required: ['blocks'],
 };
+
+/**
+ * O chat responde SEMPRE com "reply" (texto conversacional). Quando o pedido é uma
+ * edição clara de UM slide específico, o modelo também preenche editSlideIndex (o
+ * número do slide, 1-based, como listado no prompt) e editInstruction (o que mudar,
+ * numa frase objetiva) -- o servidor então chama o MESMO pipeline do botão "Melhorar
+ * Slide" com essa instrução, em vez de só sugerir em texto. Pedido vago, sobre
+ * vários slides, ou pergunta sem pedido de mudança: só "reply", sem os outros dois.
+ */
+export const chatResponseSchema = {
+  type: 'object',
+  properties: {
+    reply: { type: 'string' },
+    editSlideIndex: { type: 'integer' },
+    editInstruction: { type: 'string' },
+  },
+  required: ['reply'],
+};

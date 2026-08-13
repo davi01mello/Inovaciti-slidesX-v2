@@ -116,3 +116,65 @@ export function cloneBlock(block: Block, rectOverride?: BlockRect): Block {
     ...(block.floating ? { floating: true } : {}),
   };
 }
+
+/** Os cinco formatos estruturados que o dock oferece pra inserção manual (espelha isListBlock). */
+export type ListBlockKind = 'topics' | 'cards' | 'stats' | 'steps' | 'compare';
+
+/**
+ * Nasce com 2-3 itens placeholder, prontos pra editar na hora — mesmo texto de
+ * placeholder que addTopic/addCard/etc já usam (SlideComposition.tsx), pra não
+ * inventar um segundo vocabulário de "item novo" no produto.
+ *
+ * Sem rect: como todo bloco do fluxo, quem posiciona é o motor de zonas
+ * (services/artZones.ts) — o arquétipo do slide é INFERIDO destes blocos
+ * (services/slideArchetype.ts), então inserir um destes muda o desenho do
+ * slide na hora, automaticamente, tanto num slide manual quanto num gerado.
+ */
+export function makeListBlock(kind: ListBlockKind): Block {
+  switch (kind) {
+    case 'topics':
+      return {
+        id: createId(),
+        kind: 'topics',
+        align: 'left',
+        items: [fromPlain('Novo tópico'), fromPlain('Novo tópico'), fromPlain('Novo tópico')],
+      };
+    case 'steps':
+      return {
+        id: createId(),
+        kind: 'steps',
+        align: 'left',
+        items: [fromPlain('Nova etapa'), fromPlain('Nova etapa'), fromPlain('Nova etapa')],
+      };
+    case 'cards':
+      return {
+        id: createId(),
+        kind: 'cards',
+        align: 'left',
+        items: [
+          { id: createId(), title: fromPlain('Novo card'), body: fromPlain('') },
+          { id: createId(), title: fromPlain('Novo card'), body: fromPlain('') },
+        ],
+      };
+    case 'stats':
+      return {
+        id: createId(),
+        kind: 'stats',
+        align: 'left',
+        items: [
+          { id: createId(), value: fromPlain('0'), label: fromPlain('Nova métrica') },
+          { id: createId(), value: fromPlain('0'), label: fromPlain('Nova métrica') },
+        ],
+      };
+    case 'compare':
+      return {
+        id: createId(),
+        kind: 'compare',
+        align: 'left',
+        sides: [
+          { id: createId(), label: fromPlain('Lado A'), points: [fromPlain('Novo ponto')] },
+          { id: createId(), label: fromPlain('Lado B'), points: [fromPlain('Novo ponto')] },
+        ],
+      };
+  }
+}

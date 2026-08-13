@@ -3,7 +3,7 @@ import { createId } from '@/lib/id';
 import { loadJson, saveJson } from '@/lib/storage';
 import { pushToast } from '@/lib/toast';
 import { playSound } from '@/lib/sound';
-import { cloneBlock, makeFloatingTextBlock, makeTextBlock, type FloatingTextKind } from '@/lib/blocks';
+import { cloneBlock, makeFloatingTextBlock, makeListBlock, makeTextBlock, type FloatingTextKind, type ListBlockKind } from '@/lib/blocks';
 import { clampRect } from '@/lib/rect';
 import { applyGeneratedBlocksToSlide } from '@/lib/generatedSlide';
 import { AiClientError, generatePresentation, improveSlideRemote } from '@/services/aiClient';
@@ -467,11 +467,20 @@ export interface PresentationsApi {
   updateTitle(id: string, title: string): void;
   addSlide(id: string, afterSlideId: string | null, layout?: SlideLayout): string;
   duplicateSlide(id: string, slideId: string): string;
-  improveSlide(id: string, slideId: string): Promise<void>;
+  /** instruction ausente = "ângulo novo" genérico (botão Melhorar Slide); presente = pedido concreto (veio do chat). */
+  improveSlide(id: string, slideId: string, instruction?: string): Promise<void>;
   deleteSlide(id: string, slideId: string): void;
   reorderSlide(id: string, slideId: string, targetIndex: number): void;
   updateBlock(id: string, slideId: string, blockId: string, patch: Partial<Block>): void;
   addFloatingText(id: string, slideId: string, kind: FloatingTextKind, at?: { x: number; y: number }): string;
+  /**
+   * Insere um bloco estruturado (tópicos, cards, métricas, etapas, comparação) no
+   * FLUXO do slide — funciona tanto num slide gerado quanto num criado do zero via
+   * addSlide, porque o arquétipo/desenho é inferido dos blocos (slideArchetype.ts),
+   * nunca declarado. Regra do produto (ver types/slide.ts): nunca dois formatos de
+   * lista no mesmo slide — inserir um novo SUBSTITUI o estruturado existente.
+   */
+  insertListBlock(id: string, slideId: string, kind: ListBlockKind): void;
   deleteBlock(id: string, slideId: string, blockId: string): void;
   undo(id: string): void;
   redo(id: string): void;
@@ -686,7 +695,7 @@ export const presentationsStore = {
     });
   },
 
-  async improveSlide(id, slideId) {
+  async improveSlide(id, slideId, instruction?) {
     const pres = state.presentations.find((p) => p.id === id);
     const slide = pres?.slides.find((s) => s.id === slideId);
     if (!pres || !slide) return;
@@ -697,6 +706,7 @@ export const presentationsStore = {
       style: pres.meta.style,
       slide,
       otherSlides,
+      instruction,
     });
     recordHistory(id, `improve:${slideId}:${Date.now()}`);
     updatePresentation(id, (p) => ({
@@ -727,6 +737,19 @@ export const presentationsStore = {
       updateSlideInPresentation(p, slideId, (s) => ({ ...s, blocks: [...s.blocks, newBlock] })),
     );
     return newBlock.id;
+  },
+
+  insertListBlock(id, slideId, kind) {
+    const newBlock = makeListBlock(kind);
+    recordHistory(id, `add-list:${newBlock.id}`);
+    updatePresentation(id, (p) =>
+      updateSlideInPresentation(p, slideId, (s) => ({
+        ...s,
+        // Substitui qualquer estruturado existente (nunca dois no mesmo slide, ver
+        // types/slide.ts) e preserva o resto (títulos, corpo, imagem, caixas livres).
+        blocks: [...s.blocks.filter((b) => !isListBlock(b)), newBlock],
+      })),
+    );
   },
 
   deleteBlock(id, slideId, blockId) {

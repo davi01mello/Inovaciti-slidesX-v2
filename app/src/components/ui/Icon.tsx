@@ -43,7 +43,10 @@ export type IconName =
   | 'undo'
   | 'redo'
   | 'mic'
-  | 'image';
+  | 'image'
+  | 'bar-chart'
+  | 'route'
+  | 'columns';
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -101,6 +104,9 @@ const STROKE_PATHS: Record<string, string[]> = {
     'M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
     'm21 15-5-5L5 21',
   ],
+  'bar-chart': ['M4 20V11', 'M10 20V4', 'M16 20V13', 'M3 20h18'],
+  route: ['M5 19a4 4 0 0 0 4-4v-6a4 4 0 0 1 4-4h6'],
+  columns: ['M4 4h16v16H4Z', 'M12 4v16'],
 };
 
 function StrokeIcon({ name, size = 18, ...rest }: IconProps) {

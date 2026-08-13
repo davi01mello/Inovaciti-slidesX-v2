@@ -37,10 +37,11 @@ export const GOALS: Record<PresentationGoal, GoalSpec> = {
       'Tensão e resolução. O problema ou oportunidade entra cedo, com consequência real. A proposta só aparece quando o terreno está preparado. Os argumentos mais fortes vêm depois do diagnóstico, e as duas objeções mais prováveis são respondidas dentro da narrativa, antes de alguém levantá-las.',
     tom: 'Confiante e preparado, sem arrogância. Afirma, sustenta com o concreto, segue.',
     formatosTipicos:
-      'Uma proposta comercial TEM um slide de investimento: formato numero com o valor que o usuário deu (se ele deu valor). Prova com indicadores ou comparacao (com/sem, antes/depois). Pilares da proposta em cards. A jornada de trabalho em jornada. O fechamento pode ser citacao.',
+      'Uma proposta comercial TEM um slide de investimento: formato numero com o valor que o usuário deu (se ele deu valor). Prova com indicadores ou comparacao (com/sem, antes/depois). Pilares da proposta em cards. A jornada de trabalho em jornada. O fechamento pode ser citacao. afirmacao é a EXCEÇÃO aqui, não a regra: convencer é feito de evidência (número, comparação, prova), uma frase de impacto sozinha não fecha negócio.',
     boasPraticas:
       'O fechamento pede algo específico: valor, prazo, recurso ou decisão. Uma apresentação de convencimento que termina só em agradecimento falhou.',
-    restricoes: 'Nada de detalhe operacional profundo, isso é anexo ou conversa seguinte. Nada de promessa sem lastro.',
+    restricoes:
+      'Nada de detalhe operacional profundo, isso é anexo ou conversa seguinte. Nada de promessa sem lastro. Uma proposta não é uma sequência de frases de efeito: no máximo UM slide do deck inteiro é afirmacao ou citacao pura (sem número, sem comparação, sem prova) — todo o resto carrega evidência concreta, mesmo quando o formato permite impacto.',
   },
   inform: {
     label: 'Informar',

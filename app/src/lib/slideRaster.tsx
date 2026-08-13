@@ -246,8 +246,7 @@ export async function renderSlidesForExport(presentation: Presentation): Promise
     await nextFrame();
     await nextFrame();
 
-    const results: SlideExport[] = [];
-    for (let i = 0; i < stages.length; i++) {
+    async function rasterOne(i: number): Promise<SlideExport> {
       const stage = stages[i]!;
       const stageRect = stage.getBoundingClientRect();
       const texts = Array.from(stage.querySelectorAll<HTMLElement>('[data-export-text]'))
@@ -272,8 +271,31 @@ export async function renderSlidesForExport(presentation: Presentation): Promise
             (node.hasAttribute('data-export-text') || node.hasAttribute('data-export-decoration'))
           ),
       });
-      results.push({ background, texts, decorations });
+      return { background, texts, decorations };
     }
+
+    /**
+     * RASTERIZA COM CONCORRÊNCIA LIMITADA, não um slide de cada vez.
+     *
+     * `toPng` gasta boa parte do tempo dela ESPERANDO (decodificação de imagem,
+     * serialização em SVG) — tempo que o navegador consegue sobrepor entre
+     * chamadas mesmo sem paralelismo real de CPU. Num deck de 20+ slides, isso
+     * era o grosso do "10+ minutos" que deixava a exportação pro Canva
+     * impraticável: cada slide esperava o anterior terminar por inteiro antes
+     * de sequer começar. O teto de 4 evita estourar memória num deck gigante
+     * (cada raster é uma imagem 1920x1080 inteira na memória) sem perder o
+     * ganho — mais que isso satura o mesmo gargalo de qualquer forma.
+     */
+    const CONCURRENCY = 4;
+    const results: SlideExport[] = new Array(stages.length);
+    let nextIndex = 0;
+    async function worker() {
+      while (nextIndex < stages.length) {
+        const i = nextIndex++;
+        results[i] = await rasterOne(i);
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, stages.length) }, () => worker()));
     return results;
   } finally {
     roots.forEach((root) => root.unmount());

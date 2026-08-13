@@ -117,8 +117,21 @@ export async function generatePresentation(params: {
   };
 }
 
+/** Presente quando o pedido do usuário virou uma edição de verdade em UM slide (ver api/src/intelligence/chat.ts). */
+export interface ChatEdit {
+  /** 1-based, no mesmo índice do array `slides` mandado na request (slideIndex - 1). */
+  slideIndex: number;
+  instruction: string;
+}
+
+export interface ChatReply {
+  reply: string;
+  edit?: ChatEdit;
+}
+
 interface ChatResponse {
   reply: string;
+  edit?: ChatEdit;
 }
 
 /** Imagem anexada no chat, já reduzida pelo front, pronta pra ir inline pro modelo. */
@@ -136,7 +149,9 @@ export async function sendChatMessage(params: {
   history: ChatMessage[];
   message: string;
   attachments?: ChatImagePayload[];
-}): Promise<string> {
+  /** Slide aberto no editor no momento (1-based) -- resolve "esse slide"/"aqui" sem o usuário dizer o número. */
+  currentSlideIndex?: number;
+}): Promise<ChatReply> {
   const data = await postJson<ChatResponse>('/api/chat', {
     idea: params.idea,
     goal: params.goal,
@@ -145,8 +160,9 @@ export async function sendChatMessage(params: {
     history: params.history.map((m) => ({ author: m.author, text: m.text })),
     message: params.message,
     attachments: params.attachments ?? [],
+    currentSlideIndex: params.currentSlideIndex,
   });
-  return data.reply;
+  return { reply: data.reply, edit: data.edit };
 }
 
 interface ImproveResponse {
@@ -159,6 +175,8 @@ export async function improveSlideRemote(params: {
   style: VisualStyle;
   slide: Slide;
   otherSlides: Slide[];
+  /** Instrução concreta (veio do chat). Ausente = pedido genérico de "ângulo novo". */
+  instruction?: string;
 }): Promise<GeneratedBlock[]> {
   const data = await postJson<ImproveResponse>('/api/slides/improve', {
     idea: params.idea,
@@ -166,6 +184,7 @@ export async function improveSlideRemote(params: {
     style: params.style,
     slide: toGeneratedSlide(params.slide),
     otherSlides: params.otherSlides.map(toGeneratedSlide),
+    instruction: params.instruction,
   });
   if (data.blocks.length === 0) {
     throw new AiClientError('Não consegui melhorar esse slide dessa vez. Tenta de novo.');

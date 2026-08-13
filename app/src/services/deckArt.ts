@@ -111,7 +111,14 @@ const BAND_STEP = 0.1;
  */
 function eligibleArts(tone: number, archetype: Archetype, need: number): TemplateArt[] {
   const pool = TEMPLATE_ARTS.filter(
-    (art) => !art.light || LIGHT_ART_ALLOWED.has(archetype),
+    // Diva fica de fora do sorteio automático de propósito: o eixo de tom (tone.ts)
+    // foi calibrado pro espectro Gelo→Azul→Verde da marca, e o rosa não tem posição
+    // real nele -- na prática toda peça Diva mede tom perto de 0 (Gelo), então com o
+    // slider em Gelo (que já tem pouquíssimo material próprio) ela dominava o sorteio
+    // por afinidade de cor, e o deck saía rosa sem o usuário ter pedido isso. A família
+    // continua 100% disponível pela escolha manual na aba Fundos (ver InsertDock.tsx),
+    // que não passa por aqui -- só o sorteio automático por tom é que a ignora.
+    (art) => art.family !== 'diva' && (!art.light || LIGHT_ART_ALLOWED.has(archetype)),
   );
 
   for (let half = BAND_START; half <= 1.4; half += BAND_STEP) {

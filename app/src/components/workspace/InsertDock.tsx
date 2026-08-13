@@ -17,7 +17,7 @@ import { generateAiImage } from '@/services/imageGenClient';
 import { fileToSlideImage, pickImageFiles, IMAGE_ACCEPT_ATTR, type LoadedImage } from '@/lib/imageFile';
 import { pushToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
-import type { FloatingTextKind } from '@/lib/blocks';
+import type { FloatingTextKind, ListBlockKind } from '@/lib/blocks';
 
 /**
  * Dock de inserção do workspace, no espírito do Canva: um rail vertical fixo ao
@@ -31,6 +31,8 @@ import type { FloatingTextKind } from '@/lib/blocks';
 
 interface InsertDockProps {
   onInsertText: (kind: FloatingTextKind) => void;
+  /** Insere um bloco estruturado (tópicos, cards, métricas, etapas, comparação) no slide atual. */
+  onInsertList: (kind: ListBlockKind) => void;
   onInsertElement: (assetKey: string) => void;
   onInsertImage: (image: LoadedImage) => void;
   /** Escolha manual do fundo do slide atual. undefined = devolve pro diretor de arte automático. */
@@ -47,6 +49,7 @@ const TAB_TITLE: Record<DockTab, string> = { text: 'Texto', brand: 'Marca CITi',
 
 export function InsertDock({
   onInsertText,
+  onInsertList,
   onInsertElement,
   onInsertImage,
   onSelectArt,
@@ -125,7 +128,7 @@ export function InsertDock({
                 : 'Clique pra inserir no centro, ou arraste pro slide.'}
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-              {tab === 'text' && <TextTab onInsert={onInsertText} />}
+              {tab === 'text' && <TextTab onInsert={onInsertText} onInsertList={onInsertList} />}
               {tab === 'brand' && <BrandTab onInsert={onInsertElement} />}
               {tab === 'art' && <ArtTab onSelect={onSelectArt} currentArtId={currentArtId} artOverride={artOverride} />}
               {tab === 'images' && <ImagesTab onInsert={onInsertImage} />}
@@ -166,30 +169,76 @@ const TEXT_OPTIONS: { kind: FloatingTextKind; label: string; fontSize: string; w
   { kind: 'body', label: 'Adicionar um corpo de texto', fontSize: '13px', weight: 400, opacity: 0.75 },
 ];
 
-function TextTab({ onInsert }: { onInsert: (kind: FloatingTextKind) => void }) {
+function TextTab({
+  onInsert,
+  onInsertList,
+}: {
+  onInsert: (kind: FloatingTextKind) => void;
+  onInsertList: (kind: ListBlockKind) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        {TEXT_OPTIONS.map((option) => (
+          <button
+            key={option.kind}
+            type="button"
+            draggable
+            onDragStart={(event: DragEvent) => writeInsertPayload(event.dataTransfer, { type: 'text', kind: option.kind })}
+            onClick={() => onInsert(option.kind)}
+            className="cursor-grab rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3 text-left transition-all duration-150 hover:border-brand/35 hover:bg-brand/[0.07] active:cursor-grabbing"
+          >
+            <span
+              className="block truncate text-ink"
+              style={{
+                fontFamily: 'var(--font-slide)',
+                fontSize: option.fontSize,
+                fontWeight: option.weight,
+                opacity: option.opacity,
+                letterSpacing: option.weight >= 700 ? '-0.02em' : undefined,
+                lineHeight: 1.25,
+              }}
+            >
+              {option.label}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div>
+        <SectionHeading label="Formatos estruturados" />
+        <p className="px-0.5 pb-2 text-[10.5px] leading-snug text-ink-muted">
+          O desenho do slide se adapta sozinho ao formato escolhido. Só um por slide — escolher outro troca o atual.
+        </p>
+        <ListBlockOptions onInsert={onInsertList} />
+      </div>
+    </div>
+  );
+}
+
+const LIST_OPTIONS: { kind: ListBlockKind; icon: IconName; label: string; hint: string }[] = [
+  { kind: 'topics', icon: 'list', label: 'Tópicos', hint: 'Lista leve, uma linha por item' },
+  { kind: 'cards', icon: 'grid', label: 'Cards', hint: 'Título + corpo, até 3 caixas' },
+  { kind: 'stats', icon: 'bar-chart', label: 'Métricas', hint: 'Número em destaque + rótulo' },
+  { kind: 'steps', icon: 'route', label: 'Etapas', hint: 'Sequência numerada' },
+  { kind: 'compare', icon: 'columns', label: 'Comparação', hint: 'Dois lados frente a frente' },
+];
+
+function ListBlockOptions({ onInsert }: { onInsert: (kind: ListBlockKind) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
-      {TEXT_OPTIONS.map((option) => (
+      {LIST_OPTIONS.map((option) => (
         <button
           key={option.kind}
           type="button"
-          draggable
-          onDragStart={(event: DragEvent) => writeInsertPayload(event.dataTransfer, { type: 'text', kind: option.kind })}
           onClick={() => onInsert(option.kind)}
-          className="cursor-grab rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3 text-left transition-all duration-150 hover:border-brand/35 hover:bg-brand/[0.07] active:cursor-grabbing"
+          className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-2.5 text-left transition-all duration-150 hover:border-brand/35 hover:bg-brand/[0.07]"
         >
-          <span
-            className="block truncate text-ink"
-            style={{
-              fontFamily: 'var(--font-slide)',
-              fontSize: option.fontSize,
-              fontWeight: option.weight,
-              opacity: option.opacity,
-              letterSpacing: option.weight >= 700 ? '-0.02em' : undefined,
-              lineHeight: 1.25,
-            }}
-          >
-            {option.label}
+          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg border border-brand/30 bg-brand/[0.12] text-brand">
+            <Icon name={option.icon} size={13} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12.5px] font-semibold text-ink">{option.label}</span>
+            <span className="block truncate text-[10.5px] leading-snug text-ink-muted">{option.hint}</span>
           </span>
         </button>
       ))}

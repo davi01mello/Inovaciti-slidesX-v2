@@ -22,6 +22,8 @@ interface GenerateJsonParams {
   systemInstruction: string;
   prompt: string;
   responseSchema: object;
+  /** Imagens anexadas pelo usuário (ex: chat multimodal): vão inline junto do prompt. */
+  images?: { mimeType: string; dataBase64: string }[];
   /** Teto por tentativa. Default: config.llmTimeoutMs. Decks grandes devem mandar um valor maior (ver routes/generate.ts). */
   timeoutMs?: number;
 }
@@ -29,12 +31,30 @@ interface GenerateJsonParams {
 /** Chama o Gemini pedindo saída estruturada (JSON) validada contra responseSchema. */
 export async function generateJson<T>(params: GenerateJsonParams): Promise<T> {
   const ai = requireClient();
+  const images = params.images ?? [];
+  // Mesmo truque do generateText: sem imagens o prompt vai como string simples,
+  // com imagens vira uma lista de parts multimodal.
+  const contents =
+    images.length === 0
+      ? params.prompt
+      : [
+          {
+            role: 'user',
+            parts: [
+              ...images.map((image) => ({
+                inlineData: { mimeType: image.mimeType, data: image.dataBase64 },
+              })),
+              { text: params.prompt },
+            ],
+          },
+        ];
+
   const text = await callWithRetry(
     'gemini.generateJson',
     async (signal) => {
       const result = await ai.models.generateContent({
         model: MODEL,
-        contents: params.prompt,
+        contents,
         config: {
           systemInstruction: params.systemInstruction,
           responseMimeType: 'application/json',
